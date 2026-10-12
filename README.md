@@ -37,7 +37,7 @@ The agent reads `AGENTS.md`, loads the `re-workflow` skill, and runs gates G0 to
 | `tools/rw.py` | `init`, `doctor`, `hash`, `recon`, `lint` (stdlib only) |
 | `tools/btcap.py` | btsnoop/pcap/pcapng to ATT write/notify table by UUID |
 | `tools/crcfind.py` | Identify a CRC from sample frames |
-| `tools/notify_log.py` | Passive BLE notification logger (touch/event discovery) |
+| `tools/notify_log.py` | Passive BLE notification logger (touch/event discovery); OTA/DFU deny list always on, `--only UUID` to pin one characteristic |
 | `tools/make_test_media.py` | Synthetic test images, GIF and clips for display devices |
 | `templates/tasks/` | Recon task pack copied into every target by `init` |
 | `tools/setup_tools.py` | User-space JDK, jadx, apktool, venv (no admin rights); Linux, macOS, Windows. `setup-tools.sh` wraps it |

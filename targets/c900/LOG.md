@@ -104,3 +104,7 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Evidence: `tools/notify_log.py` main_async loops over all services and calls start_notify on every notify/indicate characteristic.
 - Cause: generic tool written before the c900 OTA services were known.
 - Fix: open. DRAFT task C900-Q17; HW-0 uses a single-UUID snippet until then. Also listed in FIXES.md Open.
+
+## 2026-10-13 Phase 1c C900-Q17 notify_log.py OTA-safe subscribe
+- Evidence: tools/notify_log.py, tests/test_notify_log.py.
+- Problem: the tool enabled notify on every notifiable characteristic, OTA included (I-50). Fix: default deny list by characteristic and by service, `--only`, `--deny`, exit 2 on a denied `--only`, plan printed first; 6 new tests. Solved.

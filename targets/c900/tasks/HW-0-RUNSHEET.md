@@ -10,7 +10,7 @@ Sources: `tasks/HW-RECON.md`, skill `re-hardware-recon`, `recon-v2.md` §3, PROT
 - No vendor app on the test phone during HW-2/HW-3 (it would bind and sync). **Turn Bluetooth off on the owner's phone** (or force-stop Hiwear Plus): the watch usually accepts one central, and the phone would reconnect and take it. Watch charged above 50 %.
 - **Never unbind, reset or "remove device"** to make the watch visible. If it does not advertise while bound, stop and record that; it is a result.
 - **No pairing agent:** on Linux run with no `bluetoothctl` agent registered (or `agent off`), so a pairing request fails and is seen instead of being auto-accepted. On macOS the system shows a dialog: press Cancel and treat it as an abort trigger.
-- **Do not use `tools/notify_log.py` as-is for HW-3**: it subscribes to every notifiable characteristic, OTA ones included. Use the single-UUID snippet in HW-3.
+- `tools/notify_log.py` is OTA-safe since C900-Q17 (default deny list, refuses denied UUIDs). For HW-3 still pin one characteristic: `python tools/notify_log.py "$ADDR" --seconds 120 --only 6e400003-b5a3-f393-e0a9-e50e24dcca9f` (equivalent to the snippet). Older checkouts without `--only`: use the snippet.
 - **Address on macOS:** CoreBluetooth gives a per-host UUID, not the MAC; record it as `UUID-masked` and do not paste it.
 - **MAC masking:** in every pasted log and result file write the address as `XX:XX:XX:XX:AB:CD` (last two octets only). Keep the full address only in the shell variable `ADDR`. Mask the scan-record MAC bytes the same way.
 - Machine: Linux or macOS with Python 3 and `bleak` installed (`pip install bleak`). Set `ADDR=` after the scan.
@@ -60,7 +60,7 @@ asyncio.run(main())
 | 3.2 | Note any 0x0C key 19 or 0x0E key 1 frame. | These are the bond triggers (C900-Q14); seeing one answers Q03 device side [H] | | |
 
 ## 2b. Tool hazard
-`tools/notify_log.py` subscribes to every notifiable characteristic including OTA ones. Fix proposed as DRAFT task C900-Q17; until it lands, use only the snippet above.
+Fixed by C900-Q17 (2026-10-13): `tools/notify_log.py` skips 0xFF00/0x18A8/`...dcca9e` by default and exits 2 if `--only` names one. Check the printed "will subscribe to" line shows only `...0003` before the watch is touched.
 
 ## 3. On deviation
 - Expected value differs (name, services, 0xAA marker, frame start): stop at the end of the step, paste output, record as [H] with the result file as source, open a contradiction row in FACTS; do not continue to the next step on the same session.
