@@ -58,3 +58,9 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Evidence: `ContactActivity.saveAsFile`, `MainActivity$6` (BroadcastReceiver), `CommandUtils.smali`, `NotifyWriteUtils.readFeatures`, `BleDataUtils.handleMountBTInfo`.
 - Problem: risk that a contacts DF opcode gets invented; jadx `(byte) 4` needed a smali check.
 - Fix: smali `const/4 0x4` / `0x1` before both `OTAUtils.<init>` call sites; app-wide smali search shows no other main=4 site. Solved. Side find: `isSyncContact` is write-only (MD5 mismatch does not auto-sync).
+
+## 2026-10-13 Phase 1 C900-Q04 command keys (static)
+- Evidence: `SettingIssuedUtils`, `GeneralUtils`, `SportIssuedUtil`, `IssuedUtil`, `MsgPushHelper`, `NotifyWriteUtils` (jadx + smali).
+- Problem 1: jadx replaced byte literals with unrelated same-valued constant names (`CommandID.COMMAND_ID_GET_FUNTION`, `CommandID.CHATGPT_ID`, `SettingIssuedUtils.KEY_SETTING_SET_LANGUAGE`, `BaseResp.CODE_ERROR_PARAMS`). Cause: jadx constant inlining by value. Fix: read the `const/16` before each `getSendByte` in smali. Solved; one real mislabel found (0x1A/21 is exit find-phone).
+- Problem 2: register value at the NAK call site looked ambiguous (two `const/4 v11` in the method). Cause: smali file order is not control-flow order. Fix: followed the `if-ne` jump target from the sum check. Solved (x=3).
+- Problem 3: `p0` reused as cmd register in some builders, so a regex on `v` registers missed the cmd. Fix: also match `const/16 p0`. Solved.

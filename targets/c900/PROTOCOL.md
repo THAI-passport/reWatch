@@ -25,23 +25,24 @@ Note: the data service ends in `...DCCA9F`, the OTA service in `...DCCA9E` [C].
 ## 3. Scan and connect [C, `BleScanActivity`, `MBleManager`]
 - The scan is unfiltered (BLESSED `scanForPeripherals`). A device is listed when it has a name and either (a) the raw scan record, printed as colon-separated hex, contains the device's own MAC followed by `12:34`, or (b) MAC followed by `56:10` (DFU mode), or (c) the name starts with `B0`, `H2` or `HY`.
 - No product name such as C900 is matched; the advertised name of a C900 is [U] (HW-2).
-- After service discovery the app reads the 5610 OTA characteristic to detect DFU mode, then requests MTU 32 normally (450 in DFU mode; the OTA tool path requests 185). App data writes are cut into 20-byte pieces regardless of MTU, 20 ms apart, with two 100 ms retries per piece.
+- After service discovery the app reads the 5610 OTA characteristic to detect DFU mode, then requests MTU 32 normally (450 in DFU mode; the OTA tool path requests 185). App data writes are cut into 20-byte pieces regardless of MTU, 20 ms apart. Each full 20-byte piece gets up to two retries 100 ms apart; the final remainder piece gets one retry after 20 ms; a frame of 20 bytes or less is written once with no retry. A failed write disconnects at once [C smali, C900-Q04].
 - No `createBond` call in the app's own code [C]; BLESSED reacts to bonding if the watch asks [C library]; whether the C900 asks is [U].
 - Bind: command 3 key 0 with an 8-character random id saved per phone; unbind: command 4 key 0 [C, `GeneralUtils`].
 
 ## 4. Framing [C, `IssuedUtil`, `NotifyWriteUtils`, `AckPackageConfigUtils`]
-App to watch: `DF | len_hi len_lo | sum | cmd | 01 | key | plen_hi plen_lo | payload`.
+App to watch: `DF | len_hi len_lo | sum | cmd | ver | key | plen_hi plen_lo | payload`.
+- `ver` is `IssuedUtil.PROTOCOL_VERSION`: default `0x01`, overwritten on connect with the integer major version from the 0x2A27 read (leading `V`/`v` stripped) [C, `IssuedUtil`, `NotifyWriteUtils.onRead`]. Only the hand-built `setAutoUpdate` frame hard-codes `01`. The C900's value is [U] (HW-2).
 - len = payload length + 5 (counts cmd through payload); total = len + 4.
 - sum = low byte of the sum of all other bytes (signed bytes, then & 0xFF; same result as unsigned mod 256).
-Acknowledgement: `FD 00 05 sum cmd key x_hi x_lo status`, status 1 = success. The app's own acks to the watch use x = 0; the watch's acks are read at bytes 4, 5 and 8 only.
+Acknowledgement: `FD 00 05 sum cmd key x_hi x_lo status`, status 1 = success. The app's ACK to a good inbound frame is `x = 0, status 1`; its NAK to a bad-sum frame is `x = 3, status 0` [C smali, `NotifyWriteUtils.dataHandle`]. The watch's acks are read at bytes 4, 5 and 8 only; the watch's own x value is [U].
 Watch to app: same `DF` frame; the app reassembles notifications until len + 4 bytes, checks the sum, replies with an `FD` ack (status 1), then dispatches on cmd.
-Flow: one command in flight; the next waits for the ack; no ack within 100 s disconnects [C].
+Flow: one command in flight; the next waits for the ack; no ack within **100 s** disconnects [C smali: `const-wide/32 0x186a0` in the send runnable and `resetTimeout`, C900-Q04]. The timer is armed only for 0xDF frames while the main screen exists; a NAK re-arms it. The command channel is paused while an OTA transfer runs (`isOTA`).
 
 ## 5. Commands (app to watch) [C unless marked]
 | cmd | Name in app | Keys seen (purpose) |
 |---|---|---|
 | 0x01 | OTA (old) | firmware path, not studied for use |
-| 0x02 | settings | 1 time sync, 2 alarms, 3 step goal, 4 profile, 5 sedentary, 6 wearing hand, 7 notification switches, 8 basic setting, 9 raise-to-wake, 10 matching, 11 find watch (1 on, 0 off), 12 camera mode (1 on, 0 off), 13 heart switch, 14 blood pressure switch, 15 sleep window, 17 call state, 18 message push, 24 temperature window, 25 temperature switch, others |
+| 0x02 | settings | 1 time sync, 2 alarms, 3 step goal, 4 profile, 5 sedentary, 6 wearing hand, 7 notification switches, 8 power save, 9 raise-to-wake, 10 matching, 11 find watch (1 on, 0 off), 12 camera mode (1 on, 0 off), 13 heart switch, 14 blood pressure switch, 15 sleep window, 17 call state, 18 message push, 24 temperature window, 25 temperature switch, others |
 | 0x03 / 0x04 | bind / unbind | key 0 |
 | 0x05 | sport data | watch to app health records |
 | 0x06 / 0x0D | reset / factory restore | never used by the client |
@@ -51,8 +52,15 @@ Flow: one command in flight; the next waits for the ack; no ack within 100 s dis
 | 0x0F | watch face | 1 query, 3 select face by code, 4 (after sync), 5 custom face layout, 10 set code to update |
 | 0x11, 0x12, 0x14 | drink, message-remind, sedentary queries | key 0 |
 | 0x13 | OTA (new) | 1 info, 2 start: firmware path, NEVER used |
-| 0x19, 0x1A | feature and function queries | 3 social, 5 payment, 7 power save |
+| 0x0B, 0x0C | device test, device control | 0x0B never used; 0x0C inbound find-phone/camera (see §7) |
+| 0x0E | BT 3.0 info | app key 3 request; watch keys 1 (classic MAC), 4 (contact MD5) |
+| 0x19 | device features | key 0 query |
+| 0x1A | functions | 3 social, 5 payment, 7 power-save support queries; 9 power save set; 21 exit find-phone; 23 altitude; 24 location |
 | 0x1B | assistant (chat) | not needed |
+### 5.1 Key and payload tables (C900-Q04) [C]
+Full per-key layouts, with source methods and smali checks, are in `tasks/results/C900-Q04.md`. Summary of cmd 0x02 keys: 1 time, 2 alarms (5 B each, same date packing + serial<<3 + repeat), 3 step goal u32, 4 profile (sex/age/height/weight bit-packed), 5 sedentary, 6 hand (1 left, 2 right), 7 notify switches (11-13 B), 8 power save, 9 raise-to-wake window, 10 pairing (2 start, 1 stop), 11 find watch, 12 camera, 13 heart, 14 BP, 15 sleep window, 17 call state, 18 message (type table in Q04 §5), 20 DND window, 21 language, 22 heart auto, 24 temp auto, 25 temp switch, 26 12/24 h, 27 units, 28 SpO2, 29 today weather, 30 temp unit, 31 SOS, 33 drink, 34 new notify switches (20 B), 35 7-day weather, 36 user name, 38 payment code, 39 social code, 58 all-day light-up, 59 all-day DND. Windows are minute-of-day u16 BE.
+Other cmds: 0x05 keys 1/6/10 (history, real-time steps, today); 0x0E key 3 (BT 3.0 info request); 0x19 key 0 (features); 0x1A keys 3/5/7 (support queries), 9 (power save set), **21 exit find-phone**, 23 altitude/pressure, 24 location. jadx printed wrong constant names for several of these keys; the values above are from smali.
+
 Time sync payload (cmd 2 key 1): 4 bytes packing, high bit first, year-2000 (6 bits), month (4), day (5), hour (5), minute (6), second (6) [C, `SettingIssuedUtils.settingSysTime` smali: `add-int/lit16 v2, v2, -0x7d0` confirms the year offset is exactly -2000 / 0x7d0]. Packing in client: `client/c900/frames.time_payload`.
 Message push (cmd 2 key 18): `type, 0, 0, UTF-8 text` with text "title:body" cut at 196 bytes [C].
 

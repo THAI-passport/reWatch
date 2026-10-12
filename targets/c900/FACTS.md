@@ -52,3 +52,9 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | Repo holds the pinned XAPK zip (owner exception) | [C] | `resources/c900/hiwear-plus-2.0.1.xapk.zip` LFS; SOURCES `REPO_COPY` |
 | Contacts use OTA channel `main=4` (CMD_CONTACT), sub 1; no DF opcode | [C] | `ContactActivity.saveAsFile` + `MainActivity$6` smali consts; `CommandUtils.smali` (C900-Q08) |
 | OTA-channel main ids: 1 OTA, 2 paper, 3 log, 4 contact, 5 watch face | [C] | `CommandUtils.smali` (`CMD_LOG=3` was not documented before) |
+| Ack timeout is 100 s | [C] | smali `const-wide/32 0x186a0` in `NotifyWriteUtils` send runnable + `resetTimeout` (C900-Q04); jadx value confirmed |
+| Frame byte 4 is `PROTOCOL_VERSION` (default 1, set from 0x2A27 major), not a fixed `01` | [C] | `IssuedUtil.getSendByte` smali `sget-byte PROTOCOL_VERSION`; corrects earlier PROTOCOL §4 and the `frames.FIXED_BYTE` comment. C900 value [U] |
+| App NAK to a bad-sum inbound frame: `FD 00 05 sum cmd key 00 03 00` | [C] | `NotifyWriteUtils.dataHandle` smali (`v11=0x3`, `v4=0x0`); earlier text said app acks always use x=0 |
+| Send retries: only full 20-byte pieces get 2x100 ms retries; last piece 1x20 ms; <=20-byte frames none | [C] | send runnable smali consts 0x14 / 0x64; earlier PROTOCOL §3 said two retries per piece |
+| cmd 0x1A key 21 = exit find-phone, not a language query | [C] | `GeneralUtils.reqeustExitFindPhone` smali `0x1a`/`0x15`; jadx printed `KEY_SETTING_SET_LANGUAGE` |
+| SimWatch ack x = `00 01` in `client/c900/frames.ack()` | [I] | not from code; app ignores bytes 6-7 of watch acks. Fix in Phase 3 |
