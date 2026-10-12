@@ -15,7 +15,9 @@ States: `todo`, `doing`, `done`, `blocked: needs human`, `blocked: needs hardwar
 | S7 | Fix client/c900 opcodes to the [C] table, with tests | done | results/S7.md; client/c900/frames.py |
 | S8 | Simulator assumption register | done (first pass) | results/S8.md |
 | S9 | First-contact readiness | done (checklist) | results/S9.md |
-| RECON-HIWEAR-APK | External-AI Hiwear Plus APK recon brief | ready | [RECON-HIWEAR-APK.md](RECON-HIWEAR-APK.md) |
+| RECON-HIWEAR-APK | Phase 0 plan review (then Phase 1 if approved) | ready (Phase 0) | [RECON-HIWEAR-APK.md](RECON-HIWEAR-APK.md); drafts [PLAN.md](../PLAN.md), [OPEN-QUESTIONS.md](../OPEN-QUESTIONS.md) |
+
+**Note:** Further `client/c900` feature work is **deferred** (PLAN.md Phase 3). S7 codec sketch remains; do not expand until owner approves.
 
 ## Hardware (prepared, not run; owner approval per session)
 | Task | Title | State |

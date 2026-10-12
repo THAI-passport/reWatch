@@ -47,4 +47,4 @@ The script is the source of truth for install steps, pinned URLs, and SHA-256 ch
 
 ## After PASS
 
-Open `targets/c900/tasks/RECON-HIWEAR-APK.md` and follow the starter prompt + token-saving section. Do not decompile "to explore".
+For **Phase 0** plan review, bootstrap is optional (skip if you only edit PLAN/OPEN-QUESTIONS). For Phase 1 claim checks, open `targets/c900/tasks/RECON-HIWEAR-APK.md` and follow the starter prompt + token-saving section. Do not decompile "to explore".
