@@ -28,16 +28,16 @@ Draft IDs — Phase 0 must approve before Phase 1 static work. Start brief: [rec
 | C900-Q01 | Adv name / scan marker | P0 | hardware-approval | blocked: needs approval | |
 | C900-Q02 | GATT services on device | P0 | hardware-approval | blocked: needs approval | |
 | C900-Q03 | Bonding behaviour | P0 | hardware-approval | blocked: needs approval | |
-| C900-Q04 | Cmd key/payload tables | P1 | static | blocked: needs Phase 0 sign-off | |
-| C900-Q05 | Inbound DF map | P1 | static | blocked: needs Phase 0 sign-off | |
-| C900-Q06 | Dial.bin decode/trim | P1 | static | blocked: needs Phase 0 sign-off | |
-| C900-Q07 | OTA 0x81 / CRC docs | P1 | static | blocked: needs Phase 0 sign-off | |
-| C900-Q08 | Contacts = OTA main 4 | P1 | static | blocked: needs Phase 0 sign-off | |
-| C900-Q09 | Server inventory expand | P2 | static | blocked: needs Phase 0 sign-off | |
+| C900-Q04 | Cmd key/payload tables | P1 | static | todo (approved Phase 1) | |
+| C900-Q05 | Inbound DF map | P1 | static | todo (approved Phase 1) | |
+| C900-Q06 | Dial.bin decode/trim | P1 | static | todo (approved Phase 1, optional) | |
+| C900-Q07 | OTA 0x81 / CRC docs | P1 | static | todo (approved Phase 1) | |
+| C900-Q08 | Contacts = OTA main 4 | P1 | static | todo (approved Phase 1) | |
+| C900-Q09 | Server inventory expand | P2 | static | todo (approved Phase 1, static only, no server calls) | |
 | C900-Q10 | HryFine compare | P2 | static | skipped: needs pin | |
 | C900-Q11 | PAR native layout | P2 | static | deferred | |
-| C900-Q12 | Cus5610 inventory | P2 | static | blocked: needs Phase 0 sign-off | |
-| C900-Q13 | Existing owner capture (HW-1) | P0 | owner supplies, then static | blocked: needs human | |
+| C900-Q12 | Cus5610 inventory | P2 | static | parked (OTA/DFU risk, not needed now) | |
+| C900-Q13 | Existing owner capture (HW-1) | P0 | owner supplies, then static | open: pending owner answer | |
 | C900-D01–D07 | Client/impl items | Deferred | — | deferred | PLAN.md Phase 3–4 |
 
 ## Hardware (prepared, not run; owner approval per session)

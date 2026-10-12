@@ -1,7 +1,7 @@
 # C900 / Hiwear Plus plan
 
-**Status: DRAFT — pending owner review (Phase 0).**  
-Do not treat as approved work orders. Deeper decompile (Phase 1) waits for owner sign-off on this file and `OPEN-QUESTIONS.md`.
+**Status: Approved for Phase 1** (2026-10-13 (Asia/Saigon), owner sign-off delegated to the requesting agent by the owner).  
+Approved scope: C900-Q04, Q05, Q07, Q08, Q09 (static inventory only, no server calls), Q06 optional. Q12 parked; Q13 open (owner answer pending). Phases 2-4 and everything outside that scope remain DRAFT. Phase 1 has not started.
 
 Last draft: 2026-10-13 (Asia/Saigon). Author: Grok Bot from current PROTOCOL/FACTS/LOG/STATUS.
 Findings snapshot: [recon-v1.md](recon-v1.md).
