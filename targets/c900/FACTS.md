@@ -66,3 +66,5 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | OTA D6 pacing = 10 ms sleep + write-complete callback | [C] | `OTANotifyWriteUtils` send runnable (`Thread.sleep(0xa)`) + `onWrite(true)` pops the queue |
 | Inbound OTA D5 replies are not checksum-checked; status at byte 5; payload from byte 8 | [C] | `OTANotifyWriteUtils.dataHandle` |
 | Server API: 70 Retrofit endpoints, 7 static hosts; dial download URLs dynamic; requests signed with MD5 `sign` (secret not recorded) | [C] | `Request.java`, `Urls.java`, `SignUtils` (C900-Q09). No server contacted |
+| Dial trim: offsets 16/17/x20/+22..25 smali-verified; trim only on the store-face screen and only if the watch's `binPreviewFlag` (feature b18 0x20) is clear; purchased faces never trimmed | [C] | `DialDetailActivity.getFileBuffer` smali; `OwnerDialDetailActivity` (C900-Q06) |
+| `HexUtil.byte2IntLR` is big-endian over its argument order; inbound sedentary threshold (0x14) is u16 BE, same as outbound | [C] | `HexUtil.byte2IntLR`; closes a C900-Q05 [U] |

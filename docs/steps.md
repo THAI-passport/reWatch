@@ -148,3 +148,11 @@ Required by AGENTS.md.
 - **Step:** Parsed the single Retrofit interface with a script (verb, path, method, parameter style), listed base-URL constants, and read the request-signing helper for its shape.
   - **Decision:** Q09 done [C]: 70 endpoints, 7 hosts, MD5 `sign` scheme. Secret values left out on purpose.
   - **Rationale:** The owner approved static inventory only, with no server calls. AGENTS.md forbids committing tokens; the algorithm shape is enough to know the client must not call these, and recording the key would add risk with no benefit.
+
+## 2026-10-13 — C900-Q06 dial decode and trim
+
+- **Step:** Budget allowed Q06. Verified the trim offsets and the token swap in smali, re-derived the three token MD5s locally, and listed which screens trim.
+  - **Decision:** Q06 done [C]. Trim is store-screen only and gated by a watch-reported flag; purchased faces are never trimmed.
+  - **Rationale:** Acceptance asks for field offsets and token seeds; smali settles both. The per-screen finding closes a PROTOCOL §6.5 unknown at no extra cost.
+- **Decision:** No unittest added.
+  - **Rationale:** With synthetic bytes and no vendor dial, a test would only check my own re-implementation, which is not evidence about the app.

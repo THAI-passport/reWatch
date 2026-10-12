@@ -72,7 +72,7 @@ Documented for the protocol only. Client rule: no watch-face upload, no OTA writ
 ### 6.1 Store face (`.bin` from the vendor) [C, `DialDetailActivity.startPush` / `getFileBuffer`]
 1. Download lands as `<filesDir>/dial/<name>.bin`.
 2. The file is opened as text (line by line). The text is an obfuscated Base64 string: `StringUtils.decodeInfo` replaces three MD5-of-literal tokens with `=`, `+`, `/` then Base64-decodes (`decodeInfoToBytes`). Token seeds (own MD5, documented so a rebuild can verify): `ZZ22` -> `37396d18...f110` (=), `Z22Z` -> `f9319252...8abd` (+), `XGHJ` -> `34657488...062a` (/).
-3. Unless `BleDataUtils.binPreviewFlag` is set, the buffer is trimmed to a length read from the decoded header: index `i = ((b[16]-b[17]-1)*20)`, then little-endian u32 at `i+22..i+25` via `HexUtil.byte2IntLR`; clamp to `[1, len]`. That trimmed buffer is what is transferred.
+3. (Store screen only; smali-verified offsets, C900-Q06. `binPreviewFlag` comes from the watch, feature byte 18 bit 0x20.) Unless `BleDataUtils.binPreviewFlag` is set, the buffer is trimmed to a length read from the decoded header: index `i = ((b[16]-b[17]-1)*20)`, then little-endian u32 at `i+22..i+25` via `HexUtil.byte2IntLR`; clamp to `[1, len]`. That trimmed buffer is what is transferred.
 4. Transfer uses `OTAUtils(context, main=5, sub=1, bytes, ...)` (CommandUtils.CMD_WATCH_FACE = 5, START_OTA / PAPER-style sub 1).
 
 ### 6.2 Custom / DIY background [C, `WatchFaceEditActivity.compressParData`]
@@ -110,7 +110,7 @@ Contacts have **no DF command-channel opcode**. They ride the OTA channel above 
 
 ### 6.5 What stays [U]
 - Exact PAR container layout (native `libabpartool`; only the first 16 bytes are logged by the app).
-- Whether every C900 dial.bin uses the trim rule or `binPreviewFlag`.
+- Whether the C900 sets `binPreviewFlag` (feature byte 18 bit 0x20). Resolved in code (C900-Q06): only the store-face screen trims, and only when the watch leaves that flag clear; purchased faces are never trimmed.
 - Wire confirmation of MTU / groupPacNum values the C900 returns.
 
 ## 7. Inbound (watch to app) [C, `NotifyWriteUtils`, `BleDataUtils.setSettingSuccess`]
