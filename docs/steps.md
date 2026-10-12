@@ -175,3 +175,11 @@ Required by AGENTS.md.
 
 - **Decision:** Owner approved Phase 1b (2026-10-13): C900-Q14 static, C900-Q15 run sheet as a document only, plus an owner HCI-capture guide. Hardware stays parked.
   - **Rationale:** Owner wants no live test until necessary; all three items are static or documents.
+
+## 2026-10-13 — C900-Q14 (Phase 1b)
+
+- **Step:** Ran the seven steps in order on the box tree (present; no bootstrap needed).
+  - **Decision:** Steps 2-7 done [C]; step 1 partial (key map and SpO2 only).
+  - **Rationale:** Step stop rule: the step needed five parser classes not named in it. Writing the key map is still useful for a capture decoder.
+- **Decision:** Wrote exact createBond conditions into FACTS §4 and PROTOCOL §3: three triggered paths, none unprompted.
+  - **Rationale:** Acceptance asks for them, and they answer what the first contact must watch for (a bond prompt is an abort trigger in HW-0).

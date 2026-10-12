@@ -37,7 +37,7 @@ Phase 0 signed off 2026-10-13; Phase 1 static pass run the same day. Start brief
 | C900-Q10 | HryFine compare | P2 | static | skipped: needs pin | |
 | C900-Q11 | PAR native layout | P2 | static | deferred | |
 | C900-Q12 | Cus5610 inventory | P2 | static | parked (OTA/DFU risk, not needed now) | |
-| C900-Q14 | Inbound map remainder + createBond conditions | P1 | static | todo (approved Phase 1b) | |
+| C900-Q14 | Inbound map remainder + createBond conditions | P1 | static | done (steps 2-7); step 1 partial: field maps need 5 more parser classes (tasks/results/C900-Q14.md) | |
 | C900-Q15 | HW-0 run sheet (document only) | P1 | static | todo (approved Phase 1b) | |
 | C900-Q13 | Existing owner capture (HW-1) | P0 | owner supplies, then static | No capture yet (2026-10-13); optional owner-run Android HCI snoop before HW-0 | |
 | C900-D01–D07 | Client/impl items | Deferred | — | deferred | PLAN.md Phase 3–4 |
