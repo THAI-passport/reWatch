@@ -95,6 +95,9 @@ CRC note [C, smali of `OTAUtils.sendData`]: for each byte `x` of a chunk, both t
 ### 6.4 Cus5610 / DFU path (not used for dial push) [C, inventory]
 `Cus5610CommandUtils` / `Cus5610OTAUtils` speak a different D5 framing (fun codes for partition / 4K check / dial area / reboot) over the Bluetrum DFU service `0x18A8`. Dial and paper push above use the generic OTAUtils path on 0xFF00, not Cus5610. No further detail until a firmware task is approved.
 
+### 6.6 Contacts (verified, C900-Q08) [C, `ContactActivity.saveAsFile`, `MainActivity$6`, `CommandUtils`]
+Contacts have **no DF command-channel opcode**. They ride the OTA channel above as `OTAUtils(main=4 = CMD_CONTACT, sub=1)`, confirmed in smali at both call sites (contacts screen and the `syncContact` broadcast receiver). OTA-channel main ids: 1 OTA, 2 paper, 3 log, 4 contact, 5 watch face [C, `CommandUtils.smali`]. File sent = `MD5(body, 16 bytes) || body`; body = `count(u8) 00`, then per contact `off_lo off_hi name_len num_len` (cumulative u16 LE offset into the string area), then UTF-8 `name||number` per contact; names cut to 30 bytes. Capability: 0x2A28 byte0 `0xAA`, `byte1 & 0x40` contacts, `byte14 & 0x08` 200-contact. The watch reports its list MD5 on inbound cmd 0x0E key 4 (see §7). Client must not implement (C900-D05). Detail: `tasks/results/C900-Q08.md`.
+
 ### 6.5 What stays [U]
 - Exact PAR container layout (native `libabpartool`; only the first 16 bytes are logged by the app).
 - Whether every C900 dial.bin uses the trim rule or `binPreviewFlag`.
