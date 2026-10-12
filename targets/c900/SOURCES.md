@@ -11,6 +11,7 @@ Artifacts are git-ignored and never committed. Static analysis only.
 | Size (bytes) | 128092196 |
 | SHA-256 | xapk `5fa761a4d16ae8980fc40a341264441fe042858876ce1267dab54bd5be7b8952`; base `931efc777ec58bc408e056da31f4e85af253a0fd35dafb6e901589829fe43a5a`; arm64 split `4c71b2819c5403cd8748931e6d24764b92ca518e677465820cb3469bf4ab7330` |
 | Retrieved | 2026-10-13 (UTC+7) |
+| Repo copy (owner-approved exception) | `resources/c900/hiwear-plus-2.0.1.xapk.zip`, Git LFS, 104797741 bytes, zip SHA-256 `800662003d57aa272e5f829908c4c7671d1118ac4ed564242a5edcd4ca8e570e`; holds one file `hiwear-plus-2.0.1.xapk` = the XAPK above (SHA-256 `5fa761a4d16ae8980fc40a341264441fe042858876ce1267dab54bd5be7b8952`). Rebuild on a fresh clone: `git lfs pull`, then `python3 tools/rebuild_analysis.py c900 --max-heap 3g` |
 
 ## Machine-readable fields (read by tools/rebuild-analysis.sh)
 Pinning rule: pin by version and SHA-256, never by a floating 'latest' link. A new vendor release is a NEW pinned entry (new version, new hash, new SOURCES), never an edit of the old hash. Fill these in after G1 so another machine can rebuild the artifacts and the decompiled tree. Plain KEY=VALUE lines between the markers; the tool parses them and never executes them. No tokens or signed URLs.
@@ -20,7 +21,9 @@ NAME_FILE=HiwearPlus-2.0.1.xapk
 VERSION=2.0.1
 KIND=xapk
 URL=https://d.apkpure.com/b/XAPK/com.myled.HiwearPlus?version=latest
-COPY_LOCATION=owner to keep an exact copy of HiwearPlus-2.0.1.xapk (sha256 above) in their own storage; not yet done
+COPY_LOCATION=repo resources/c900/hiwear-plus-2.0.1.xapk.zip (Git LFS), committed on the owner's explicit instruction of 2026-10-13
+REPO_COPY=resources/c900/hiwear-plus-2.0.1.xapk.zip
+REPO_COPY_SHA256=800662003d57aa272e5f829908c4c7671d1118ac4ed564242a5edcd4ca8e570e
 SHA256=5fa761a4d16ae8980fc40a341264441fe042858876ce1267dab54bd5be7b8952
 INNER_APK=com.myled.HiwearPlus.apk
 INNER_SHA256=931efc777ec58bc408e056da31f4e85af253a0fd35dafb6e901589829fe43a5a

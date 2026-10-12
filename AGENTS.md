@@ -12,7 +12,7 @@ Everything else is optional (package name, artifact path, transport hint). If it
 ## Ground rules (non-negotiable)
 1. Authorized, interoperability-focused work on hardware and software the user owns or may lawfully analyse. Do not defeat paid-feature gates, DRM, or other users' accounts. Do not touch vendor servers beyond downloading the public artifact.
 2. Static analysis only by default. Never install or run the target app. Dynamic work (emulator, capture) only if the user asks.
-3. Never commit vendor artifacts: APK, XAPK, IPA, dex, jar, `.so`, firmware images, decompiled trees, third-party assets, tokens, or signed URLs. Commit notes in your own words, hashes, source URLs, scripts, original code, tests. `python tools/rw.py lint` enforces this.
+3. Never commit vendor artifacts: APK, XAPK, IPA, dex, jar, `.so`, firmware images, decompiled trees, third-party assets, tokens, or signed URLs. Commit notes in your own words, hashes, source URLs, scripts, original code, tests. `python tools/rw.py lint` enforces this. One exception: an exactly pinned vendor archive the owner explicitly approved may live under `resources/<slug>/` as a zip in Git LFS, declared as `REPO_COPY` plus `REPO_COPY_SHA256` in that target's SOURCES.md and allowed by exact path in `.gitignore` (see `resources/README.md`). Decompiled output, work trees and loose binaries stay out.
 4. No emoji in docs or code. Plain ASCII punctuation where easy.
 5. Every factual claim carries an evidence tag (below). Untagged claims are bugs.
 6. Never hard-code a result from a simulator as "confirmed". A simulator written by you only proves consistency.

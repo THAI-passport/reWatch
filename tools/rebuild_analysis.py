@@ -16,7 +16,7 @@ Usage: tools/rebuild-analysis.sh <name> [options]      (or: python tools/rebuild
   -h, --help          this text
 SOURCES fields (KEY=VALUE, one per line; in SOURCES.md only between <!-- rebuild:begin --> and <!-- rebuild:end -->):
   required: NAME_FILE (artifact file name), SHA256, VERSION; URL unless --local-file is used
-  optional: COPY_LOCATION (where the owner-controlled exact copy lives, no secrets), KIND (apk, xapk or other; default apk), PACKAGE, INNER_APK + INNER_SHA256 (for xapk), ABI_APK + ABI_SHA256,
+  optional: COPY_LOCATION (where the owner-controlled exact copy lives, no secrets), REPO_COPY + REPO_COPY_SHA256 (owner-approved zip of the artifact committed under resources/ with Git LFS; used when the artifact is absent, before any URL), KIND (apk, xapk or other; default apk), PACKAGE, INNER_APK + INNER_SHA256 (for xapk), ABI_APK + ABI_SHA256,
             JADX_VERSION, JAVA_MAJOR, JADX_ARGS (default "-j 4"), JADX_HEAP, RECOVER_CLASS, RECOVER_DEX
 Exit codes: 0 ok, 2 usage or SOURCES error, 3 hash mismatch, 4 missing tool or tool version, 5 step failed.
 Output (all git-ignored): targets/<name>/artifacts, work, decompiled, BUILD-INFO.txt.
@@ -113,7 +113,11 @@ def parse_sources(path, root):
         for k in ("INNER_APK", "INNER_SHA256"):
             if not s.get(k):
                 raise Fail(2, "%s: KIND=xapk needs %s" % (rel, k))
-    for k in ("SHA256", "INNER_SHA256", "ABI_SHA256"):
+    if s.get("REPO_COPY") and not s.get("REPO_COPY_SHA256"):
+        raise Fail(2, "%s: REPO_COPY needs REPO_COPY_SHA256" % rel)
+    if s.get("REPO_COPY") and (s["REPO_COPY"].startswith("/") or ".." in s["REPO_COPY"].split("/")):
+        raise Fail(2, "%s: REPO_COPY must be a path inside the repository" % rel)
+    for k in ("SHA256", "INNER_SHA256", "ABI_SHA256", "REPO_COPY_SHA256"):
         if s.get(k) and not HEX64.match(s[k]):
             raise Fail(2, "%s: %s is not a lowercase 64-digit sha256" % (rel, k))
     if s.get("ABI_APK") and not s.get("ABI_SHA256"):
@@ -218,6 +222,30 @@ def main(argv=None):
         return f.code
 
 
+def from_repo_copy(zpath, zsha, art, dry):
+    """Owner-approved pinned copy committed under resources/ (Git LFS): a zip holding exactly one file."""
+    with open(zpath, "rb") as f:
+        head = f.read(64)
+    if head.startswith(b"version https://git-lfs"):
+        raise Fail(2, "%s is a Git LFS pointer, not the file: run 'git lfs install && git lfs pull' first" % zpath)
+    got = sha256_file(zpath)
+    if got != zsha:
+        raise Fail(3, "repo copy %s: sha256 %s, expected REPO_COPY_SHA256 %s; refusing" % (zpath, got, zsha))
+    say("sha256 ok: repo copy " + zpath)
+    if dry:
+        say("dry run: would extract the repo copy to " + art)
+        return art
+    with zipfile.ZipFile(zpath) as z:
+        names = [n for n in z.namelist() if not n.endswith("/")]
+        if len(names) != 1:
+            raise Fail(2, "repo copy %s must hold exactly one file, found %d" % (zpath, len(names)))
+        os.makedirs(os.path.dirname(art), exist_ok=True)
+        with z.open(names[0]) as src, open(art, "wb") as dst:
+            shutil.copyfileobj(src, dst)
+    say("extracted repo copy to " + art)
+    return art
+
+
 def rebuild(argv):
     o = parse_args(argv)
     if o["help"]:
@@ -258,6 +286,8 @@ def rebuild(argv):
     elif os.path.isfile(art) and not force:
         fpath = art
         say("artifact already present: targets/%s/artifacts/%s" % (o["target"], S["NAME_FILE"]))
+    elif S.get("REPO_COPY") and os.path.isfile(os.path.join(root, S["REPO_COPY"])):
+        fpath = from_repo_copy(os.path.join(root, S["REPO_COPY"]), S["REPO_COPY_SHA256"], art, dry)
     else:
         urls = [o["url"]] if o["url"] else [S[k] for k in ("URL", "URL2", "URL3", "URL4") if S.get(k)]
         if not urls:
