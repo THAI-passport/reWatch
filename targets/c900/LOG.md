@@ -29,3 +29,19 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Evidence: the Gemini document (sources/gemini-hiwear-re.md) gives the right header and checksum but wrong opcodes; two of them would unbind the watch (0x04) or start a factory test (0x07).
 - Cause: opcodes guessed or copied from another app; untagged as such.
 - Fix: FACTS.md section 2 lists each dispute; client opcodes must come from the [C] table only.
+
+## 2026-10-13 G1 owner-approved repo copy (Git LFS)
+- Evidence: owner instructed to zip the exact Hiwear Plus 2.0.1 XAPK into `resources/c900/hiwear-plus-2.0.1.xapk.zip` and pin it; zip 104797741 bytes, SHA-256 `800662003d57aa272e5f829908c4c7671d1118ac4ed564242a5edcd4ca8e570e`; inner XAPK unchanged `5fa761a4...8952`.
+- Cause: floating APKPure URL and cloud-agent rebuild needs a local file; prior rule forbade committing artifacts.
+- Fix: AGENTS.md ground rule 3 exception (exact path + REPO_COPY + LFS); `.gitattributes` tracks `resources/**/*.zip`; `rebuild_analysis.py` acquires from REPO_COPY after --local-file / existing artifact; `rw.py lint` rejects undeclared files under resources/. Solved.
+
+## 2026-10-13 G3 time offset smali confirmation
+- Evidence: jadx printed `BaseResp.CODE_ERROR_PARAMS` (-2000) in `settingSysTime`; smali shows `add-int/lit16 v2, v2, -0x7d0`.
+- Cause: jadx constant substitution (same class of pitfall as reBeamBox guard 300 vs 800).
+- Fix: trust smali for numeric literals; record -0x7d0 in PROTOCOL/FACTS; implement `frames.time_payload`. Solved.
+
+## 2026-10-13 G3 OTA / watch-face framing (static)
+- Evidence: `CommandUtils` / `OTAUtils` / `OTANotifyWriteUtils` / `DialDetailActivity` / `WatchFaceEditActivity` / `ParTool.rawToPar`.
+- Cause: needed for PROTOCOL completeness; client must not send.
+- Fix: PROTOCOL section 6 documents D5/D6 framing, CRC poly 0x31, dial.bin obfuscated Base64, PAR path. PAR container bytes remain [U] (native). No client OTA path. Solved for documentation.
+

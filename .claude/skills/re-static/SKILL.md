@@ -44,3 +44,7 @@ Write into PROTOCOL.md a surface map: transports (with service UUIDs/ports/SSID 
 
 ## Other platforms
 iOS: class-dump / Ghidra on the decrypted Mach-O, `Info.plist` for Bluetooth usage strings; same method. Desktop: strings and import tables first. Web/Electron: unpack asar and read JS, endpoints are plain.
+
+## Pitfall: jadx constant substitution (C900 / Hiwear Plus, 2026-10-13)
+Jadx may print a library constant name whose value equals a literal (example: `BaseResp.CODE_ERROR_PARAMS` for -2000 in a time-pack routine). Always confirm numeric literals that affect framing or packing in smali (`apktool d` without `-s`). Same class of bug as reBeamBox's guard multiplier (300 vs 800).
+

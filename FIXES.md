@@ -18,3 +18,7 @@ Things that need fixing in reWatch itself (tools, templates, skills), and things
 - jadx was OOM-killed on small machines and the cap lived only in the log: `rebuild_analysis.py` takes `--max-heap`/`JADX_HEAP` and defaults to 3g under 8 GiB RAM; an OOM kill now says so.
 - `?version=latest` URLs break the hash check on a new release: `--url` overrides the download URL.
 - No script rebuilt a target's artifacts and decompiled tree on another machine: added `tools/rebuild-analysis.sh` (SOURCES driven, hash-verified, idempotent), a machine-readable block in `templates/SOURCES.md`, and pinned jadx and apktool in setup-tools.
+
+### 2026-10-13 — pinned vendor archive for cloud rebuild
+- Wrong: no way to rebuild a target whose download host is blocked or unsigned without the user uploading the file each time; committing binaries was flatly forbidden.
+- Changed: owner-approved exception under `resources/<slug>/` via Git LFS + `REPO_COPY` / `REPO_COPY_SHA256` in SOURCES; lint enforces declaration; rebuild extracts the single inner member after hash check.

@@ -7,14 +7,14 @@ States: `todo`, `doing`, `done`, `blocked: needs human`, `blocked: needs hardwar
 |---|---|---|---|
 | S0 | Baseline: tools, tests, lint | done | unittest and lint green 2026-10-13 |
 | S1 | Acquire and decompile Hiwear Plus 2.0.1 | done | SOURCES.md, BUILD-INFO.txt (local) |
-| S2 | Audit claims in PROTOCOL.md (smali for the time offset, frame vectors) | todo | |
+| S2 | Audit claims in PROTOCOL.md (smali for the time offset, frame vectors) | done | results/S2.md |
 | S3 | Server API inventory (static) | done (first pass) | PROTOCOL.md 8 |
-| S4 | Firmware and watch-face transfer path (read only, never used) | todo | |
-| S5 | Inbound message inventory | doing | PROTOCOL.md 7 |
+| S4 | Firmware and watch-face transfer path (read only, never used) | done (static) | results/S4.md; PROTOCOL.md 6 |
+| S5 | Inbound message inventory | done (first pass) | results/S5.md; PROTOCOL.md 7 |
 | S6 | Scan filter audit vs client | done (app side) | PROTOCOL.md 3; client has no scanner yet |
-| S7 | Fix client/c900 opcodes to the [C] table, with tests | todo | |
-| S8 | Simulator assumption register | todo | |
-| S9 | First-contact readiness | todo | |
+| S7 | Fix client/c900 opcodes to the [C] table, with tests | done | results/S7.md; client/c900/frames.py |
+| S8 | Simulator assumption register | done (first pass) | results/S8.md |
+| S9 | First-contact readiness | done (checklist) | results/S9.md |
 
 ## Hardware (prepared, not run; owner approval per session)
 | Task | Title | State |
