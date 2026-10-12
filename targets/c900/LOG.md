@@ -54,3 +54,7 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Decisions (finding → action): (1) Bluetrum not Jieli → deprioritise Jieli skills for this target. (2) Face/contact/paper via OTAUtils → treat as OTA-class, defer Phase 4. (3) Dangerous CommandIDs → keep BLOCKED_CMDS. (4) Incomplete [H] → defer client features (G4). (5) Cloud rebuild need → keep one LFS REPO_COPY; CI no lfs:true. (6) Scope risk → Phase 0 plan gate before Phase 1 decompile. (7) Identity → c900 = Hiwear Plus only. (8) Gemini → framing OK, opcodes not authoritative.
 - Status: Recorded; PLAN/OPEN-QUESTIONS remain DRAFT pending owner review.
 
+## 2026-10-13 Phase 1 C900-Q08 contacts path (static)
+- Evidence: `ContactActivity.saveAsFile`, `MainActivity$6` (BroadcastReceiver), `CommandUtils.smali`, `NotifyWriteUtils.readFeatures`, `BleDataUtils.handleMountBTInfo`.
+- Problem: risk that a contacts DF opcode gets invented; jadx `(byte) 4` needed a smali check.
+- Fix: smali `const/4 0x4` / `0x1` before both `OTAUtils.<init>` call sites; app-wide smali search shows no other main=4 site. Solved. Side find: `isSyncContact` is write-only (MD5 mismatch does not auto-sync).

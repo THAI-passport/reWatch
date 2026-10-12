@@ -50,4 +50,5 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | Watch-face / paper / contact push rides OTAUtils on 0xFF00 with D5/D6 framing | [C] | `OTAUtils`, `CommandUtils` (main 5/2/4); CRC poly 0x31 |
 | Cus5610 (0x18A8) is a separate DFU path, not used for dial push | [C] | `Cus5610CommandUtils` inventory only |
 | Repo holds the pinned XAPK zip (owner exception) | [C] | `resources/c900/hiwear-plus-2.0.1.xapk.zip` LFS; SOURCES `REPO_COPY` |
-
+| Contacts use OTA channel `main=4` (CMD_CONTACT), sub 1; no DF opcode | [C] | `ContactActivity.saveAsFile` + `MainActivity$6` smali consts; `CommandUtils.smali` (C900-Q08) |
+| OTA-channel main ids: 1 OTA, 2 paper, 3 log, 4 contact, 5 watch face | [C] | `CommandUtils.smali` (`CMD_LOG=3` was not documented before) |

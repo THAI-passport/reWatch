@@ -32,7 +32,7 @@ Draft IDs — Phase 0 must approve before Phase 1 static work. Start brief: [rec
 | C900-Q05 | Inbound DF map | P1 | static | todo (approved Phase 1) | |
 | C900-Q06 | Dial.bin decode/trim | P1 | static | todo (approved Phase 1, optional) | |
 | C900-Q07 | OTA 0x81 / CRC docs | P1 | static | todo (approved Phase 1) | |
-| C900-Q08 | Contacts = OTA main 4 | P1 | static | todo (approved Phase 1) | |
+| C900-Q08 | Contacts = OTA main 4 | P1 | static | done (tasks/results/C900-Q08.md) | |
 | C900-Q09 | Server inventory expand | P2 | static | todo (approved Phase 1, static only, no server calls) | |
 | C900-Q10 | HryFine compare | P2 | static | skipped: needs pin | |
 | C900-Q11 | PAR native layout | P2 | static | deferred | |
