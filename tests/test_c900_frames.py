@@ -33,3 +33,14 @@ class C900Frames(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class C900AgainstHiwearPlus(unittest.TestCase):
+    # Layout rules read from Hiwear Plus 2.0.1 (targets/c900/PROTOCOL.md section 4) [C]; vector is own arithmetic.
+    def test_settings_query_vector(self):
+        self.assertEqual(frames.build(0x09, 0x00), bytes.fromhex("df0005ee0901000000"))
+
+    def test_len_counts_cmd_to_payload(self):
+        f = frames.build(0x02, 0x12, b"\x01\x00\x00hi")
+        self.assertEqual(int.from_bytes(f[1:3], "big"), 5 + 5)
+

@@ -1,3 +1,5 @@
+Target app: Hiwear Plus `com.myled.HiwearPlus` 2.0.1 (SOURCES.md). Start points in the tree: `com/myled/HiwearPlus/BleConstants`, `ble/IssuedUtil`, `ble/CommandID`, `ble/SettingIssuedUtils`, `ble/GeneralUtils`, `ble/utils/NotifyWriteUtils`, `function/device/BleScanActivity`, `ble/ota/*` (read only), `com/bluetrum/abpartool`.
+
 # Software recon tasks: C900 watch
 
 No hardware, no live vendor contact. An AI agent can do all of these. Read `README.md` first. Run from the repository root; target directory is `targets/c900/`. After each task: write `tasks/results/<task>-<date>.md`, update `STATUS.md`, commit.
