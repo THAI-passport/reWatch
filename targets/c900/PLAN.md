@@ -4,6 +4,7 @@
 Do not treat as approved work orders. Deeper decompile (Phase 1) waits for owner sign-off on this file and `OPEN-QUESTIONS.md`.
 
 Last draft: 2026-10-13 (Asia/Saigon). Author: Grok Bot from current PROTOCOL/FACTS/LOG/STATUS.
+Findings snapshot: [recon-v1.md](recon-v1.md).
 
 ---
 

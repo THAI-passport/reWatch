@@ -15,9 +15,29 @@ States: `todo`, `doing`, `done`, `blocked: needs human`, `blocked: needs hardwar
 | S7 | Fix client/c900 opcodes to the [C] table, with tests | done | results/S7.md; client/c900/frames.py |
 | S8 | Simulator assumption register | done (first pass) | results/S8.md |
 | S9 | First-contact readiness | done (checklist) | results/S9.md |
-| RECON-HIWEAR-APK | Phase 0 plan review (then Phase 1 if approved) | ready (Phase 0) | [RECON-HIWEAR-APK.md](RECON-HIWEAR-APK.md); drafts [PLAN.md](../PLAN.md), [OPEN-QUESTIONS.md](../OPEN-QUESTIONS.md) |
+| RECON-HIWEAR-APK | Phase 0 plan review (then Phase 1 if approved) | ready (Phase 0) | [RECON-HIWEAR-APK.md](RECON-HIWEAR-APK.md); start [recon-v1.md](../recon-v1.md); drafts [PLAN.md](../PLAN.md), [OPEN-QUESTIONS.md](../OPEN-QUESTIONS.md) |
 
 **Note:** Further `client/c900` feature work is **deferred** (PLAN.md Phase 3). S7 codec sketch remains; do not expand until owner approves.
+
+## Open questions (from OPEN-QUESTIONS.md)
+
+Draft IDs — Phase 0 must approve before Phase 1 static work. Start brief: [recon-v1.md](../recon-v1.md).
+
+| ID | Title | Priority | Gate | State | Result |
+|---|---|---|---|---|---|
+| C900-Q01 | Adv name / scan marker | P0 | hardware-approval | blocked: needs approval | |
+| C900-Q02 | GATT services on device | P0 | hardware-approval | blocked: needs approval | |
+| C900-Q03 | Bonding behaviour | P0 | hardware-approval | blocked: needs approval | |
+| C900-Q04 | Cmd key/payload tables | P1 | static | blocked: needs Phase 0 sign-off | |
+| C900-Q05 | Inbound DF map | P1 | static | blocked: needs Phase 0 sign-off | |
+| C900-Q06 | Dial.bin decode/trim | P1 | static | blocked: needs Phase 0 sign-off | |
+| C900-Q07 | OTA 0x81 / CRC docs | P1 | static | blocked: needs Phase 0 sign-off | |
+| C900-Q08 | Contacts = OTA main 4 | P1 | static | blocked: needs Phase 0 sign-off | |
+| C900-Q09 | Server inventory expand | P2 | static | todo | |
+| C900-Q10 | HryFine compare | P2 | static | skipped: needs pin | |
+| C900-Q11 | PAR native layout | P2 | static | deferred | |
+| C900-Q12 | Cus5610 inventory | P2 | static | todo | |
+| C900-D01–D07 | Client/impl items | Deferred | — | deferred | PLAN.md Phase 3–4 |
 
 ## Hardware (prepared, not run; owner approval per session)
 | Task | Title | State |

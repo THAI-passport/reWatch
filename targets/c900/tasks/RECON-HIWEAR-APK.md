@@ -1,6 +1,7 @@
 # Task: Hiwear Plus recon — Phase 0 plan review (then optional Phase 1)
 
 **Cloud setup (Phase 1 / claim checks only):** [docs/CLOUD-SETUP.md](../../../docs/CLOUD-SETUP.md) — `bash tools/cloud_bootstrap.sh` → `PASS`.  
+**Start here:** [../recon-v1.md](../recon-v1.md) (consolidated findings + decisions).
 **Drafts to review:** [../PLAN.md](../PLAN.md) · [../OPEN-QUESTIONS.md](../OPEN-QUESTIONS.md) (both **DRAFT pending owner review**).
 
 Self-contained brief for Claude, Gemini, Antigravity, or any other agent. Follow reWatch `AGENTS.md`.
@@ -17,7 +18,7 @@ Main goal: revise the C900/Hiwear Plus PLAN and OPEN-QUESTIONS — not implement
 Never touch a watch. Never push main. No PR unless asked. No new client features.
 
 Phase 0 only:
-1) Read AGENTS.md ground rules, then targets/c900/PLAN.md, OPEN-QUESTIONS.md, PROTOCOL.md, FACTS.md, LOG.md, docs/steps.md, TARGET.md, tasks/STATUS.md, and this file (RECON-HIWEAR-APK.md).
+1) Read AGENTS.md ground rules, then targets/c900/recon-v1.md (start), PLAN.md, OPEN-QUESTIONS.md, PROTOCOL.md, FACTS.md, LOG.md, docs/steps.md, TARGET.md, tasks/STATUS.md, and this file (RECON-HIWEAR-APK.md).
 2) Bootstrap is OPTIONAL. Run `bash tools/cloud_bootstrap.sh` only if a light claim sanity-check needs the decompiled tree; otherwise skip (saves ~105 MB LFS bandwidth).
 3) Light targeted rg only to sanity-check existing claims — do not start new research areas. Do not read the whole decompiled tree.
 4) Edit PLAN.md and OPEN-QUESTIONS.md (keep DRAFT until owner signs off): revise goals, phases, gates, risks, priorities, how-to-answer, costs. Mark implementation-only items Deferred. Relabel client/c900 work as deferred if not already.
@@ -30,7 +31,7 @@ Phase 0 only:
 ## Phase 0 — plan review (deliverable only)
 
 ### Allowed
-- Read existing docs listed in the starter prompt (and `results/S2`…`S9` if useful).
+- Read **recon-v1.md** first, then docs listed in the starter prompt (and `results/S2`…`S9` if useful).
 - Light targeted `rg` / single-file peeks **only** to sanity-check a claim already in PROTOCOL/FACTS (e.g. confirm a CommandID value). Prefer not to bootstrap.
 - Edit `targets/c900/PLAN.md` and `targets/c900/OPEN-QUESTIONS.md`.
 - Update `docs/steps.md`, this task's result file, and STATUS row for Phase 0.
