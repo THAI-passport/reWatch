@@ -207,3 +207,7 @@ Required by AGENTS.md.
 - Decision: Q14 step 1 remainder -> standalone C900-Q16. New DRAFT tasks Q17 (notify_log.py OTA-safe subscribe; tool not edited this pass), Q18 (DF decoder + synthetic fixture), Q19 (ingest owner capture, gate capture).
 - Decision: recommended order Q17+Q18 -> Q16 -> owner capture -> HW-0 only for leftovers (NEXT-STEPS.md, DRAFT). Rationale: software first, remove hazards first, capture gives write-side facts a zero-write HW-0 cannot.
 - Step: run sheet and capture guide safety/privacy gaps fixed; stale lines removed in PLAN, TARGET, recon-v2, STATUS. Report: targets/c900/tasks/results/REVIEW-PHASE1B.md.
+
+## 2026-10-13 c900 INVARIANTS.md + guard test
+- Step: added targets/c900/INVARIANTS.md (identity, frame, commands, bonding, OTA, process quirks with the wrong version each one replaced) and tests/test_c900_invariants.py (blocklist, checksum vector, rows present). Linked from TARGET, RECON-HIWEAR-APK, NEXT-STEPS; SOP note.
+  - Rationale: owner asked to stop agents dropping quirks; several facts (byte 4 version, createBond, jadx constant swaps, OTA interval) were wrong once and could regress silently.

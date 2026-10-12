@@ -1,6 +1,7 @@
 # Task: Hiwear Plus recon — Phase 0 plan review (then optional Phase 1)
 
 **Cloud setup (Phase 1 / claim checks only):** [docs/CLOUD-SETUP.md](../../../docs/CLOUD-SETUP.md) — `bash tools/cloud_bootstrap.sh` → `PASS`.  
+**Read first, always:** [../INVARIANTS.md](../INVARIANTS.md) (quirks that must not be dropped).  
 **Start here:** [../recon-v1.md](../recon-v1.md) (consolidated findings + decisions).
 **Drafts to review:** [../PLAN.md](../PLAN.md) · [../OPEN-QUESTIONS.md](../OPEN-QUESTIONS.md) (both **DRAFT pending owner review**).
 
