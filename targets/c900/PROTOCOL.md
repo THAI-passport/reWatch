@@ -95,7 +95,8 @@ Data frame (app -> watch): `D6` + up to `(deviceMtu - 1)` bytes of file. Chunks 
 
 Session [C, `OTAUtils` / `OTANotifyWriteUtils`]:
 1. Request MTU 185; disable command-channel notify; after 2 s enable OTA notify. 60 s overall timeout disconnects.
-2. On OTA-ready: write `startOTA`. Watch replies with a D5 control whose fun (byte 3) is `0x81`; payload carries `deviceMtu` (u16), `sendInterval` ms (u16, default 300 if 0; field init is 500), `groupPacNum` (u8), timeout units (u8 * 5000 ms).
+2. On OTA-ready: write `startOTA` (advertised mtu = negotiated ATT MTU - 3). Watch replies with a D5 control whose fun (byte 3) is `0x81`; status at byte 5, payload from byte 8: `deviceMtu` u16 BE (8-9), `sendInterval` u16 BE (10-11), `groupPacNum` (12, signed byte), timeout units (13, signed byte, x 5000 ms). Reply total length = plen + 9; **the app does not verify the reply checksum**. A reply shorter than 14 bytes aborts (byte 5 = 13: face picture too large) [C smali, C900-Q07].
+   - **Interval (300 vs 500 resolved, C900-Q07):** 500 ms is the field init (`0x1f4`; jadx printed a library constant), 300 ms replaces a zero reply value (`0x12c`). The value is only logged; `getSendInterval()` has no callers. Real pacing: 10 ms sleep per queued frame, next frame released by the BLE write-complete callback; failed write disconnects. Per-frame guard `timeOut` (10 s at init) protects the write, not the watch reply.
 3. Split file into packets of `deviceMtu - 1`. Group them by `groupPacNum`. For each group: write each `D6`+chunk (CRC8-style running xor poly 0x31 left-shift, same for per-group and whole-file CRC), then fun=2 CRC; watch fun=`0x82` status 0 means next group. After last group: fun=3 file CRC; watch fun=`0x83` status 0 finishes. Error header D6 on notify, or status != 0, aborts.
 4. On finish for main in {2,4,5}: restore MTU 32 and re-enable command notify. Otherwise send reboot.
 

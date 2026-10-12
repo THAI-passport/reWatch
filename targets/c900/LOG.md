@@ -69,3 +69,8 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Evidence: `NotifyWriteUtils.dataHandle`, `BleDataUtils.setDeviceContro`, `readFeatures`, smali search for `BluetoothDevice;->createBond`.
 - Problem: app-code `createBond` sites (3) contradict FACTS §2 / PROTOCOL §3 "no createBond in app code". Likely cause: the earlier pass searched jadx output of a narrower class set. Fix: none chosen; recorded as a conflict in FACTS and PROTOCOL §3 per stop condition (b). **Unsolved** pending review.
 - Done before the stop: top-level dispatch for 14 cmds, device-control keys (find phone, camera, bind accept/refuse, media, bond), feature bit map.
+
+## 2026-10-13 Phase 1 C900-Q07 OTA 0x81 / CRC (static, docs only)
+- Evidence: `OTANotifyWriteUtils` (`<init>`, `dataHandle`, send runnable, `onWrite`), `OTAUtils.sendData/startOTA`, `CommandUtils`.
+- Problem: PROTOCOL said interval "default 300 if 0; field init is 500" and recon flagged it as a conflict. Cause: jadx printed the init as `CropImageView.DEFAULT_IMAGE_TO_CROP_BOUNDS_ANIM_DURATION` (value 500); nobody had checked whether the field is read. Fix: smali shows both literals are real and the field is never used for timing. Solved.
+- No send code written; client unchanged.

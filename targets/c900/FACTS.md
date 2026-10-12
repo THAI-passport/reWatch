@@ -62,3 +62,6 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | Bind accepted / refused arrive as inbound cmd 0x0C key 8 / key 9 | [C] | `BleDataUtils.setDeviceContro` (C900-Q05) |
 | Feature map is delivered both by the 0x2A28 read and by the cmd 0x19 reply; byte 0 = 0xAA | [C] | `NotifyWriteUtils.dataHandle` case 25 -> `readFeatures` |
 | cmd 2 key 26 payload 1 = 12 h, 0 = 24 h | [C] | sync sends `settingHourUnit(false)` with `isHour24 = false` |
+| OTA `sendInterval`: 500 ms field init, 300 ms if the 0x81 reply has 0; **never used for pacing** | [C] | smali `OTANotifyWriteUtils.<init>` `0x1f4`, `dataHandle` `0x12c`; only read is a log line; `getSendInterval()` has no callers (C900-Q07). Earlier text read as a send interval |
+| OTA D6 pacing = 10 ms sleep + write-complete callback | [C] | `OTANotifyWriteUtils` send runnable (`Thread.sleep(0xa)`) + `onWrite(true)` pops the queue |
+| Inbound OTA D5 replies are not checksum-checked; status at byte 5; payload from byte 8 | [C] | `OTANotifyWriteUtils.dataHandle` |
