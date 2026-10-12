@@ -1,6 +1,8 @@
+<!-- Imported 2026-10-13 from the removed combined target targets/t900-c900/PROTOCOL.md. Kept for history. C900 parts are SUPERSEDED: they assumed HryFine/HiWatch Pro and were written from a third-party write-up, not from the app. Current C900 facts: ../PROTOCOL.md and ../FACTS.md. -->
+
 # Protocol: T900 and C900 watch
 
-Every statement carries a tag: [C] [V] [H] [W] [I] [U]. Disputed values live in [FACTS.md](file:///Users/puredent/Desktop/reWatch/targets/t900-c900/FACTS.md).
+Every statement carries a tag: [C] [V] [H] [W] [I] [U]. Disputed values live in [FACTS.md](legacy-t900-c900-FACTS.md).
 
 ## 1. Transport selection
 The client selects its wire transport dynamically during GATT service discovery, falling back to profile selection if multiple services are advertised:
