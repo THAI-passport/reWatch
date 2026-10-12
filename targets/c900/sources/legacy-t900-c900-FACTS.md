@@ -1,3 +1,5 @@
+<!-- Imported 2026-10-13 from the removed combined target targets/t900-c900/FACTS.md. Kept for history. C900 parts are SUPERSEDED: they assumed HryFine/HiWatch Pro and were written from a third-party write-up, not from the app. Current C900 facts: ../PROTOCOL.md and ../FACTS.md. -->
+
 # Fact sheet: T900 and C900 watch
 
 Single place for values that sources disagree on. Other documents link here. Change a value here first.

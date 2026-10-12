@@ -1,3 +1,5 @@
+<!-- Imported 2026-10-13 from the removed combined target targets/t900-c900/TARGET.md. Kept for history. C900 parts are SUPERSEDED: they assumed HryFine/HiWatch Pro and were written from a third-party write-up, not from the app. Current C900 facts: ../PROTOCOL.md and ../FACTS.md. -->
+
 # T900 and C900 watch
 
 - Slug: t900-c900
