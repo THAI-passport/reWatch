@@ -15,13 +15,13 @@ States: `todo`, `doing`, `done`, `blocked: needs human`, `blocked: needs hardwar
 | S7 | Fix client/c900 opcodes to the [C] table, with tests | done | results/S7.md; client/c900/frames.py |
 | S8 | Simulator assumption register | done (first pass) | results/S8.md |
 | S9 | First-contact readiness | done (checklist) | results/S9.md |
-| RECON-HIWEAR-APK | Phase 0 plan review (then Phase 1 if approved) | ready (Phase 0) | [RECON-HIWEAR-APK.md](RECON-HIWEAR-APK.md); start [recon-v1.md](../recon-v1.md); drafts [PLAN.md](../PLAN.md), [OPEN-QUESTIONS.md](../OPEN-QUESTIONS.md) |
+| RECON-HIWEAR-APK | Phase 0 plan review, then Phase 1 | Phase 0 signed off; Phase 1 run 2026-10-13 (Q05 partial) | [recon-v2.md](../recon-v2.md); [RECON-HIWEAR-APK.md](RECON-HIWEAR-APK.md); start [recon-v1.md](../recon-v1.md); drafts [PLAN.md](../PLAN.md), [OPEN-QUESTIONS.md](../OPEN-QUESTIONS.md) |
 
 **Note:** Further `client/c900` feature work is **deferred** (PLAN.md Phase 3). S7 codec sketch remains; do not expand until owner approves.
 
 ## Open questions (from OPEN-QUESTIONS.md)
 
-Draft IDs — Phase 0 must approve before Phase 1 static work. Start brief: [recon-v1.md](../recon-v1.md).
+Phase 0 signed off 2026-10-13; Phase 1 static pass run the same day. Start brief: [recon-v2.md](../recon-v2.md) (then recon-v1).
 
 | ID | Title | Priority | Gate | State | Result |
 |---|---|---|---|---|---|

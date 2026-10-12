@@ -1,0 +1,53 @@
+# C900 / Hiwear Plus — recon v2 (Phase 1 static results)
+
+Date: 2026-10-13 (Asia/Saigon). Builds on [recon-v1.md](recon-v1.md). Static only (jadx `decompiled/` + apktool `work/smali/` of the pinned 2.0.1 build); no watch, no app run, no server call. Detail lives in `tasks/results/C900-Q0*.md`, PROTOCOL.md and FACTS.md.
+Tags: [C] app code (smali-checked where marked), [V] local re-derivation, [I] inferred, [U] unknown.
+
+## 1. Per question
+| ID | State | Answer (one line) | Tag |
+|---|---|---|---|
+| Q08 | done | Contacts ride OTA `main=4, sub=1`; no DF opcode. File = MD5 + count + 4-byte index + UTF-8 strings | [C smali] |
+| Q04 | done | 100 s ack timeout confirmed (`0x186a0`); full cmd 2 key table; byte 4 is `PROTOCOL_VERSION`; NAK x=3 | [C smali] |
+| Q05 | **partial** | Inbound dispatch for 14 cmds, device-control keys (bind accept 0x0C/8, refuse 0x0C/9, find phone, camera, media), feature bits. Stopped on a FACTS conflict (createBond) | [C] |
+| Q07 | done | 300 vs 500 resolved: 500 = field init, 300 = zero-reply substitute, **neither is used**; pacing is write-callback + 10 ms | [C smali] |
+| Q09 | done | 70 endpoints, 7 hosts, MD5 `sign` scheme (secret not recorded) | [C] |
+| Q06 | done | Trim offsets smali-verified; store screen only, gated by the watch's `binPreviewFlag` | [C smali] + [V] seeds |
+
+## 2. Corrections to earlier text
+| Earlier | Now | Source |
+|---|---|---|
+| Frame byte 4 is a fixed `01` | `PROTOCOL_VERSION`: default 1, set from the 0x2A27 major version | Q04 |
+| Two 100 ms retries per piece | only for full 20-byte pieces; last piece one 20 ms retry; frames <=20 B none | Q04 |
+| App acks always x = 0 | ACK x=0 status 1; NAK x=3 status 0 | Q04 |
+| OTA interval default 300 / init 500 | both real, neither applied | Q07 |
+| cmd 2 key 8 "basic setting" | power save on/off | Q04 |
+| 0x1A key 21 (jadx: language) | exit find-phone | Q04 |
+| No createBond in app code | **conflict**: 3 app-code sites in smali; not resolved | Q05, FACTS §4 |
+
+## 3. First-contact relevant (for HW-0 run sheet)
+- Bind flow: app sends cmd 3 key 0 (8 ASCII chars); the watch answers **inbound 0x0C key 8** (accept; byte 9 = 1 first bind) or **key 9** (refuse, app disconnects). The app then sends cmd 2 key 10 (pairing start) [C].
+- Feature map arrives twice: 0x2A28 read and cmd 0x19 reply; byte 0 = 0xAA. It decides payload variants (notify length, message type table, face code size, trim) [C].
+- The watch may ask for classic bonding (0x0C key 19) and reports a classic BT MAC (0x0E key 1) [C]; whether the C900 does is [U] (Q03).
+- 12/24 h: payload 1 = 12 h, 0 = 24 h [C].
+
+## 4. Contradictions found (recorded, not resolved)
+1. `createBond` present in app code (FACTS §4 conflict row). Needs a reviewer to accept the smali evidence and retire the §2 "No bonding" row.
+2. `client/c900/frames.py`: `FIXED_BYTE` comment incomplete (version byte) and SimWatch ack x = `00 01` unsourced [I]. Client not edited (Phase 3).
+
+## 5. Still needed
+| Item | Settles it |
+|---|---|
+| Q05 remainder: cmd 5 health fields, cmd 9 settings reply, 0x0F face replies, FD-ack key map, camera shutter, battery | next static pass, after the createBond conflict is reviewed |
+| C900 adv name, services, bonding (Q01-Q03) | HW-2/HW-3, or an owner HCI snoop |
+| C900 `PROTOCOL_VERSION` (0x2A27), feature map bytes (0x2A28) incl. `binPreviewFlag`, contacts bit | HW-2 read-only 0x180A reads |
+| Watch's own ack x value; which keys it acks | HW-4 single writes, or a capture |
+| OTA 0x81 values (mtu, group, timeout) | capture or an approved OTA session only |
+
+## Decisions from findings
+| ID | Finding | Decision | Rationale |
+|---|---|---|---|
+| D-stop-b | createBond conflict with FACTS | Q05 partial; record conflict, pick no winner | OPEN-QUESTIONS stop condition (b) |
+| D-version | Byte 4 follows 0x2A27 | HW-2 must read 0x2A27 before any write; codec must take the version as input in Phase 3 | A hard-coded 01 could be wrong on some firmware |
+| D-interval | OTA interval unused | Do not copy any interval into a future design; pacing = write-complete | Copying 300/500 would be cargo cult |
+| D-secrets | Signing key literal in app | Not recorded anywhere | AGENTS.md; no benefit |
+| D-client | Codec comment/ack inaccuracies | Leave client untouched; list for Phase 3 | Phase 1 is static docs only |

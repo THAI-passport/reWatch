@@ -141,3 +141,8 @@ Exactly 70 Retrofit endpoints in `network/request/Request.java`, all `@QueryMap`
 | C900's returned OTA MTU / groupPacNum | HW-1 capture or approved OTA session |
 | Time year offset in smali | done: -0x7d0 [C] |
 | Whether Hiwear Plus and HryFine use the same opcodes | decompile HryFine (optional) |
+| C900 `PROTOCOL_VERSION` (frame byte 4) and feature map (incl. `binPreviewFlag`, contacts bit) | HW-2 read-only 0x2A27 / 0x2A28 reads |
+| Whether the C900 requests classic bonding (0x0C key 19) | HW-2/HW-3; app-side createBond is a recorded conflict (FACTS §4) |
+| Watch ack x value; which cmd 2 keys the C900 acks | HW-4 single writes or a capture |
+| Ack timeout value | done: 100 s [C smali] |
+| OTA send interval 300 vs 500 | done: neither is applied [C smali] |

@@ -1,6 +1,6 @@
 # C900 / Hiwear Plus — recon v1 (consolidated)
 
-Snapshot of static recon through 2026-10-13 (Asia/Saigon).  
+Snapshot of static recon through 2026-10-13 (Asia/Saigon). **Superseded in part by [recon-v2.md](recon-v2.md) (Phase 1 results); read v2 first.**  
 Source of truth for detail remains PROTOCOL.md / FACTS.md; this file is the **starting brief** for plan review and subagents.  
 Tags: [C] app code · [V] vector against code · [H] hardware · [W] third party · [I] inferred · [U] unknown · [owner] owner statement (not an AGENTS.md tag; treat as [W] for evidence weight, never as [C]/[H]).
 
