@@ -18,7 +18,7 @@
 | G1 Acquire | done | Identified packages com.lianhezhuli.hyfit and com.jusheng.hiwatchpro; clean-room wire spec |
 | G2 Surface map | done | Mapped NUS (C900), JieLi RCSP (T900), standard GATT, and prohibited OTA UUIDs |
 | G3 Spec | done | Byte-exact PROTOCOL.md with HryFine 0xDF/0xFD framing, JieLi RCSP, dial format, worked vectors |
-| G4 Client | todo | |
+| G4 Client | done | Layered client (codecs, dial, safe-write, link, session, simulator, CLI), 30 tests green, dry-run mode |
 | G5 Handoff | todo | |
 
 ## Hardware and software identified
