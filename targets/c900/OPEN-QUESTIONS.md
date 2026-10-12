@@ -196,7 +196,7 @@ Q01-Q03 (need the watch; first try the capture route Q13 -> Q19; live only when 
 
 Plan and comparison: [NEXT-STEPS.md](NEXT-STEPS.md). Gates now include `capture` (needs a capture file the owner supplied; the AI never asks for one to be made on its behalf).
 
-### C900-Q16 — cmd 5 health field maps (DRAFT)
+### C900-Q16 — cmd 5 health field maps (APPROVED Phase 1c 2026-10-13)
 - **Why:** Q14 step 1 stopped after the key map; a capture or listen session cannot be decoded without field layouts.
 - **Who:** AI alone. **Gate:** static.
 - **Inputs:** `tasks/results/C900-Q14.md` step 1 (key -> decoder table, do not redo); decompiled tree (`bash tools/cloud_bootstrap.sh`, expect `PASS`; FAIL -> stop, log in LOG.md).
@@ -206,7 +206,7 @@ Plan and comparison: [NEXT-STEPS.md](NEXT-STEPS.md). Gates now include `capture`
 - **Output:** `tasks/results/C900-Q16.md` + PROTOCOL patch + steps.md.
 - **Priority:** P1 · **Deps:** none · **Cost:** medium (one bootstrap ~105 MB LFS, one session).
 
-### C900-Q17 — notify_log.py OTA-safe subscribe (DRAFT, tool change)
+### C900-Q17 — notify_log.py OTA-safe subscribe (APPROVED Phase 1c 2026-10-13, tool change)
 - **Why:** `tools/notify_log.py` subscribes to every notifiable characteristic (`main_async` loop over `client.services`), which would enable notify on 0xFF00 / 0x18A8 / `...DCCA9E` OTA characteristics. HW-0 forbids that.
 - **Who:** AI alone. **Gate:** static (code change; needs owner approval of Phase 1c because it edits a tool).
 - **Inputs:** `tools/notify_log.py`, `tests/test_notify_log.py`, HW-0-RUNSHEET §0.
@@ -215,7 +215,7 @@ Plan and comparison: [NEXT-STEPS.md](NEXT-STEPS.md). Gates now include `capture`
 - **Output:** code + tests + `tasks/results/C900-Q17.md`.
 - **Priority:** P1 · **Deps:** none · **Cost:** low; no LFS.
 
-### C900-Q18 — Capture decoder prep and fixture dry run (DRAFT, tool change)
+### C900-Q18 — Capture decoder prep and fixture dry run (APPROVED Phase 1c 2026-10-13, tool change)
 - **Why:** when a capture arrives it should be parsed in one pass. `tools/btcap.py` lists ATT writes/notifies per handle but does not reassemble or decode DF/FD frames (checked 2026-10-13 against `tests/fixtures/synthetic_gatt.btsnoop`: works, output is raw hex).
 - **Who:** AI alone. **Gate:** static (code change).
 - **Inputs:** `tools/btcap.py --json`, PROTOCOL §4 and §7, `client/c900/frames.py` (read only), C900-Q04/Q05/Q14 tables.
@@ -234,14 +234,14 @@ Plan and comparison: [NEXT-STEPS.md](NEXT-STEPS.md). Gates now include `capture`
 - **Output:** `tasks/results/C900-Q19.md` + FACTS/PROTOCOL patches.
 - **Priority:** P0 · **Deps:** C900-Q13 (owner) · **Cost:** low; no LFS.
 
-### Owner Phase 1c checklist (DRAFT)
-- [ ] Approve C900-Q16 (static, one bootstrap)
-- [ ] Approve C900-Q17 (tool fix; edits `tools/notify_log.py`)
-- [ ] Approve C900-Q18 (decoder + synthetic fixture)
-- [ ] Q13: will you record a capture with `docs/guides/HCI-CAPTURE-ANDROID.md`? (yes / no / later)
-- [ ] Confirm HW-0 stays parked until you say live work is necessary
-- [ ] Confirm Phase 3 (client) and Phase 4 (OTA, faces) stay deferred
-- [ ] Sign-off:
+### Owner Phase 1c checklist (SIGNED 2026-10-13)
+- [x] Approve C900-Q16 (static, one bootstrap)
+- [x] Approve C900-Q17 (tool fix; edits `tools/notify_log.py`)
+- [x] Approve C900-Q18 (decoder + synthetic fixture)
+- [x] Q13: will you record a capture with `docs/guides/HCI-CAPTURE-ANDROID.md`? **later** (2026-10-13)
+- [x] Confirm HW-0 stays parked until you say live work is necessary
+- [x] Confirm Phase 3 (client) and Phase 4 (OTA, faces) stay deferred
+- [x] Sign-off: 2026-10-13 (Asia/Saigon), owner approval relayed by the requesting agent. Run order Q17 -> Q18 -> Q16.
 
 ---
 

@@ -1,6 +1,6 @@
 # C900 / Hiwear Plus plan
 
-**Status:** Phase 1 and Phase 1b done (approved 2026-10-13, Asia/Saigon). **Phase 1c (Q16-Q19) and everything after it is DRAFT pending owner sign-off.** Next-step comparison: [NEXT-STEPS.md](NEXT-STEPS.md). Findings: [recon-v2.md](recon-v2.md).
+**Status:** Phase 1 and Phase 1b done (approved 2026-10-13, Asia/Saigon). **Phase 1c Q16-Q18 APPROVED 2026-10-13; Q13 capture later (Q19 waits for it); HW-0 parked; Phase 3/4 deferred.** Next-step comparison: [NEXT-STEPS.md](NEXT-STEPS.md). Findings: [recon-v2.md](recon-v2.md).
 
 Last draft: 2026-10-13 (Asia/Saigon). Findings: [recon-v2.md](recon-v2.md) (current), [recon-v1.md](recon-v1.md) (first snapshot).
 
@@ -72,7 +72,7 @@ Map to TARGET.md gates: G0–G2 done; G3 continues in Phase 1; **G4 Client defer
 
 Owner 2026-10-13: no live test until necessary. Phase 1b is static only: C900-Q14 (inbound remainder, createBond conditions) and C900-Q15 (HW-0 run sheet as a document, zero writes). Phase 2 stays parked until the owner says hardware is necessary; then it starts read-only (HW-1 optional capture, HW-2, HW-3) and needs per-session approval. Bonding decision (2026-10-13): app-side createBond is [C] (FACTS §4); device side stays [U].
 
-## 6c. Phase 1c (DRAFT, pending owner sign-off)
+## 6c. Phase 1c (APPROVED 2026-10-13 for Q16-Q18; run order Q17 -> Q18 -> Q16)
 
 Static and owner-capture work only; details and rationale in [NEXT-STEPS.md](NEXT-STEPS.md).
 1. C900-Q16: cmd 5 field maps (static).
