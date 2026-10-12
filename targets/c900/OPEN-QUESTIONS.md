@@ -153,11 +153,11 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 
 ---
 
-## Proposed next phase (DRAFT, pending owner sign-off)
+## Phase 1b (APPROVED by owner 2026-10-13)
 
 Owner 2026-10-13: no live test until necessary. So the next phase is **Phase 1b: static only**. Hardware (Phase 2) stays parked; HW-0 is written as a document but nothing is run.
 
-### C900-Q14 — Inbound map remainder (DRAFT)
+### C900-Q14 — Inbound map remainder (approved Phase 1b)
 - **Why:** HW-3 listen-only and any future capture need a complete decode table; Q05 stopped early.
 - **Who:** AI alone. **Gate:** static.
 - **Inputs:** `tasks/results/C900-Q05.md` (mapped part, do not redo); decompiled tree via `bash tools/cloud_bootstrap.sh` (expect `PASS`; on FAIL stop and log).
@@ -174,7 +174,7 @@ Owner 2026-10-13: no live test until necessary. So the next phase is **Phase 1b:
 - **Output:** `tasks/results/C900-Q14.md` + PROTOCOL/FACTS patches + steps.md.
 - **Priority:** P1 · **Deps:** none · **Cost:** medium (one bootstrap, one session).
 
-### C900-Q15 — HW-0 run sheet, written only (DRAFT)
+### C900-Q15 — HW-0 run sheet, written only (approved Phase 1b; document only)
 - **Why:** when hardware becomes necessary, the first session must be ready, read-only and budgeted. Writing it touches nothing.
 - **Who:** AI writes; owner approves before any use. **Gate:** static (document).
 - **Inputs:** `tasks/HW-RECON.md`, `re-hardware-recon` skill, recon-v2 §3, PROTOCOL §2-3, C900-Q14 result if done.
@@ -205,11 +205,12 @@ Q01-Q03 (need the watch; only when the owner says live work is necessary), Q10 (
 
 ---
 
-## Owner Phase 1b checklist (DRAFT)
+## Owner Phase 1b checklist (signed 2026-10-13)
 
-- [ ] Run C900-Q14 (static)
-- [ ] Write C900-Q15 run sheet (document only)
-- [ ] Hardware stays parked until you say it is necessary
+- [x] Run C900-Q14 (static)
+- [x] Write C900-Q15 run sheet (document only, zero writes, not executed)
+- [x] Hardware stays parked until you say it is necessary
+- [x] Sign-off: owner approved Phase 1b, 2026-10-13 (Asia/Saigon). Also: write an owner guide for an Android HCI snoop capture (docs/guides/HCI-CAPTURE-ANDROID.md).
 
 ## Owner Phase 0 checklist (signed 2026-10-13)
 
