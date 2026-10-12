@@ -49,3 +49,8 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Evidence: GitHub docs — Free plan includes 10 GiB LFS storage and 10 GiB LFS bandwidth per month; downloads (including public clones and Actions with LFS) count against the **repository owner**. Archive is 104797741 bytes (~0.098 GiB) so about **102** full downloads fit in the monthly bandwidth quota. Overage: with budget $0 or no payment method, usage is blocked (not auto-charged); with payment method and budget deleted/raised, overages bill. CI currently omits `lfs: true` (checkout default false). Could not read live usage: `gh` token lacks billing/`user` scope; no settings changed.
 - Fix: document in RECON task; keep CI without LFS fetch; agents should `git lfs pull -I` only the one path. Open for owner to confirm budget UI if desired.
 
+## 2026-10-13 Decisions from recon-v1
+- Evidence: consolidated in `targets/c900/recon-v1.md` from PROTOCOL/FACTS/S-tasks.
+- Decisions (finding → action): (1) Bluetrum not Jieli → deprioritise Jieli skills for this target. (2) Face/contact/paper via OTAUtils → treat as OTA-class, defer Phase 4. (3) Dangerous CommandIDs → keep BLOCKED_CMDS. (4) Incomplete [H] → defer client features (G4). (5) Cloud rebuild need → keep one LFS REPO_COPY; CI no lfs:true. (6) Scope risk → Phase 0 plan gate before Phase 1 decompile. (7) Identity → c900 = Hiwear Plus only. (8) Gemini → framing OK, opcodes not authoritative.
+- Status: Recorded; PLAN/OPEN-QUESTIONS remain DRAFT pending owner review.
+

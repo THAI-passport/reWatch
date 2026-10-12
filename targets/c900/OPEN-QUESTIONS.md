@@ -1,138 +1,157 @@
-# C900 / Hiwear Plus — open questions
+# C900 / Hiwear Plus — open questions (assignable)
 
 **Status: DRAFT — pending owner review (Phase 0).**  
-Each item: why it matters, priority, evidence so far, how to answer, cost, dependencies.  
-**P0** = blocks first useful contact plan · **P1** = needed soon for a solid PROTOCOL · **P2** = later · **Deferred** = implementation-only or post-hardware.
+Start from [recon-v1.md](recon-v1.md). Each ID is owner-free and assignable to a subagent.
 
-Last draft: 2026-10-13 (Asia/Saigon).
-
----
-
-## Priority legend
-
-| Priority | Meaning |
-|---|---|
-| P0 | Decide before or with first hardware session design |
-| P1 | Answer in Phase 1 static pass if owner approves |
-| P2 | Nice-to-have static / later compare |
-| Deferred | Implementation or Phase 3+; do not spend Phase 1 budget |
+Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) · **Acceptance** · **Output** · **Priority** · **Deps** · **Cost**.
 
 ---
 
-## P0 — first-contact blockers (mostly hardware)
+## P0 — hardware (gate: hardware-approval)
 
-### Q1. C900 advertisement name and scan-record marker
-- **Why:** Client/scanner must find the watch; app uses MAC+`12:34` or names `B0`/`H2`/`HY`.
-- **Evidence:** PROTOCOL 3 [C] app rules; actual C900 advert [U].
-- **How:** HW-2 read-only scan (capture adv + scan response).
-- **Cost:** One approved BLE session, no writes.
-- **Deps:** Owner phone/adapter + approval.
+### C900-Q01 — Advertisement name and scan-record marker
+- **Why:** Scanner must find the watch; app rules may not match retail name “C900”.
+- **Evidence so far:** App match MAC+`12:34` / `56:10` / name `B0|H2|HY` [C] (`BleScanActivity`); on-air C900 [U]. See recon-v1 §3.
+- **Inputs:** Approved BLE adapter/phone; recon-v1; PROTOCOL §3; HW-RECON.md.
+- **Method:** Read-only scan; record adv name, raw scan record hex, RSSI; no connect required if adv enough — prefer connectless first.
+- **Gate:** hardware-approval (HW-2).
+- **Acceptance:** Table: name(s), whether MAC+12:34 present, sample scan-record excerpt (MAC masked); FACTS/PROTOCOL updated with `[H]`.
+- **Output:** `tasks/results/C900-Q01.md` (+ PROTOCOL/FACTS patches).
+- **Priority:** P0 · **Deps:** none · **Cost:** one short session.
 
-### Q2. GATT services the C900 actually exposes
-- **Why:** Confirm NUS/command path vs OTA 0xFF00 / DFU 0x18A8 presence before any write plan.
-- **Evidence:** App knows several UUIDs [C]; device side [U].
-- **How:** HW-2 service discovery (read-only).
-- **Cost:** Same session as Q1.
-- **Deps:** Q1 connectable device.
+### C900-Q02 — GATT services present on device
+- **Why:** Confirm command NUS vs OTA 0xFF00 / 0x18A8 before any write plan.
+- **Evidence so far:** App UUID table [C] recon-v1 §3; device [U].
+- **Inputs:** Q01 connectable target; PROTOCOL §2.
+- **Method:** Connect read-only; service discovery; list UUIDs; optional 0x180A reads; **no writes**, no OTA chars write.
+- **Gate:** hardware-approval (HW-2).
+- **Acceptance:** Service/characteristic list vs PROTOCOL §2; note missing/extra; `[H]` tags.
+- **Output:** `tasks/results/C900-Q02.md`.
+- **Priority:** P0 · **Deps:** C900-Q01 · **Cost:** same session as Q01 OK.
 
-### Q3. Bonding required?
-- **Why:** App may `createBond` during sync; Gemini claimed none.
-- **Evidence:** App has createBond path [C]; device requirement [U].
-- **How:** HW-2/HW-3 observe bond state; no forced bond without approval.
-- **Cost:** Read-only session.
-- **Deps:** Q2.
-
----
-
-## P1 — Phase 1 static (proposed)
-
-### Q4. Remaining command-channel keys/payloads for first-contact features
-- **Why:** Time/message/find are known; weather, alarms, health/sport query, settings keys, drink/sedentary still incomplete for a full PROTOCOL table.
-- **Evidence:** CommandID + SettingIssuedUtils / MsgPushHelper / GeneralUtils / HealthUtils partial [C]; many keys not tabulated.
-- **How:** Static — targeted read of those classes + smali for literals; tables into PROTOCOL 5.
-- **Cost:** Medium (half-day agent); no LFS pull if decompiled tree already present.
-- **Deps:** Bootstrap only if tree missing.
-
-### Q5. Inbound DF payload map (finish S5)
-- **Why:** Listen-only HW-3 needs to know what notifies mean.
-- **Evidence:** Ack follow-ups sketched [C]; per-key DF bodies incomplete.
-- **How:** Static — `NotifyWriteUtils` + `BleDataUtils` (+ related parsers).
-- **Cost:** Medium.
-- **Deps:** Q4 overlap OK.
-
-### Q6. Dial `.bin` obfuscation + header trim (document + synthetic test)
-- **Why:** Understand store-face pipeline; not to implement upload.
-- **Evidence:** decodeInfo + getFileBuffer trim [C]; field semantics still thin.
-- **How:** Static — DialDetailActivity / StringUtils; optional synthetic unit test (no vendor dial in git).
-- **Cost:** Low–medium.
-- **Deps:** None for docs; tests optional.
-
-### Q7. OTA ready-reply (fun 0x81) field map and CRC edge cases
-- **Why:** PROTOCOL 6 first pass may mis-state offsets; matters if Phase 4 ever happens; also prevents wrong “safe” assumptions.
-- **Evidence:** OTANotifyWriteUtils parsing [C] partially documented.
-- **How:** Static — smali/Java of dataHandle; document only; **no client send**.
-- **Cost:** Low–medium.
-- **Deps:** Owner must keep Phase 4 gated.
-
-### Q8. Contacts sync framing (command vs OTA main=4)
-- **Why:** Contacts ride OTAUtils main=4; clarify vs command-channel so nobody invents a DF opcode for it.
-- **Evidence:** ContactActivity → OTAUtils(4,1) [C].
-- **How:** Static — short PROTOCOL note + OPEN-QUESTIONS close.
-- **Cost:** Low.
-- **Deps:** None.
+### C900-Q03 — Bonding behaviour
+- **Why:** Affects first-contact procedure.
+- **Evidence so far:** App may createBond during sync [C] (`BleDataUtils`); device ask [U].
+- **Inputs:** Q02 connection; PROTOCOL §3, §7.
+- **Method:** Observe bond state on connect + during listen (HW-3); do not force bond unless approved.
+- **Gate:** hardware-approval.
+- **Acceptance:** Statement: bond required / optional / never seen; `[H]`.
+- **Output:** `tasks/results/C900-Q03.md`.
+- **Priority:** P0 · **Deps:** C900-Q02 · **Cost:** low.
 
 ---
 
-## P2 — later / optional static
+## P1 — static (gate: static; Phase 1 only after Phase 0 sign-off)
 
-### Q9. Server endpoint inventory completion
-- **Why:** Know login/dial/OTA hosts; never call them from the client by default.
-- **Evidence:** ~70 Retrofit endpoints sketched [C] PROTOCOL 8.
-- **How:** Static — expand table (host, path, auth style); no tokens/URLs with secrets.
-- **Cost:** Low–medium.
-- **Deps:** None.
+### C900-Q04 — Command-channel key/payload tables (first-contact set)
+- **Why:** PROTOCOL §5 lists keys incompletely for weather/alarms/health/settings.
+- **Evidence so far:** CommandID + partial SettingIssuedUtils/MsgPushHelper [C]; recon-v1 §5.
+- **Inputs:** recon-v1; decompiled tree (bootstrap if missing); class list in RECON-HIWEAR-APK Phase 1.
+- **Method:** Targeted `rg` + read `CommandID`, `SettingIssuedUtils`, `MsgPushHelper`, `GeneralUtils`, `HealthUtils` / sport helpers; smali for literals.
+- **Gate:** static.
+- **Acceptance:** PROTOCOL §5 tables for: time (done—verify), message, find, camera, alarms, step goal, profile, notification switches, settings query 0x09; each row cmd/key/payload layout/tag/source method. No client feature code.
+- **Output:** `tasks/results/C900-Q04.md` + PROTOCOL patch.
+- **Priority:** P1 · **Deps:** Phase 0 approval · **Cost:** medium.
 
-### Q10. HryFine opcode comparison
-- **Why:** Shared `api/hry` hint; landscape wrongly assumed HryFine was the C900 app.
-- **Evidence:** Partial [I]; no HryFine pin in this target.
-- **How:** Only if owner supplies/pins a HryFine artifact; new SOURCES entry; optional.
-- **Cost:** High (second APK + LFS or local file).
-- **Deps:** Owner pin decision.
+### C900-Q05 — Inbound DF payload map
+- **Why:** Listen-only (HW-3) needs decode map.
+- **Evidence so far:** S5 first pass; recon-v1 §5; PROTOCOL §7 sketch.
+- **Inputs:** Probe `NotifyWriteUtils`, `BleDataUtils`, health parsers.
+- **Method:** Static trace notify → dispatch → parsers; table cmd/key → fields.
+- **Gate:** static.
+- **Acceptance:** PROTOCOL §7 table covering health/sport (cmd 5), settings replies, find-phone, camera shutter, battery path; `[C]` sources named.
+- **Output:** `tasks/results/C900-Q05.md` + PROTOCOL patch.
+- **Priority:** P1 · **Deps:** Phase 0; overlaps Q04 · **Cost:** medium.
 
-### Q11. Exact PAR container layout (native)
-- **Why:** DIY watch faces; **not** needed for first contact.
-- **Evidence:** `ParTool.rawToPar` [C]; bytes [U] in libabpartool.
-- **How:** Native RE optional; or HW capture of a push (Phase 4).
-- **Cost:** High.
-- **Deps:** Phase 4 approval; prefer defer.
+### C900-Q06 — Dial `.bin` decode + header trim
+- **Why:** Document store-face pipeline; not to implement upload.
+- **Evidence so far:** decodeInfo + getFileBuffer [C]; recon-v1 §6.
+- **Inputs:** `DialDetailActivity`, `utils/StringUtils`; synthetic bytes only in tests.
+- **Method:** Static; optional unittest with synthetic obfuscated string (no vendor dial in git).
+- **Gate:** static.
+- **Acceptance:** PROTOCOL §6.1 field offsets for trim rule; token seeds noted; test optional but green if added.
+- **Output:** `tasks/results/C900-Q06.md` (+ test if any).
+- **Priority:** P1 · **Deps:** Phase 0 · **Cost:** low–medium.
 
-### Q12. Cus5610 / 0x18A8 DFU command details
-- **Why:** Firmware path; dangerous.
-- **Evidence:** Inventory only [C].
-- **How:** Static inventory expansion **document-only**; never implement.
-- **Cost:** Medium; low priority vs first contact.
-- **Deps:** Keep blocked in client forever unless dedicated firmware project.
+### C900-Q07 — OTA ready-reply (0x81) + CRC edge cases (docs only)
+- **Why:** Tighten PROTOCOL §6.3; prevent false “safe to send” assumptions.
+- **Evidence so far:** First-pass D5/D6 [C]; recon-v1 §6.
+- **Inputs:** `OTANotifyWriteUtils`, `OTAUtils`, `CommandUtils` (+ smali for 0x31).
+- **Method:** Static field map for fun 0x81 payload; document group vs file CRC; **no send code**.
+- **Gate:** static.
+- **Acceptance:** PROTOCOL §6.3 byte map + CRC note with `[C]`; explicit “client must not implement”.
+- **Output:** `tasks/results/C900-Q07.md`.
+- **Priority:** P1 · **Deps:** Phase 0 · **Cost:** low–medium.
+
+### C900-Q08 — Contacts path confirmation (OTA main=4)
+- **Why:** Stop anyone inventing a DF opcode for contacts.
+- **Evidence so far:** ContactActivity → OTAUtils(4,1) [C].
+- **Inputs:** `ContactActivity`, `MainActivity` sync call sites.
+- **Method:** Short static confirm; PROTOCOL cross-link.
+- **Gate:** static.
+- **Acceptance:** PROTOCOL note + this question closed or marked verified `[C]`.
+- **Output:** `tasks/results/C900-Q08.md`.
+- **Priority:** P1 · **Deps:** Phase 0 · **Cost:** low.
 
 ---
 
-## Deferred — implementation-only (not Phase 1)
+## P2 — static optional
 
-| ID | Topic | Why deferred |
-|---|---|---|
-| D1 | CLI pair / scan implementation | Phase 3; needs Q1–Q3 [H] |
-| D2 | Session state machine / reconnect | Phase 3 |
-| D3 | Expanding SimWatch into device model | Misleading until [H] |
-| D4 | Message/time/find send helpers beyond codec | Phase 3 after HW-4+ |
-| D5 | Watch-face or contact upload code | Phase 4 + design review |
-| D6 | Any OTA/DFU write path in client | Forbidden without dedicated approval |
-| D7 | UI / packaging / ad-free product polish | After protocol MVP |
+### C900-Q09 — Server endpoint inventory expansion
+- **Why:** Know hosts/paths; never call from client by default.
+- **Inputs:** Retrofit API interfaces under decompiled sources.
+- **Method:** Static table host/path/auth-style; scrub secrets.
+- **Gate:** static.
+- **Acceptance:** PROTOCOL §8 table expanded; no tokens/signed URLs.
+- **Output:** `tasks/results/C900-Q09.md`.
+- **Priority:** P2 · **Cost:** low–medium.
+
+### C900-Q10 — HryFine opcode compare (optional)
+- **Why:** Shared `api/hry` hint only.
+- **Inputs:** Owner-pinned HryFine artifact + new SOURCES entry (do not download unpinned).
+- **Method:** Static compare CommandID/framing if artifact provided.
+- **Gate:** static (+ owner pin).
+- **Acceptance:** Short diff table or “not pinned — skipped”.
+- **Output:** `tasks/results/C900-Q10.md`.
+- **Priority:** P2 · **Cost:** high if pinned.
+
+### C900-Q11 — PAR container layout (native)
+- **Why:** DIY faces only; not first contact.
+- **Inputs:** `ParTool`, `libabpartool` (if extracted); or defer to capture.
+- **Method:** Native RE optional; else leave [U].
+- **Gate:** static (or hardware-approval capture in Phase 4).
+- **Acceptance:** Layout doc `[C]`/`[U]` explicit; no upload client.
+- **Output:** `tasks/results/C900-Q11.md`.
+- **Priority:** P2 · **Cost:** high.
+
+### C900-Q12 — Cus5610 inventory (docs only)
+- **Why:** Firmware path awareness; never implement.
+- **Inputs:** `Cus5610CommandUtils`, `Cus5610OTAUtils`.
+- **Method:** Static fun-code table; mark NEVER USE.
+- **Gate:** static.
+- **Acceptance:** PROTOCOL §6.4 inventory table; client still has no path.
+- **Output:** `tasks/results/C900-Q12.md`.
+- **Priority:** P2 · **Cost:** medium.
 
 ---
 
-## Owner checklist (Phase 0 sign-off)
+## Deferred — implementation (not assignable in Phase 1)
 
-- [ ] Priorities P0–P2 acceptable (edit freely)
-- [ ] Phase 1 may answer: ___ (list Q numbers)
-- [ ] Explicitly deferred: PAR / HryFine / Cus5610 / client features (confirm or promote)
-- [ ] Bootstrap required for Phase 0? (default **no**)
-- [ ] Sign-off date / notes:
+| ID | Topic | Output when unblocked | Gate |
+|---|---|---|---|
+| C900-D01 | CLI scan/pair | client/ + tests | hardware-approval + Phase 3 |
+| C900-D02 | Session/reconnect | client/ | Phase 3 |
+| C900-D03 | Rich SimWatch device model | client/ | after [H] |
+| C900-D04 | Send helpers beyond codec | client/ | after HW-4+ |
+| C900-D05 | Face/contact upload | client/ — design review | Phase 4 |
+| C900-D06 | OTA/DFU write path | forbidden by default | dedicated approval |
+| C900-D07 | Product UI / packaging | later | after protocol MVP |
+
+---
+
+## Owner Phase 0 checklist
+
+- [ ] Priorities OK
+- [ ] Phase 1 may run: (e.g. C900-Q04…Q08)
+- [ ] Confirm deferred D01–D07 / Q11–Q12
+- [ ] Sign-off:
