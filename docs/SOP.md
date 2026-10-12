@@ -88,3 +88,5 @@ Build a software device from the spec to test the client, but a simulator writte
 - Read a third-party frame layout for internal contradictions before coding it (here the ack header 0xFD versus the app header 0xDF, and what the length field counts); each goes into FACTS.md as a dispute.
 
 - Negative claims ("the app never calls X") need a smali search before they get [C]; a jadx-only negative search was wrong on c900 (createBond). One reproducible positive hit retires a negative claim.
+
+- Keep a per-target INVARIANTS.md: each quirk that was wrong once, its tempting wrong version, tag and proof; a small test pins the machine-checkable rows. Agents grep their diff for the wrong versions before finishing a pass.

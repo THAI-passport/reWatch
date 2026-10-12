@@ -2,6 +2,8 @@
 
 **Status: DRAFT, pending owner sign-off.** Written 2026-10-13 (Asia/Saigon) in REVIEW-PHASE1B. Nothing here is approved to run. Owner rule in force: no live test until necessary.
 
+Every step below assumes [INVARIANTS.md](INVARIANTS.md).
+
 ## 1. Where we are
 Static work has mapped framing, command tables, the inbound map, bond triggers and the OTA path [C] (recon-v2.md). What is left falls in three groups:
 - **Static, still open:** cmd 5 health field layouts (C900-Q16); cmd 9 bytes 9-13 [U].

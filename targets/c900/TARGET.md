@@ -10,6 +10,9 @@
 - Reads only on the watch until the owner approves a write session. Never touch 0xFF00, 0x18A8, `6E40FF01...` or commands 0x01, 0x06, 0x07, 0x0D, 0x13.
 - Client in `client/c900/` is **deferred** (PLAN.md Phase 3). Codec sketch exists: frame layout and CommandID opcodes [C], blocklist on dangerous ids; UNVERIFIED on hardware. No new client features until Phase 3 approval.
 
+## Invariants
+Read [INVARIANTS.md](INVARIANTS.md) before editing any c900 doc or code; `tests/test_c900_invariants.py` guards the checkable rows.
+
 ## Gate status
 | Gate | Status | Notes |
 |---|---|---|
