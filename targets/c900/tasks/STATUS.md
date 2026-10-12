@@ -33,19 +33,20 @@ Draft IDs — Phase 0 must approve before Phase 1 static work. Start brief: [rec
 | C900-Q06 | Dial.bin decode/trim | P1 | static | blocked: needs Phase 0 sign-off | |
 | C900-Q07 | OTA 0x81 / CRC docs | P1 | static | blocked: needs Phase 0 sign-off | |
 | C900-Q08 | Contacts = OTA main 4 | P1 | static | blocked: needs Phase 0 sign-off | |
-| C900-Q09 | Server inventory expand | P2 | static | todo | |
+| C900-Q09 | Server inventory expand | P2 | static | blocked: needs Phase 0 sign-off | |
 | C900-Q10 | HryFine compare | P2 | static | skipped: needs pin | |
 | C900-Q11 | PAR native layout | P2 | static | deferred | |
-| C900-Q12 | Cus5610 inventory | P2 | static | todo | |
+| C900-Q12 | Cus5610 inventory | P2 | static | blocked: needs Phase 0 sign-off | |
+| C900-Q13 | Existing owner capture (HW-1) | P0 | owner supplies, then static | blocked: needs human | |
 | C900-D01–D07 | Client/impl items | Deferred | — | deferred | PLAN.md Phase 3–4 |
 
 ## Hardware (prepared, not run; owner approval per session)
 | Task | Title | State |
 |---|---|---|
 | HW-0 | Run sheet, approvals, write budget | todo |
-| HW-1 | Optional reference capture with Hiwear Plus (owner's phone, HCI snoop) | blocked: needs approval |
-| HW-2 | Read-only scan: name, scan record (MAC + 12 34?), services, 0x180A reads, battery | blocked: needs approval |
-| HW-3 | Read-only notification listen after connect (no writes) | blocked: needs approval |
+| HW-1 (= C900-Q13) | Optional reference capture with Hiwear Plus (owner's phone, HCI snoop) | blocked: needs approval |
+| HW-2 (= C900-Q01, Q02) | Read-only scan: name, scan record (MAC + 12 34?), services, 0x180A reads, battery | blocked: needs approval |
+| HW-3 (= C900-Q03; uses Q05 map) | Read-only notification listen after connect (no writes) | blocked: needs approval |
 | HW-4 | First write: time sync (cmd 2 key 1), one frame | blocked: needs approval |
 | HW-5 | Message push (cmd 2 key 18), one frame | blocked: needs approval |
 | HW-6 | Find watch on/off (cmd 2 key 11) | blocked: needs approval |

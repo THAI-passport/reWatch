@@ -3,6 +3,12 @@
 **Status: DRAFT — pending owner review (Phase 0).**  
 Start from [recon-v1.md](recon-v1.md). Each ID is owner-free and assignable to a subagent.
 
+**Priority means importance, not run order.** P0 items need the watch and therefore run last (after HW-0 and per-session owner approval). Recommended run order once Phase 0 is signed: Q13 (ask owner) -> Q08 -> Q04 -> Q05 -> Q07 -> Q06 -> HW-0 -> Q01 -> Q02 -> Q03.
+
+**Who:** every `static` question can be finished by an AI alone. Every `hardware-approval` question needs a human with the watch; an AI may only prepare the run sheet and must never fabricate `[H]` results.
+
+**Stop conditions for every question:** stop and write the result file (state `partial`) if (a) the answer needs a class not listed in Inputs and more than two extra classes, (b) a value conflicts with FACTS.md (record it there, do not pick a winner), (c) work would touch a blocked command or OTA send path beyond reading, or (d) the decompiled tree is missing and bootstrap FAILs.
+
 Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) · **Acceptance** · **Output** · **Priority** · **Deps** · **Cost**.
 
 ---
@@ -12,12 +18,12 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 ### C900-Q01 — Advertisement name and scan-record marker
 - **Why:** Scanner must find the watch; app rules may not match retail name “C900”.
 - **Evidence so far:** App match MAC+`12:34` / `56:10` / name `B0|H2|HY` [C] (`BleScanActivity`); on-air C900 [U]. See recon-v1 §3.
-- **Inputs:** Approved BLE adapter/phone; recon-v1; PROTOCOL §3; HW-RECON.md.
+- **Inputs:** Approved BLE adapter/phone; recon-v1; PROTOCOL §3; HW-RECON.md; HW-0 run sheet signed.
 - **Method:** Read-only scan; record adv name, raw scan record hex, RSSI; no connect required if adv enough — prefer connectless first.
 - **Gate:** hardware-approval (HW-2).
 - **Acceptance:** Table: name(s), whether MAC+12:34 present, sample scan-record excerpt (MAC masked); FACTS/PROTOCOL updated with `[H]`.
 - **Output:** `tasks/results/C900-Q01.md` (+ PROTOCOL/FACTS patches).
-- **Priority:** P0 · **Deps:** none · **Cost:** one short session.
+- **Priority:** P0 · **Deps:** HW-0; C900-Q13 (a capture may already answer this) · **Cost:** one short session.
 
 ### C900-Q02 — GATT services present on device
 - **Why:** Confirm command NUS vs OTA 0xFF00 / 0x18A8 before any write plan.
@@ -47,9 +53,9 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 - **Why:** PROTOCOL §5 lists keys incompletely for weather/alarms/health/settings.
 - **Evidence so far:** CommandID + partial SettingIssuedUtils/MsgPushHelper [C]; recon-v1 §5.
 - **Inputs:** recon-v1; decompiled tree (bootstrap if missing); class list in RECON-HIWEAR-APK Phase 1.
-- **Method:** Targeted `rg` + read `CommandID`, `SettingIssuedUtils`, `MsgPushHelper`, `GeneralUtils`, `HealthUtils` / sport helpers; smali for literals.
+- **Method:** Smali check of the 100 s ack-timeout literal first. Then targeted `rg` + read `CommandID`, `SettingIssuedUtils`, `MsgPushHelper`, `GeneralUtils`, `HealthUtils` / sport helpers; smali for literals.
 - **Gate:** static.
-- **Acceptance:** PROTOCOL §5 tables for: time (done—verify), message, find, camera, alarms, step goal, profile, notification switches, settings query 0x09; each row cmd/key/payload layout/tag/source method. No client feature code.
+- **Acceptance:** PROTOCOL §5 tables for: time (done—verify), message, find, camera, alarms, step goal, profile, notification switches, settings query 0x09; each row cmd/key/payload layout/tag/source method. No client feature code. Rows not reached stay `[U]` with the method name to read next.
 - **Output:** `tasks/results/C900-Q04.md` + PROTOCOL patch.
 - **Priority:** P1 · **Deps:** Phase 0 approval · **Cost:** medium.
 
@@ -74,7 +80,7 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 - **Priority:** P1 · **Deps:** Phase 0 · **Cost:** low–medium.
 
 ### C900-Q07 — OTA ready-reply (0x81) + CRC edge cases (docs only)
-- **Why:** Tighten PROTOCOL §6.3; prevent false “safe to send” assumptions.
+- **Why:** Tighten PROTOCOL §6.3; prevent false “safe to send” assumptions. Most fields are already listed in PROTOCOL §6.3 (first pass); this question is a **smali verification** of field widths, the 0x31 poly and the default/init interval conflict (300 vs 500), not new research.
 - **Evidence so far:** First-pass D5/D6 [C]; recon-v1 §6.
 - **Inputs:** `OTANotifyWriteUtils`, `OTAUtils`, `CommandUtils` (+ smali for 0x31).
 - **Method:** Static field map for fun 0x81 payload; document group vs file CRC; **no send code**.
@@ -135,6 +141,18 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 
 ---
 
+### C900-Q13 — Existing owner capture (HW-1) as software input
+- **Why:** AGENTS.md: captures the owner already has count as software and come before probing. One HCI snoop of Hiwear Plus pairing + time sync could settle Q01-Q03 and the MTU/ack-timeout values with no new watch contact.
+- **Evidence so far:** None; HW-1 never asked.
+- **Inputs:** Owner answer; `re-capture-ingestion` skill; `tools/btcap.py`.
+- **Method:** Ask the owner whether a btsnoop exists. If yes: scrub (mask MAC), ingest with btcap, map handles. If no: record "none" and keep Q01-Q03 as live tasks. The AI never asks the owner to install or run the vendor app on its behalf; capturing is the owner's own choice.
+- **Gate:** static once supplied (owner action to supply).
+- **Acceptance:** Either "no capture" recorded, or a scrubbed summary with `[H]` rows promoted into FACTS/PROTOCOL. No raw capture committed if it has personal data.
+- **Output:** `tasks/results/C900-Q13.md`.
+- **Priority:** P0 (cheapest P0) · **Deps:** owner reply · **Cost:** low.
+
+---
+
 ## Deferred — implementation (not assignable in Phase 1)
 
 | ID | Topic | Output when unblocked | Gate |
@@ -152,6 +170,8 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 ## Owner Phase 0 checklist
 
 - [ ] Priorities OK
-- [ ] Phase 1 may run: (e.g. C900-Q04…Q08)
+- [ ] Phase 1 may run: (recommended C900-Q04, Q05, Q07, Q08; Q06 optional)
+- [ ] Q13: do you already have an HCI snoop capture? (yes/no)
+- [ ] Q09 / Q12: run in Phase 1 or keep parked?
 - [ ] Confirm deferred D01–D07 / Q11–Q12
 - [ ] Sign-off:

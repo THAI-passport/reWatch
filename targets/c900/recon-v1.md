@@ -2,7 +2,7 @@
 
 Snapshot of static recon through 2026-10-13 (Asia/Saigon).  
 Source of truth for detail remains PROTOCOL.md / FACTS.md; this file is the **starting brief** for plan review and subagents.  
-Tags: [C] app code · [V] vector against code · [H] hardware · [W] third party · [I] inferred · [U] unknown · [owner] owner statement.
+Tags: [C] app code · [V] vector against code · [H] hardware · [W] third party · [I] inferred · [U] unknown · [owner] owner statement (not an AGENTS.md tag; treat as [W] for evidence weight, never as [C]/[H]).
 
 ---
 
@@ -49,7 +49,7 @@ Tags: [C] app code · [V] vector against code · [H] hardware · [W] third party
 | len = payload+5; total = len+4 | [C] | PROTOCOL §4 |
 | sum = Σ(all bytes with sum slot 0) mod 256 | [C]/[V] | PROTOCOL §4, §9; `client/c900/frames.py` tests |
 | Ack: `FD 00 05 sum cmd key x x status` (status 1 = ok) | [C] | `AckPackageConfigUtils`; PROTOCOL §4 |
-| One command in flight; 100 s ack timeout → disconnect | [C] | PROTOCOL §4 |
+| One command in flight; 100 s ack timeout → disconnect | [C] (jadx; smali check of the literal still owed, see Q04) | PROTOCOL §4 |
 | Worked vector settings query: `df0005ee0901000000` | [V] | PROTOCOL §9 |
 
 ## 5. Commands (high level)
@@ -71,6 +71,7 @@ Tags: [C] app code · [V] vector against code · [H] hardware · [W] third party
 | DIY face: `ParTool.rawToPar(...)` → `OTAUtils(main=2, sub=1)` | [C] | `WatchFaceEditActivity`; PROTOCOL §6.2 |
 | Contacts sync: `OTAUtils(main=4, sub=1)` | [C] | `ContactActivity`; PROTOCOL §6 |
 | OTA control `D5` / data `D6`; CRC left-shift poly 0x31; ready fun 0x81 carries MTU/interval/groupPacNum | [C] | `CommandUtils`, `OTAUtils`, `OTANotifyWriteUtils`; PROTOCOL §6.3 |
+| OTA timing: 60 s overall timeout; ready reply carries deviceMtu, sendInterval (default 300 ms if 0), groupPacNum, timeout units x5000 ms | [C] first pass | PROTOCOL §6.3; verify in Q07 |
 | Cus5610 on 0x18A8 is a **separate** DFU path, not used for dial push | [C] | PROTOCOL §6.4 |
 | Exact PAR container bytes | [U] | native lib; OPEN-QUESTIONS Q11 |
 | Face/firmware upload from our client | not done — deferred | PLAN Phase 4 |
@@ -107,5 +108,15 @@ Source kept as untrusted data: `targets/c900/sources/gemini-hiwear-re.md`. Dispu
 | D-lfs | Cloud agents need rebuild without floating CDN | Keep **one** owner-approved LFS zip + REPO_COPY; CI without `lfs:true`; `git lfs pull -I` only that path | ~102 full pulls/month on Free bandwidth |
 | D-phase0 | Deeper decompile before goals clear wastes tokens/LFS | **Phase 0 gate**: approve PLAN + OPEN-QUESTIONS before Phase 1 static deepen | Owner feedback 2026-10-13 |
 | D-identity | Owner named Hiwear Plus; landscape assumed HryFine | One target `c900`; fold legacy combined docs into sources/ | Stop cross-contaminating FACTS |
+| D-order | P0 questions need the watch; P1 are static | Run approved **static** P1 questions first; P0 hardware only after HW-0 run sheet + per-session approval. Priority = importance, not run order | Software first, hardware last (AGENTS.md) |
+| D-capture | Owner may already hold an HCI snoop (HW-1) | Ask owner for an existing capture before any live probe (new C900-Q13) | An existing capture is software, needs no watch contact |
 | D-gemini | Third-party RE mixed right framing with wrong opcodes | Keep as annotated source; opcodes only from CommandID/[C] | Safety |
 
+
+---
+
+## Review notes (improve-plan pass 2026-10-12)
+
+- No new [C] claims were added in this pass; decompiled tree was not present and not bootstrapped.
+- Weakest tags to firm up in Phase 1: 100 s ack timeout (jadx literal), MTU 32 vs 20-byte pieces (both [C], but which governs on the C900 is [U] until [H]), OTA ready-reply field widths.
+- recon-v1 has no inbound (watch -> app) findings table; inbound is only a sketch (PROTOCOL §7, results/S5). That gap is C900-Q05.
