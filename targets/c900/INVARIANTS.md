@@ -53,7 +53,7 @@ Rule for agents: before you finish a pass, grep your diff for each "Wrong versio
 ## Process and safety
 | ID | True | Wrong version | Tag | Proof |
 |---|---|---|---|---|
-| I-50 | `tools/notify_log.py` subscribes to OTA characteristics; do not use it on the C900 until C900-Q17 lands | it is passive, so safe | [C] tool code | LOG.md; FIXES.md |
+| I-50 | `tools/notify_log.py` always applies an OTA/DFU deny list (0xFF00, 0x18A8, their chars, `...dcca9e`); `--only` with a denied UUID exits 2. Before C900-Q17 it subscribed to everything | it is passive, so any version is safe; or `--only` turns the deny list off | [C] tool code + tests | C900-Q17; `tests/test_notify_log.py` |
 | I-51 | No live test until the owner says it is necessary; capture before HW-0 | probe the watch to check a doc | owner rule | NEXT-STEPS.md |
 | I-52 | Only the Gemini doc's frame layout is kept; its opcodes are wrong | Gemini opcodes as a fallback | [C] | FACTS §2 |
 | I-53 | Nothing becomes `[H]` without a capture or hardware result file | simulator/test agreement = confirmed | AGENTS rule 6 | AGENTS.md |

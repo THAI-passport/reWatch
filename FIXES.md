@@ -3,7 +3,6 @@
 Things that need fixing in reWatch itself (tools, templates, skills), and things already fixed. Add to Open when you find something; move to Fixed with what was wrong and what changed. Same commit as the change.
 
 ## Open
-- `tools/notify_log.py` subscribes to every notifiable characteristic, including OTA/DFU ones (c900: 0xFF00, 0x18A8, `...DCCA9E`). Needs an allowlist flag and a default deny list. Task: targets/c900 C900-Q17 (DRAFT).
 - Skills and tools are untested end to end on a real target; run the benchmark in README.md and record gaps here.
 - `tools/setup_tools.py` pins jadx and apktool versions and verifies SHA-256 only when `JADX_SHA256`/`APKTOOL_SHA256` are set (it prints the computed hashes); the JDK is the latest 17. Pin real hashes once a machine with github access has downloaded them.
 - Windows is untested locally: CI covers `rebuild_analysis.py` and `setup_tools.py`, but the fake-jadx tests skip there and a real run on Windows has not happened. macOS is likewise untested locally (the JDK bundle layout is unit tested).
@@ -12,6 +11,7 @@ Things that need fixing in reWatch itself (tools, templates, skills), and things
 - iOS, desktop and firmware notes in the skills are thin.
 
 ## Fixed
+- `tools/notify_log.py` subscribed to every notifiable characteristic, OTA/DFU included: added a default deny list (0xFF00, 0x18A8 and their characteristics, `...dcca9e`), `--deny`, `--only` (denied UUID there exits 2 before anything is enabled), and a printed plan before listening; tests in `tests/test_notify_log.py` (C900-Q17).
 - Pinning was only a hash check: added the pin rule to AGENTS.md, `COPY_LOCATION` and URL2 guidance in the SOURCES template, pin warnings and clearer mismatch and accept messages in the rebuild tool, with tests.
 - Hash mismatch after a vendor update now names the real version; URL2 to URL4 fallbacks; rebuild-only-when-necessary and record-after-every-pass rules in AGENTS.md and the skills; QUICKSTART in the task-pack template; test that scripts mentioned in docs exist.
 - Hardware recon had no reusable form that a weaker agent could follow: added `templates/tasks/` (README, SW-RECON, HW-RECON, ASSUMPTIONS, STATUS) copied by `rw.py init`, the `re-hardware-recon` skill, `tools/notify_log.py`, `tools/make_test_media.py`, and rules in `re-client-sim` (log pushed status, no-delta option) and `AGENTS.md` (writing for weaker agents). Derived from the reBeamBox task pack.

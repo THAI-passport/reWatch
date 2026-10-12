@@ -217,3 +217,12 @@ Required by AGENTS.md.
 - **Step:** Recorded owner approval of C900-Q16, Q17 and Q18; Q13 capture = later; HW-0 parked; Phase 3/4 deferred (OPEN-QUESTIONS checklist, PLAN §6c, STATUS).
   - **Decision:** Run order Q17 -> Q18 -> Q16, as instructed.
   - **Rationale:** Q17 removes the I-50 hazard before any tooling work; Q18 needs no LFS; Q16 needs the decompiled tree.
+
+## 2026-10-13 — C900-Q17
+
+- **Decision:** Deny by service as well as characteristic UUID.
+  - **Rationale:** An OTA service could expose a characteristic UUID not in the list; skipping the whole service is the safe default.
+- **Decision:** The deny list stays on even with `--only`, and a denied `--only` exits 2 before connecting.
+  - **Rationale:** Spec; a typo in a flag must not reach an OTA characteristic.
+- **Decision:** Rewrote INVARIANTS I-50 to the new state.
+  - **Rationale:** New evidence of equal tag (tool code plus tests); the old row would now be false.
