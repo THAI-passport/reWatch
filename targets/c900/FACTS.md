@@ -68,3 +68,5 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | Server API: 70 Retrofit endpoints, 7 static hosts; dial download URLs dynamic; requests signed with MD5 `sign` (secret not recorded) | [C] | `Request.java`, `Urls.java`, `SignUtils` (C900-Q09). No server contacted |
 | Dial trim: offsets 16/17/x20/+22..25 smali-verified; trim only on the store-face screen and only if the watch's `binPreviewFlag` (feature b18 0x20) is clear; purchased faces never trimmed | [C] | `DialDetailActivity.getFileBuffer` smali; `OwnerDialDetailActivity` (C900-Q06) |
 | `HexUtil.byte2IntLR` is big-endian over its argument order; inbound sedentary threshold (0x14) is u16 BE, same as outbound | [C] | `HexUtil.byte2IntLR`; closes a C900-Q05 [U] |
+| createBond conditions: 0x0C/19 (BOND_NONE); cmd 2 key 1 ack in sync + feature b15 0x40 -> MAC^0x55 last byte; 0x0E/1 classic MAC -> up to 3 tries, 35 s | [C] smali | C900-Q14 steps 4-5 (`xor-int/lit8 0x55`, `0xa`, `0xc`, `0x88b8`) |
+| Feature b25 0x80 drives both `isShowHrAutoTest` and `isShowDnd` | [C] smali | `readFeatures` (`v4 = 0x80`, index `0x19`); C900-Q14 step 7 |

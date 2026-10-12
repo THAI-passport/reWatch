@@ -90,3 +90,8 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Evidence: earlier [C] "no createBond in app code"; smali shows 3 app-code call sites (C900-Q05).
 - Cause: claim based on a search of jadx output; jadx output can hide or rename calls, and a negative result was tagged [C].
 - Fix: row retired (FACTS §4). Rule: negative claims ("X never called") must be checked in smali before tagging [C].
+
+## 2026-10-13 Phase 1b C900-Q14 inbound remainder (static)
+- Evidence: `HealthUtils.analusis`, `UserInfoAndRemindUtils`, `BleDataUtils.handleWatchFaceInfo/setSettingSuccess`, `MainActivity$4`, `DeviceContro`, `NotifyWriteUtils.onRead/readFeatures` (jadx + smali).
+- Problem: step 1 field maps sit in five parser classes not named in the step. Fix: stopped per the step stop rule; key map and inline SpO2 recorded, parsers listed. Partial.
+- Problem: grep of readFeatures smali showed the b25 flags several times (default branches). Fix: read the window after the `0x1a` length check and traced the mask register back to `const/16 v4, 0x80`. Solved.
