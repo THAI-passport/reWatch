@@ -200,3 +200,10 @@ Required by AGENTS.md.
 - **Decision:** Git-ignored `captures/`, `targets/*/captures/`, `*.btsnoop`, `btsnoop_hci.log*` and `bugreport*.zip`; checked with `git check-ignore`.
   - **Rationale:** These logs carry phone Bluetooth data and notification text, which is personal data.
 - **Step:** Updated recon-v2 with a Phase 1b section.
+
+## 2026-10-13 REVIEW-PHASE1B (docs only)
+- Step: reviewed Phase 1b (Q14, HW-0 run sheet, capture guide) and all plan docs; smoke-ran btcap.py on the synthetic fixture (works, raw hex only).
+- Decision: bonding wording made exact everywhere (three watch-side gates; the time-ack path is app-initiated but gated by feature b15 0x40). Rationale: "never unprompted" overstated it.
+- Decision: Q14 step 1 remainder -> standalone C900-Q16. New DRAFT tasks Q17 (notify_log.py OTA-safe subscribe; tool not edited this pass), Q18 (DF decoder + synthetic fixture), Q19 (ingest owner capture, gate capture).
+- Decision: recommended order Q17+Q18 -> Q16 -> owner capture -> HW-0 only for leftovers (NEXT-STEPS.md, DRAFT). Rationale: software first, remove hazards first, capture gives write-side facts a zero-write HW-0 cannot.
+- Step: run sheet and capture guide safety/privacy gaps fixed; stale lines removed in PLAN, TARGET, recon-v2, STATUS. Report: targets/c900/tasks/results/REVIEW-PHASE1B.md.

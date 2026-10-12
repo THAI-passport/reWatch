@@ -158,7 +158,7 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 
 Owner 2026-10-13: no live test until necessary. So the next phase is **Phase 1b: static only**. Hardware (Phase 2) stays parked; HW-0 is written as a document but nothing is run.
 
-### C900-Q14 — Inbound map remainder (approved Phase 1b)
+### C900-Q14 — Inbound map remainder (approved Phase 1b) (**closed 2026-10-13: steps 2-7 done; step 1 remainder = C900-Q16**)
 - **Why:** HW-3 listen-only and any future capture need a complete decode table; Q05 stopped early.
 - **Who:** AI alone. **Gate:** static.
 - **Inputs:** `tasks/results/C900-Q05.md` (mapped part, do not redo); decompiled tree via `bash tools/cloud_bootstrap.sh` (expect `PASS`; on FAIL stop and log).
@@ -175,7 +175,7 @@ Owner 2026-10-13: no live test until necessary. So the next phase is **Phase 1b:
 - **Output:** `tasks/results/C900-Q14.md` + PROTOCOL/FACTS patches + steps.md.
 - **Priority:** P1 · **Deps:** none · **Cost:** medium (one bootstrap, one session).
 
-### C900-Q15 — HW-0 run sheet, written only (approved Phase 1b; document only)
+### C900-Q15 — HW-0 run sheet, written only (approved Phase 1b; document only) (**closed 2026-10-13: DRAFT run sheet written; revised in REVIEW-PHASE1B**)
 - **Why:** when hardware becomes necessary, the first session must be ready, read-only and budgeted. Writing it touches nothing.
 - **Who:** AI writes; owner approves before any use. **Gate:** static (document).
 - **Inputs:** `tasks/HW-RECON.md`, `re-hardware-recon` skill, recon-v2 §3, PROTOCOL §2-3, C900-Q14 result if done.
@@ -188,7 +188,60 @@ Owner 2026-10-13: no live test until necessary. So the next phase is **Phase 1b:
 An owner-made Android HCI snoop of Hiwear Plus pairing is still the cheapest way to settle Q01-Q03 without our own contact. Owner's choice; not required.
 
 ### Still parked
-Q01-Q03 (need the watch; only when the owner says live work is necessary), Q10 (needs pin), Q11, Q12, D01-D07.
+Q01-Q03 (need the watch; first try the capture route Q13 -> Q19; live only when the owner says it is necessary), Q10 (needs pin), Q11, Q12, D01-D07.
+
+---
+
+## Phase 1c (DRAFT, pending owner sign-off)
+
+Plan and comparison: [NEXT-STEPS.md](NEXT-STEPS.md). Gates now include `capture` (needs a capture file the owner supplied; the AI never asks for one to be made on its behalf).
+
+### C900-Q16 — cmd 5 health field maps (DRAFT)
+- **Why:** Q14 step 1 stopped after the key map; a capture or listen session cannot be decoded without field layouts.
+- **Who:** AI alone. **Gate:** static.
+- **Inputs:** `tasks/results/C900-Q14.md` step 1 (key -> decoder table, do not redo); decompiled tree (`bash tools/cloud_bootstrap.sh`, expect `PASS`; FAIL -> stop, log in LOG.md).
+- **Method (one class per step, smali for every offset and shift):** `StepUtils.getSportBy1Hour` and `getTotalStepData` (keys 2, 12); `HrUtils.getHrDataList` (4); `DevBaseDataUtils.getBloodBean`, `getDateBean`, `getSportModeData` (5, 14 date, 15); `SleepUtils.receiveTotalSleepData` (9); `TempUtils.getTempDataList` (13).
+- **Acceptance:** for each of keys 2, 4, 5, 9, 12, 13, 15 a table of payload offset, width, endianness, scale/unit, meaning, tag, source method; record repeat size for lists; one worked synthetic example per key in the result (bytes made up, labelled synthetic); PROTOCOL §7 updated. Rows not reached stay `[U]` with the method to read next.
+- **Stop:** shared stop conditions; the five classes above count as named.
+- **Output:** `tasks/results/C900-Q16.md` + PROTOCOL patch + steps.md.
+- **Priority:** P1 · **Deps:** none · **Cost:** medium (one bootstrap ~105 MB LFS, one session).
+
+### C900-Q17 — notify_log.py OTA-safe subscribe (DRAFT, tool change)
+- **Why:** `tools/notify_log.py` subscribes to every notifiable characteristic (`main_async` loop over `client.services`), which would enable notify on 0xFF00 / 0x18A8 / `...DCCA9E` OTA characteristics. HW-0 forbids that.
+- **Who:** AI alone. **Gate:** static (code change; needs owner approval of Phase 1c because it edits a tool).
+- **Inputs:** `tools/notify_log.py`, `tests/test_notify_log.py`, HW-0-RUNSHEET §0.
+- **Method:** add `--only UUID` (repeatable; when given, subscribe to those only) and a default deny list (`--deny`, prefilled with services 0xFF00, 0x18A8 and UUIDs ending `dcca9e`, case-insensitive) that is applied even without `--only`; print the subscribed list before listening; refuse to start if a denied UUID would be subscribed. No other behaviour change.
+- **Acceptance:** unit tests with a fake client cover: default run skips OTA chars; `--only` subscribes exactly one; denied UUID in `--only` exits non-zero. `python3 -m unittest discover -s tests` and `python3 tools/rw.py lint` green; README/tool docstring updated; FIXES.md entry moved to Fixed.
+- **Output:** code + tests + `tasks/results/C900-Q17.md`.
+- **Priority:** P1 · **Deps:** none · **Cost:** low; no LFS.
+
+### C900-Q18 — Capture decoder prep and fixture dry run (DRAFT, tool change)
+- **Why:** when a capture arrives it should be parsed in one pass. `tools/btcap.py` lists ATT writes/notifies per handle but does not reassemble or decode DF/FD frames (checked 2026-10-13 against `tests/fixtures/synthetic_gatt.btsnoop`: works, output is raw hex).
+- **Who:** AI alone. **Gate:** static (code change).
+- **Inputs:** `tools/btcap.py --json`, PROTOCOL §4 and §7, `client/c900/frames.py` (read only), C900-Q04/Q05/Q14 tables.
+- **Method:** a small stdlib script (for example `tools/c900_decode.py`) that reads btcap JSON, keeps one handle pair (write `...0002`, notify `...0003`, chosen by flag), reassembles DF frames to `len + 4`, checks the sum, labels cmd/key from a table built from PROTOCOL (names only, no new claims), flags any write with a blocked cmd, and prints 0x2A27/0x2A28/0x2A19 reads with the feature bits Q14 cares about (b1 0x80, b15 0x40, b18 0x20, b25 0x80). Build a **synthetic** btsnoop fixture with made-up DF frames (bind, accept 0x0C/8, time sync + ack, 0x0C/19) and run the decoder on it as the dry run. Mask any address the tool prints.
+- **Acceptance:** tests green on the synthetic fixture; output shows each frame decoded and a summary block (version byte seen, feature bits, bond triggers seen yes/no, blocked cmds seen yes/no). No vendor data in the fixture.
+- **Output:** script + fixture + tests + `tasks/results/C900-Q18.md`.
+- **Priority:** P1 · **Deps:** none (Q16 improves cmd 5 labels later) · **Cost:** low-medium; no LFS.
+
+### C900-Q19 — Ingest the owner capture (gate: capture)
+- **Why:** cheapest path to `[H]` for Q01-Q03, the version byte, feature bits and the watch's ack bytes, with no contact by us.
+- **Who:** AI alone once the owner supplies the file. **Gate:** capture.
+- **Inputs:** `captures/btsnoop_hci.log` (git-ignored) + owner step-time notes and phone model; skill `re-capture-ingestion`; Q18 decoder (or `btcap.py` alone if Q18 is not done).
+- **Method:** follow NEXT-STEPS.md §4 (decision tree). Map handles to UUIDs from the capture's discovery; decode; compare every value with PROTOCOL/FACTS.
+- **Acceptance:** `tasks/results/C900-Q19.md` with masked excerpts only (no notification text, no full MAC, no profile values); each settled item promoted to `[H]` in FACTS/PROTOCOL with the capture as source; each conflict as a FACTS row; Q01-Q03 states updated. Raw capture never committed.
+- **Stop:** capture contains a watch-face, OTA or contacts transfer (owner did a forbidden step) -> record only that it happened, do not decode the file payload; capture lacks the pairing/connect part -> record what is missing and ask the owner.
+- **Output:** `tasks/results/C900-Q19.md` + FACTS/PROTOCOL patches.
+- **Priority:** P0 · **Deps:** C900-Q13 (owner) · **Cost:** low; no LFS.
+
+### Owner Phase 1c checklist (DRAFT)
+- [ ] Approve C900-Q16 (static, one bootstrap)
+- [ ] Approve C900-Q17 (tool fix; edits `tools/notify_log.py`)
+- [ ] Approve C900-Q18 (decoder + synthetic fixture)
+- [ ] Q13: will you record a capture with `docs/guides/HCI-CAPTURE-ANDROID.md`? (yes / no / later)
+- [ ] Confirm HW-0 stays parked until you say live work is necessary
+- [ ] Confirm Phase 3 (client) and Phase 4 (OTA, faces) stay deferred
+- [ ] Sign-off:
 
 ---
 
