@@ -183,3 +183,12 @@ Required by AGENTS.md.
   - **Rationale:** Step stop rule: the step needed five parser classes not named in it. Writing the key map is still useful for a capture decoder.
 - **Decision:** Wrote exact createBond conditions into FACTS §4 and PROTOCOL §3: three triggered paths, none unprompted.
   - **Rationale:** Acceptance asks for them, and they answer what the first contact must watch for (a bond prompt is an abort trigger in HW-0).
+
+## 2026-10-13 — C900-Q15 HW-0 run sheet
+
+- **Decision:** Wrote `targets/c900/tasks/HW-0-RUNSHEET.md`, marked DRAFT, zero writes, nothing run.
+  - **Rationale:** Owner approved the document only.
+- **Decision:** Banned `notify_log.py` in HW-3 in favour of a one-UUID snippet.
+  - **Rationale:** The tool enables notify on all characteristics, including OTA ones on the never-touch list.
+- **Decision:** Budget 3 connects, 6 reads, 30 min; abort on bond prompt, disconnect loop, OTA screen.
+  - **Rationale:** C900-Q14 shows the app bonds only on watch request, so an unprompted prompt is new device behaviour worth stopping for.
