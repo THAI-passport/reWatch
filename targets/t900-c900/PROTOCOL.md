@@ -174,10 +174,10 @@ Tag: [V]
 
 ### Example 3: HryFine Notification Alert (SMS: "Alert", "Test")
 Inner length: 17 bytes (`0x00 0x11`).
-Sum calculation: `1269 % 256 = 245 (0xF5)`
+Sum calculation: `1189 % 256 = 165 (0xA5)`
 Wire bytes:
 ```hex
-DF 00 11 F5 05 01 01 00 0C 01 05 41 6C 65 72 74 04 54 65 73 74
+DF 00 11 A5 05 01 01 00 0C 01 05 41 6C 65 72 74 04 54 65 73 74
 ```
 Tag: [V]
 
