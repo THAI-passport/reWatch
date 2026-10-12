@@ -85,3 +85,8 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Problem: jadx printed the `/` replacement as `FileUriModel.SCHEME`. Fix: smali `const-string "/"`. Solved.
 - Problem: name `byte2IntLR` suggests little-endian. Fix: read the body; it is big-endian over argument order, and callers pass bytes reversed. Solved.
 - Optional test skipped: would only test a re-implementation against itself.
+
+## 2026-10-13 negative search on jadx output was wrong (createBond)
+- Evidence: earlier [C] "no createBond in app code"; smali shows 3 app-code call sites (C900-Q05).
+- Cause: claim based on a search of jadx output; jadx output can hide or rename calls, and a negative result was tagged [C].
+- Fix: row retired (FACTS §4). Rule: negative claims ("X never called") must be checked in smali before tagging [C].

@@ -49,7 +49,7 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 
 ## P1 — static (gate: static; Phase 1 only after Phase 0 sign-off)
 
-### C900-Q04 — Command-channel key/payload tables (first-contact set)
+### C900-Q04 — Command-channel key/payload tables (first-contact set) (**closed: done 2026-10-13**, see tasks/results)
 - **Why:** PROTOCOL §5 lists keys incompletely for weather/alarms/health/settings.
 - **Evidence so far:** CommandID + partial SettingIssuedUtils/MsgPushHelper [C]; recon-v1 §5.
 - **Inputs:** recon-v1; decompiled tree (bootstrap if missing); class list in RECON-HIWEAR-APK Phase 1.
@@ -59,7 +59,7 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 - **Output:** `tasks/results/C900-Q04.md` + PROTOCOL patch.
 - **Priority:** P1 · **Deps:** Phase 0 approval · **Cost:** medium.
 
-### C900-Q05 — Inbound DF payload map
+### C900-Q05 — Inbound DF payload map (**closed partial 2026-10-13; remainder = C900-Q14**)
 - **Why:** Listen-only (HW-3) needs decode map.
 - **Evidence so far:** S5 first pass; recon-v1 §5; PROTOCOL §7 sketch.
 - **Inputs:** Probe `NotifyWriteUtils`, `BleDataUtils`, health parsers.
@@ -69,7 +69,7 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 - **Output:** `tasks/results/C900-Q05.md` + PROTOCOL patch.
 - **Priority:** P1 · **Deps:** Phase 0; overlaps Q04 · **Cost:** medium.
 
-### C900-Q06 — Dial `.bin` decode + header trim
+### C900-Q06 — Dial `.bin` decode + header trim (**closed: done 2026-10-13**, see tasks/results)
 - **Why:** Document store-face pipeline; not to implement upload.
 - **Evidence so far:** decodeInfo + getFileBuffer [C]; recon-v1 §6.
 - **Inputs:** `DialDetailActivity`, `utils/StringUtils`; synthetic bytes only in tests.
@@ -79,7 +79,7 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 - **Output:** `tasks/results/C900-Q06.md` (+ test if any).
 - **Priority:** P1 · **Deps:** Phase 0 · **Cost:** low–medium.
 
-### C900-Q07 — OTA ready-reply (0x81) + CRC edge cases (docs only)
+### C900-Q07 — OTA ready-reply (0x81) + CRC edge cases (docs only) (**closed: done 2026-10-13**, see tasks/results)
 - **Why:** Tighten PROTOCOL §6.3; prevent false “safe to send” assumptions. Most fields are already listed in PROTOCOL §6.3 (first pass); this question is a **smali verification** of field widths, the 0x31 poly and the default/init interval conflict (300 vs 500), not new research.
 - **Evidence so far:** First-pass D5/D6 [C]; recon-v1 §6.
 - **Inputs:** `OTANotifyWriteUtils`, `OTAUtils`, `CommandUtils` (+ smali for 0x31).
@@ -89,7 +89,7 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 - **Output:** `tasks/results/C900-Q07.md`.
 - **Priority:** P1 · **Deps:** Phase 0 · **Cost:** low–medium.
 
-### C900-Q08 — Contacts path confirmation (OTA main=4)
+### C900-Q08 — Contacts path confirmation (OTA main=4) (**closed: done 2026-10-13**, see tasks/results)
 - **Why:** Stop anyone inventing a DF opcode for contacts.
 - **Evidence so far:** ContactActivity → OTAUtils(4,1) [C].
 - **Inputs:** `ContactActivity`, `MainActivity` sync call sites.
@@ -103,7 +103,7 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 
 ## P2 — static optional
 
-### C900-Q09 — Server endpoint inventory expansion
+### C900-Q09 — Server endpoint inventory expansion (**closed: done 2026-10-13**, see tasks/results)
 - **Why:** Know hosts/paths; never call from client by default.
 - **Inputs:** Retrofit API interfaces under decompiled sources.
 - **Method:** Static table host/path/auth-style; scrub secrets.
@@ -153,6 +153,44 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 
 ---
 
+## Proposed next phase (DRAFT, pending owner sign-off)
+
+Owner 2026-10-13: no live test until necessary. So the next phase is **Phase 1b: static only**. Hardware (Phase 2) stays parked; HW-0 is written as a document but nothing is run.
+
+### C900-Q14 — Inbound map remainder (DRAFT)
+- **Why:** HW-3 listen-only and any future capture need a complete decode table; Q05 stopped early.
+- **Who:** AI alone. **Gate:** static.
+- **Inputs:** `tasks/results/C900-Q05.md` (mapped part, do not redo); decompiled tree via `bash tools/cloud_bootstrap.sh` (expect `PASS`; on FAIL stop and log).
+- **Method, in order (one class each, smali for every literal):**
+  1. `HealthUtils.analusis`: cmd 5 key -> record type and field offsets (steps, sleep, HR, BP, SpO2, temperature).
+  2. `UserInfoAndRemindUtils.parsingUseInfoAndRemind`: cmd 9 reply layout.
+  3. `BleDataUtils.handleWatchFaceInfo`: cmd 0x0F keys 2/5/6/8/9 fields.
+  4. `BleDataUtils.setSettingSuccess`: FD-ack cmd/key -> follow-up table, including the exact createBond condition.
+  5. `MainActivity$4.run`: what schedules it and when it calls createBond.
+  6. Camera shutter (`BleInfoCallback.callDeviceContro`, `DeviceContro` enum) and the 0x2A19 battery handler.
+  7. `NotifyWriteUtils.readFeatures` smali: is b25 0x80 really shared by `isShowHrAutoTest` and `isShowDnd`?
+- **Acceptance:** each step has a row in a table (cmd, key, offset, width, endianness, meaning, tag, source method) or an explicit `[U]` with why; createBond conditions written into FACTS §4 and PROTOCOL §3; PROTOCOL §7 updated; no client code.
+- **Stop conditions:** the shared ones above; also stop if a step needs more than two classes not named here.
+- **Output:** `tasks/results/C900-Q14.md` + PROTOCOL/FACTS patches + steps.md.
+- **Priority:** P1 · **Deps:** none · **Cost:** medium (one bootstrap, one session).
+
+### C900-Q15 — HW-0 run sheet, written only (DRAFT)
+- **Why:** when hardware becomes necessary, the first session must be ready, read-only and budgeted. Writing it touches nothing.
+- **Who:** AI writes; owner approves before any use. **Gate:** static (document).
+- **Inputs:** `tasks/HW-RECON.md`, `re-hardware-recon` skill, recon-v2 §3, PROTOCOL §2-3, C900-Q14 result if done.
+- **Method:** fill a run sheet for HW-1 (owner HCI snoop, optional), HW-2 (passive scan, then connect + discovery + reads of 0x2A19, 0x2A26-0x2A28; **no writes, no notify enable on OTA services, never touch 0xFF00 / 0x18A8 / ...DCCA9E**) and HW-3 (enable notify on ...0003 only; listen; no writes). Budget per session: connects, reads, max duration, abort triggers (unexpected bond prompt, disconnect loop, any OTA UI on the watch). MAC masking rule. Expected values per step from PROTOCOL with tags.
+- **Acceptance:** one file a human can follow without this conversation; every step says expected result and what to do on deviation; zero write steps.
+- **Output:** `tasks/HW-0-RUNSHEET.md` (marked DRAFT, not approved).
+- **Priority:** P1 · **Deps:** Q14 preferred · **Cost:** low.
+
+### Q13 (unchanged, optional)
+An owner-made Android HCI snoop of Hiwear Plus pairing is still the cheapest way to settle Q01-Q03 without our own contact. Owner's choice; not required.
+
+### Still parked
+Q01-Q03 (need the watch; only when the owner says live work is necessary), Q10 (needs pin), Q11, Q12, D01-D07.
+
+---
+
 ## Deferred — implementation (not assignable in Phase 1)
 
 | ID | Topic | Output when unblocked | Gate |
@@ -167,7 +205,13 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 
 ---
 
-## Owner Phase 0 checklist
+## Owner Phase 1b checklist (DRAFT)
+
+- [ ] Run C900-Q14 (static)
+- [ ] Write C900-Q15 run sheet (document only)
+- [ ] Hardware stays parked until you say it is necessary
+
+## Owner Phase 0 checklist (signed 2026-10-13)
 
 - [x] Priorities OK
 - [x] Phase 1 APPROVED: C900-Q04, Q05, Q07, Q08; Q06 optional

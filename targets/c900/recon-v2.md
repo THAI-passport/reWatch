@@ -22,7 +22,7 @@ Tags: [C] app code (smali-checked where marked), [V] local re-derivation, [I] in
 | OTA interval default 300 / init 500 | both real, neither applied | Q07 |
 | cmd 2 key 8 "basic setting" | power save on/off | Q04 |
 | 0x1A key 21 (jadx: language) | exit find-phone | Q04 |
-| No createBond in app code | **conflict**: 3 app-code sites in smali; not resolved | Q05, FACTS §4 |
+| No createBond in app code | **retired**: 3 app-code sites in smali (conditional); old row retired 2026-10-13 | Q05, FACTS §4, REVIEW-PHASE1 |
 
 ## 3. First-contact relevant (for HW-0 run sheet)
 - Bind flow: app sends cmd 3 key 0 (8 ASCII chars); the watch answers **inbound 0x0C key 8** (accept; byte 9 = 1 first bind) or **key 9** (refuse, app disconnects). The app then sends cmd 2 key 10 (pairing start) [C].
@@ -31,13 +31,13 @@ Tags: [C] app code (smali-checked where marked), [V] local re-derivation, [I] in
 - 12/24 h: payload 1 = 12 h, 0 = 24 h [C].
 
 ## 4. Contradictions found (recorded, not resolved)
-1. `createBond` present in app code (FACTS §4 conflict row). Needs a reviewer to accept the smali evidence and retire the §2 "No bonding" row.
+1. `createBond` present in app code: **resolved 2026-10-13** (REVIEW-PHASE1). Smali evidence accepted; FACTS §2 row retired. Trigger conditions of two sites go to C900-Q14.
 2. `client/c900/frames.py`: `FIXED_BYTE` comment incomplete (version byte) and SimWatch ack x = `00 01` unsourced [I]. Client not edited (Phase 3).
 
 ## 5. Still needed
 | Item | Settles it |
 |---|---|
-| Q05 remainder: cmd 5 health fields, cmd 9 settings reply, 0x0F face replies, FD-ack key map, camera shutter, battery | next static pass, after the createBond conflict is reviewed |
+| Q05 remainder (now C900-Q14): cmd 5 health fields, cmd 9 settings reply, 0x0F face replies, FD-ack key map + createBond conditions, camera shutter, battery, b25 bit | Phase 1b static pass (DRAFT) |
 | C900 adv name, services, bonding (Q01-Q03) | HW-2/HW-3, or an owner HCI snoop |
 | C900 `PROTOCOL_VERSION` (0x2A27), feature map bytes (0x2A28) incl. `binPreviewFlag`, contacts bit | HW-2 read-only 0x180A reads |
 | Watch's own ack x value; which keys it acks | HW-4 single writes, or a capture |
@@ -47,6 +47,8 @@ Tags: [C] app code (smali-checked where marked), [V] local re-derivation, [I] in
 | ID | Finding | Decision | Rationale |
 |---|---|---|---|
 | D-stop-b | createBond conflict with FACTS | Q05 partial; record conflict, pick no winner | OPEN-QUESTIONS stop condition (b) |
+| D-bond | Reviewer: 3 named smali hits vs one negative jadx search | Retire "no createBond"; app bonds conditionally [C]; device side [U] | A negative search is falsified by a reproducible positive hit (REVIEW-PHASE1) |
+| D-nolive | Owner 2026-10-13: no live test until necessary | Phase 2 parked; HW-0 written as a doc only; static Phase 1b first | Owner instruction; software first |
 | D-version | Byte 4 follows 0x2A27 | HW-2 must read 0x2A27 before any write; codec must take the version as input in Phase 3 | A hard-coded 01 could be wrong on some firmware |
 | D-interval | OTA interval unused | Do not copy any interval into a future design; pacing = write-complete | Copying 300/500 would be cargo cult |
 | D-secrets | Signing key literal in app | Not recorded anywhere | AGENTS.md; no benefit |
