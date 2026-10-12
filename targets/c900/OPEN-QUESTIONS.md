@@ -142,8 +142,9 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 ---
 
 ### C900-Q13 — Existing owner capture (HW-1) as software input
+- **Owner guide:** `docs/guides/HCI-CAPTURE-ANDROID.md` (how to record and hand over an Android HCI snoop log).
 - **Why:** AGENTS.md: captures the owner already has count as software and come before probing. One HCI snoop of Hiwear Plus pairing + time sync could settle Q01-Q03 and the MTU/ack-timeout values with no new watch contact.
-- **Evidence so far:** Owner answer 2026-10-13: No capture yet (2026-10-13). Q01-Q03 stay live tasks. Later option: the owner can record an Android HCI snoop log of Hiwear Plus pairing and time sync on their own phone. It is cheap and owner-run, and worth doing before HW-0. It is the owner's choice; the AI does not request it.
+- **Evidence so far:** Owner answer 2026-10-13: No capture yet (2026-10-13). Q01-Q03 stay live tasks. Later option: the owner can record an Android HCI snoop log of Hiwear Plus pairing and time sync on their own phone. It is cheap and owner-run, and worth doing before HW-0. It is the owner's choice; the AI does not request it. How-to: `docs/guides/HCI-CAPTURE-ANDROID.md`.
 - **Inputs:** Owner answer; `re-capture-ingestion` skill; `tools/btcap.py`.
 - **Method:** Ask the owner whether a btsnoop exists. If yes: scrub (mask MAC), ingest with btcap, map handles. If no: record "none" and keep Q01-Q03 as live tasks. The AI never asks the owner to install or run the vendor app on its behalf; capturing is the owner's own choice.
 - **Gate:** static once supplied (owner action to supply).

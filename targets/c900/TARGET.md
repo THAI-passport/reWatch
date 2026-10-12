@@ -19,3 +19,6 @@
 | G3 Spec | doing | framing, command table, time packing, OTA D5/D6 framing [C]; further keys/inbound await Phase 0 sign-off + Phase 1 |
 | G4 Client | deferred | codec sketch only; no feature work until PLAN Phase 3 (see PLAN.md / OPEN-QUESTIONS.md Deferred) |
 | G5 Handoff | todo | after HW-2 |
+
+## Owner capture (optional)
+To record the vendor app's Bluetooth traffic on your own Android phone, follow `docs/guides/HCI-CAPTURE-ANDROID.md`. First-contact plan: `tasks/HW-0-RUNSHEET.md` (DRAFT).

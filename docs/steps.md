@@ -192,3 +192,11 @@ Required by AGENTS.md.
   - **Rationale:** The tool enables notify on all characteristics, including OTA ones on the never-touch list.
 - **Decision:** Budget 3 connects, 6 reads, 30 min; abort on bond prompt, disconnect loop, OTA screen.
   - **Rationale:** C900-Q14 shows the app bonds only on watch request, so an unprompted prompt is new device behaviour worth stopping for.
+
+## 2026-10-13 — HCI capture guide and Phase 1b wrap-up
+
+- **Decision:** Wrote `docs/guides/HCI-CAPTURE-ANDROID.md`, linked from OPEN-QUESTIONS Q13, TARGET.md and HANDOFF.md.
+  - **Rationale:** The owner asked for a plain-language guide. The guide's do-not list mirrors the never-touch OTA paths.
+- **Decision:** Git-ignored `captures/`, `targets/*/captures/`, `*.btsnoop`, `btsnoop_hci.log*` and `bugreport*.zip`; checked with `git check-ignore`.
+  - **Rationale:** These logs carry phone Bluetooth data and notification text, which is personal data.
+- **Step:** Updated recon-v2 with a Phase 1b section.
