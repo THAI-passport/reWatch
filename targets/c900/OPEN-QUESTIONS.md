@@ -143,7 +143,7 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 
 ### C900-Q13 — Existing owner capture (HW-1) as software input
 - **Why:** AGENTS.md: captures the owner already has count as software and come before probing. One HCI snoop of Hiwear Plus pairing + time sync could settle Q01-Q03 and the MTU/ack-timeout values with no new watch contact.
-- **Evidence so far:** None; HW-1 never asked.
+- **Evidence so far:** Owner answer 2026-10-13: No capture yet (2026-10-13). Q01-Q03 stay live tasks. Later option: the owner can record an Android HCI snoop log of Hiwear Plus pairing and time sync on their own phone. It is cheap and owner-run, and worth doing before HW-0. It is the owner's choice; the AI does not request it.
 - **Inputs:** Owner answer; `re-capture-ingestion` skill; `tools/btcap.py`.
 - **Method:** Ask the owner whether a btsnoop exists. If yes: scrub (mask MAC), ingest with btcap, map handles. If no: record "none" and keep Q01-Q03 as live tasks. The AI never asks the owner to install or run the vendor app on its behalf; capturing is the owner's own choice.
 - **Gate:** static once supplied (owner action to supply).
@@ -171,7 +171,7 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 
 - [x] Priorities OK
 - [x] Phase 1 APPROVED: C900-Q04, Q05, Q07, Q08; Q06 optional
-- [ ] Q13: do you already have an HCI snoop capture? OPEN, pending owner answer
+- [x] Q13: No capture yet (2026-10-13). Later option: the owner can record an Android HCI snoop log of Hiwear Plus pairing and time sync on their own phone. It is cheap and owner-run, and worth doing before HW-0. It is the owner's choice; the AI does not request it.
 - [x] Q09 APPROVED for Phase 1 (static inventory only, no server calls); Q12 PARKED (OTA/DFU risk, not needed now)
 - [x] Deferred D01–D07 and Q11 stay deferred; Q12 parked
 - [x] Sign-off: 2026-10-13 (Asia/Saigon), owner sign-off delegated to the requesting agent by the owner. Rationale: the approved items are static, document-only and needed for listen-only and first-contact planning; Q12 touches the firmware path with no near-term use; Q13 needs a fact only the owner has.
