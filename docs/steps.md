@@ -126,3 +126,11 @@ Required by AGENTS.md.
   - **Rationale:** Acceptance needs each row with layout and source; every literal jadx printed as a named constant was replaced by its smali value, because jadx inlines by value and picked wrong names.
 - **Decision:** Did not edit `client/c900/frames.py` (FIXED_BYTE comment, SimWatch ack x).
   - **Rationale:** No client work in Phase 1. Recorded in FACTS as [I] / correction for Phase 3.
+
+## 2026-10-13 — C900-Q05 inbound map (partial)
+
+- **Step:** Read the inbound dispatcher top to bottom, the device-control handler and the feature parser.
+- **Decision:** Stopped Q05 as partial when smali showed three app-code `createBond` calls that conflict with FACTS §2 and PROTOCOL §3.
+  - **Rationale:** OPEN-QUESTIONS stop condition (b): a value that conflicts with FACTS.md is recorded there and no winner is picked. Verified by an app-wide smali search before recording, so the conflict is real and reproducible.
+- **Decision:** Wrote the mapped part (14 cmds, 0x0C keys, feature bits) and listed six next reads in the result file.
+  - **Rationale:** A partial result with exact next steps lets the next pass resume without re-reading the dispatcher.

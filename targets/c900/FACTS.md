@@ -58,3 +58,7 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | Send retries: only full 20-byte pieces get 2x100 ms retries; last piece 1x20 ms; <=20-byte frames none | [C] | send runnable smali consts 0x14 / 0x64; earlier PROTOCOL §3 said two retries per piece |
 | cmd 0x1A key 21 = exit find-phone, not a language query | [C] | `GeneralUtils.reqeustExitFindPhone` smali `0x1a`/`0x15`; jadx printed `KEY_SETTING_SET_LANGUAGE` |
 | SimWatch ack x = `00 01` in `client/c900/frames.ack()` | [I] | not from code; app ignores bytes 6-7 of watch acks. Fix in Phase 3 |
+| **CONFLICT** App code calls `BluetoothDevice.createBond` | [C] smali vs earlier [C] | smali: `BleDataUtils.setDeviceContro` (0x0C key 19, BOND_NONE only), `BleDataUtils.setSettingSuccess`, `MainActivity$4.run`. Conflicts with §2 row "No bonding" and PROTOCOL §3. Not resolved (C900-Q05 stop condition b). Device side still [U] (C900-Q03) |
+| Bind accepted / refused arrive as inbound cmd 0x0C key 8 / key 9 | [C] | `BleDataUtils.setDeviceContro` (C900-Q05) |
+| Feature map is delivered both by the 0x2A28 read and by the cmd 0x19 reply; byte 0 = 0xAA | [C] | `NotifyWriteUtils.dataHandle` case 25 -> `readFeatures` |
+| cmd 2 key 26 payload 1 = 12 h, 0 = 24 h | [C] | sync sends `settingHourUnit(false)` with `isHour24 = false` |
