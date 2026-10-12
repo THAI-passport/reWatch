@@ -27,3 +27,10 @@ resources/**
 !resources/*/
 !resources/README.md
 !resources/c900/hiwear-plus-2.0.1.xapk.zip
+
+# Owner Bluetooth captures (btsnoop, bug reports): private, never committed
+captures/
+targets/*/captures/
+*.btsnoop
+btsnoop_hci.log*
+bugreport*.zip

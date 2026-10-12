@@ -53,3 +53,9 @@ Tags: [C] app code (smali-checked where marked), [V] local re-derivation, [I] in
 | D-interval | OTA interval unused | Do not copy any interval into a future design; pacing = write-complete | Copying 300/500 would be cargo cult |
 | D-secrets | Signing key literal in app | Not recorded anywhere | AGENTS.md; no benefit |
 | D-client | Codec comment/ack inaccuracies | Leave client untouched; list for Phase 3 | Phase 1 is static docs only |
+
+## Phase 1b (approved 2026-10-13)
+- **C900-Q14 (static):** steps 2-7 done [C]; step 1 partial (cmd 5 key map and inline SpO2; five parser classes left, stop rule). Main result: the app calls createBond only when prompted. The prompts are inbound 0x0C/19, inbound 0x0E/1 (classic MAC, up to 3 tries 35 s apart), or an ack of cmd 2 key 1 in sync with feature b15 0x40 (target MAC is the BLE MAC with its last byte XOR 0x55). Shutter = 0x0C key 2. Battery byte 0 = percent, then bind 500 ms later. Feature b25 0x80 is shared by HR auto test and DND. Details: `tasks/results/C900-Q14.md`.
+- **C900-Q15:** `tasks/HW-0-RUNSHEET.md`, DRAFT, zero writes, not run. HW-3 uses a single-UUID listener because `tools/notify_log.py` would subscribe to OTA characteristics.
+- **Owner guide:** `docs/guides/HCI-CAPTURE-ANDROID.md`; `captures/` is git-ignored.
+- **Next:** owner decides on an optional HW-1 capture; HW-0 needs a separate approval before anything runs.

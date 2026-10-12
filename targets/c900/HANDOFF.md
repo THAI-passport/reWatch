@@ -19,3 +19,6 @@ Counts of [C] [V] [H] [W] [I] [U] statements in PROTOCOL.md.
 
 ## Risks
 Flash wear, bricking paths, legal notes.
+
+## Owner capture (optional)
+To record the vendor app's Bluetooth traffic on your own Android phone, follow `docs/guides/HCI-CAPTURE-ANDROID.md`. First-contact plan: `tasks/HW-0-RUNSHEET.md` (DRAFT).
