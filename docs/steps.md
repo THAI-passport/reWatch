@@ -156,3 +156,11 @@ Required by AGENTS.md.
   - **Rationale:** Acceptance asks for field offsets and token seeds; smali settles both. The per-screen finding closes a PROTOCOL §6.5 unknown at no extra cost.
 - **Decision:** No unittest added.
   - **Rationale:** With synthetic bytes and no vendor dial, a test would only check my own re-implementation, which is not evidence about the app.
+
+## 2026-10-13 — Phase 1 wrap-up
+
+- **Step:** Wrote `targets/c900/recon-v2.md` (per-question answers, corrections, contradictions, what is still needed); pointed recon-v1, PLAN, OPEN-QUESTIONS and STATUS at it; added the new unknowns to PROTOCOL §10.
+  - **Rationale:** Findings changed several earlier statements (version byte, retries, NAK, OTA interval, createBond), so a new brief is clearer than editing v1 in place; v1 stays as history.
+- **Decision:** Phase 1 ends with Q05 partial. No client code, no watch contact, no app run, no server calls, no OTA send path touched.
+  - **Rationale:** Stop condition (b) applies to Q05; the remaining static reads are listed in its result file and recon-v2 §5.
+

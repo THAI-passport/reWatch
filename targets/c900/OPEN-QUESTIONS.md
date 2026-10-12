@@ -1,7 +1,7 @@
 # C900 / Hiwear Plus — open questions (assignable)
 
-**Status: Phase 0 signed off 2026-10-13 for the approved Phase 1 scope (C900-Q04, Q05, Q07, Q08, Q09; Q06 optional).** All other entries stay DRAFT. Phase 1 has not started.  
-Start from [recon-v1.md](recon-v1.md). Each ID is owner-free and assignable to a subagent.
+**Status: Phase 0 signed off 2026-10-13 for the approved Phase 1 scope (C900-Q04, Q05, Q07, Q08, Q09; Q06 optional).** All other entries stay DRAFT. Phase 1 ran 2026-10-13 (Asia/Saigon): Q04, Q06, Q07, Q08, Q09 done; Q05 partial (stop condition b, createBond conflict in FACTS). Findings: [recon-v2.md](recon-v2.md).  
+Start from [recon-v2.md](recon-v2.md) (Phase 1 findings), then [recon-v1.md](recon-v1.md). Each ID is owner-free and assignable to a subagent.
 
 **Priority means importance, not run order.** P0 items need the watch and therefore run last (after HW-0 and per-session owner approval). Recommended run order once Phase 0 is signed: Q13 (ask owner) -> Q08 -> Q04 -> Q05 -> Q07 -> Q06 -> HW-0 -> Q01 -> Q02 -> Q03.
 

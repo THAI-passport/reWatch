@@ -1,7 +1,7 @@
 # C900 / Hiwear Plus plan
 
 **Status: Approved for Phase 1** (2026-10-13 (Asia/Saigon), owner sign-off delegated to the requesting agent by the owner).  
-Approved scope: C900-Q04, Q05, Q07, Q08, Q09 (static inventory only, no server calls), Q06 optional. Q12 parked; Q13 open (owner answer pending). Phases 2-4 and everything outside that scope remain DRAFT. Phase 1 has not started.
+Approved scope: C900-Q04, Q05, Q07, Q08, Q09 (static inventory only, no server calls), Q06 optional. Q12 parked; Q13 answered: no capture yet (2026-10-13). Phases 2-4 and everything outside that scope remain DRAFT. Phase 1 ran 2026-10-13 (Asia/Saigon): Q04, Q06, Q07, Q08, Q09 done; Q05 partial (stop condition b, createBond conflict in FACTS). Findings: [recon-v2.md](recon-v2.md).
 
 Last draft: 2026-10-13 (Asia/Saigon). Author: Grok Bot from current PROTOCOL/FACTS/LOG/STATUS.
 Findings snapshot: [recon-v1.md](recon-v1.md).
