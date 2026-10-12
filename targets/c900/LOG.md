@@ -79,3 +79,9 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Evidence: `network/request/Request.java`, `network/Urls.java`, `network/sse/SSEManager.java`, `utils/SignUtils.java`, `function/dial/activity/DialDetailActivity.java`.
 - Problem: risk of copying secrets (signing key literal, speech SDK credential fields) into the repo. Fix: every grep piped through a scrubber that masks key/token/sign values and long tokens; recorded algorithm shape and field names only; scanned the result file with the same scrubber before commit (no matches). Solved.
 - No network calls, DNS lookups or downloads.
+
+## 2026-10-13 Phase 1 C900-Q06 dial decode/trim (static, docs only)
+- Evidence: `StringUtils.decodeInfo/decodeInfoToBytes/md5Encode32`, `Base64Utils`, `DialDetailActivity.getFileBuffer`, `OwnerDialDetailActivity`, `HexUtil.byte2IntLR`.
+- Problem: jadx printed the `/` replacement as `FileUriModel.SCHEME`. Fix: smali `const-string "/"`. Solved.
+- Problem: name `byte2IntLR` suggests little-endian. Fix: read the body; it is big-endian over argument order, and callers pass bytes reversed. Solved.
+- Optional test skipped: would only test a re-implementation against itself.
