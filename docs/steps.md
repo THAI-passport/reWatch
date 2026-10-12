@@ -118,3 +118,11 @@ Required by AGENTS.md.
 - **Step:** Q08: checked both `OTAUtils` call sites with main=4 in smali; listed every `OTAUtils.<init>` site in the app; traced the contact capability bit and the inbound MD5 report.
   - **Decision:** Q08 done [C]. Contacts are OTA-class (main 4, sub 1); no DF opcode. Documented the file layout for reference only.
   - **Rationale:** The acceptance criterion is a verified [C] note; smali settles the jadx literals, and the full call-site list rules out a second path.
+
+## 2026-10-13 — C900-Q04 command keys
+
+- **Step:** Checked the 100 s ack timeout in smali first, as the task asked: `0x186a0` at both arm sites. Then read the send loop, the ack/NAK path, every `getSendByte` caller, and the message-type tables.
+  - **Decision:** Q04 done [C]. 100 s confirmed; PROTOCOL §3/§4 corrected (version byte, retry rule, NAK x=3); §5.1 tables added.
+  - **Rationale:** Acceptance needs each row with layout and source; every literal jadx printed as a named constant was replaced by its smali value, because jadx inlines by value and picked wrong names.
+- **Decision:** Did not edit `client/c900/frames.py` (FIXED_BYTE comment, SimWatch ack x).
+  - **Rationale:** No client work in Phase 1. Recorded in FACTS as [I] / correction for Phase 3.
