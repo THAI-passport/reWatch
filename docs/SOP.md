@@ -55,6 +55,10 @@ Build a software device from the spec to test the client, but a simulator writte
 - Docs drift: do not write test counts in prose; keep disputed values in one FACTS.md; scan for contradictions after each milestone (that scan found a real client bug).
 - Safe-write for storage: counter, delta skipping, minimum interval, daily cap, applied after the payload is known and before the first data frame.
 - Check every claim in a task pack against the real flags; invented flags waste the first hardware session.
+- Budget smartwatch ecosystem reality: models with similar numbering (e.g. T900 vs C900) often originate from completely different ODM solution houses and silicon architectures (JieLi Pi32 vs Bluetrum RISC-V). Build modular profile selectors rather than assuming monolithic protocol compatibility.
+- Critical hazard: budget OTA bootloader services (such as Bluetrum Cus5610 0x18A8 and JieLi 0xAE10) often lack memory boundary checks and overwrite executing code when written to over BLE. Hard-blacklist OTA service UUIDs at the client link layer.
+- Framing checksums: HryFine Sum8 checksum requires clearing byte[3] to 0x00 prior to computing the arithmetic sum of the full frame modulo 256.
+- In-memory simulation speed: do not introduce artificial chunk pacing sleeps in unit test simulators; guard sleep delays with hardware link checks so test suites finish in milliseconds.
 
 ## 10. After each pass (checklist)
 1. PROTOCOL.md: byte-level findings with tags and the source class and method.
