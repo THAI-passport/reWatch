@@ -27,6 +27,7 @@ Note: the data service ends in `...DCCA9F`, the OTA service in `...DCCA9E` [C].
 - No product name such as C900 is matched; the advertised name of a C900 is [U] (HW-2).
 - After service discovery the app reads the 5610 OTA characteristic to detect DFU mode, then requests MTU 32 normally (450 in DFU mode; the OTA tool path requests 185). App data writes are cut into 20-byte pieces regardless of MTU, 20 ms apart. Each full 20-byte piece gets up to two retries 100 ms apart; the final remainder piece gets one retry after 20 ms; a frame of 20 bytes or less is written once with no retry. A failed write disconnects at once [C smali, C900-Q04].
 - No `createBond` call in the app's own code [C]; BLESSED reacts to bonding if the watch asks [C library]; whether the C900 asks is [U].
+- **Conflict (C900-Q05, see FACTS §4):** smali shows three app-code `createBond` sites (`BleDataUtils.setDeviceContro` on inbound 0x0C key 19, `BleDataUtils.setSettingSuccess`, `MainActivity$4.run`). Not resolved here.
 - Bind: command 3 key 0 with an 8-character random id saved per phone; unbind: command 4 key 0 [C, `GeneralUtils`].
 
 ## 4. Framing [C, `IssuedUtil`, `NotifyWriteUtils`, `AckPackageConfigUtils`]
@@ -115,6 +116,9 @@ Contacts have **no DF command-channel opcode**. They ride the OTA channel above 
 `DF` frames with cmd 5 (health and sport records), settings and alarm replies, find-phone requests, camera shutter; `FD` acks with cmd 2 (settings keys), 3 (bind ok), 4 (unbind ok) and others; battery level on 0x2A19.
 
 Ack-driven follow-ups during the sync sequence [C, `BleDataUtils.setSettingSuccess`]: on bind/settings acks the app may createBond if unbound, write cmd 0x0E key 3, push profile / username, request settings info (cmd 9), sport target, and time sync (cmd 2 key 1). Exact key map for every inbound DF payload is still being tabulated (S5).
+
+### 7.1 Inbound map, first pass (C900-Q05, partial) [C, `NotifyWriteUtils.dataHandle`, `BleDataUtils`]
+cmd at byte 4, key at byte 6, payload from byte 9. Mapped: 0x05 health (field map pending); 0x08 alarm list; 0x09 settings reply (field map pending); **0x0C device control**: 1/15 find phone start/stop, 3/4 watch camera open/close, **8 bind accepted** (byte 9 = 1 first bind), **9 bind refused** (app disconnects), 10-13 media keys, 18 BT status, 19 bond request; 0x0E BT 3.0 info (1 classic MAC, 4 contact MD5); 0x0F face replies; 0x11 drink; 0x12 new notify switches; 0x13 OTA-new status (never used); 0x14 sedentary; **0x19 feature map** (same as 0x2A28, byte 0 = 0xAA); 0x1A support bitmaps and location requests; 0x1B assistant events. Full table and the feature bit map: `tasks/results/C900-Q05.md`.
 
 ## 8. Server endpoints (inventory only, no calls) [C]
 Vendor API via Retrofit (about 70 endpoints): login and account binding, `member_devices/bind_mac`, `dial/get_list`, `dial/get_detail`, `dial_local/get_list`, `order/get_onwer_dials`, `census/add_dial_down`; OTA host with `api/hry/get_update`, `api/ota/down_finish`, `api/ota/down_error`; two weather hosts; privacy pages. No secret values recorded here.

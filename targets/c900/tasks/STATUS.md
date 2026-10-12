@@ -29,7 +29,7 @@ Draft IDs — Phase 0 must approve before Phase 1 static work. Start brief: [rec
 | C900-Q02 | GATT services on device | P0 | hardware-approval | blocked: needs approval | |
 | C900-Q03 | Bonding behaviour | P0 | hardware-approval | blocked: needs approval | |
 | C900-Q04 | Cmd key/payload tables | P1 | static | done (tasks/results/C900-Q04.md) | |
-| C900-Q05 | Inbound DF map | P1 | static | todo (approved Phase 1) | |
+| C900-Q05 | Inbound DF map | P1 | static | partial: stop (b) createBond conflict; see tasks/results/C900-Q05.md | |
 | C900-Q06 | Dial.bin decode/trim | P1 | static | todo (approved Phase 1, optional) | |
 | C900-Q07 | OTA 0x81 / CRC docs | P1 | static | todo (approved Phase 1) | |
 | C900-Q08 | Contacts = OTA main 4 | P1 | static | done (tasks/results/C900-Q08.md) | |

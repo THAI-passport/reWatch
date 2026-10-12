@@ -64,3 +64,8 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Problem 1: jadx replaced byte literals with unrelated same-valued constant names (`CommandID.COMMAND_ID_GET_FUNTION`, `CommandID.CHATGPT_ID`, `SettingIssuedUtils.KEY_SETTING_SET_LANGUAGE`, `BaseResp.CODE_ERROR_PARAMS`). Cause: jadx constant inlining by value. Fix: read the `const/16` before each `getSendByte` in smali. Solved; one real mislabel found (0x1A/21 is exit find-phone).
 - Problem 2: register value at the NAK call site looked ambiguous (two `const/4 v11` in the method). Cause: smali file order is not control-flow order. Fix: followed the `if-ne` jump target from the sum check. Solved (x=3).
 - Problem 3: `p0` reused as cmd register in some builders, so a regex on `v` registers missed the cmd. Fix: also match `const/16 p0`. Solved.
+
+## 2026-10-13 Phase 1 C900-Q05 inbound map (static, partial)
+- Evidence: `NotifyWriteUtils.dataHandle`, `BleDataUtils.setDeviceContro`, `readFeatures`, smali search for `BluetoothDevice;->createBond`.
+- Problem: app-code `createBond` sites (3) contradict FACTS §2 / PROTOCOL §3 "no createBond in app code". Likely cause: the earlier pass searched jadx output of a narrower class set. Fix: none chosen; recorded as a conflict in FACTS and PROTOCOL §3 per stop condition (b). **Unsolved** pending review.
+- Done before the stop: top-level dispatch for 14 cmds, device-control keys (find phone, camera, bind accept/refuse, media, bond), feature bit map.

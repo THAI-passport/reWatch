@@ -72,6 +72,8 @@ Build a software device from the spec to test the client, but a simulator writte
 - Owner-approved pinned archives live under `resources/<slug>/` as a single-member zip in Git LFS, declared as `REPO_COPY` + `REPO_COPY_SHA256`. Fresh clone: `git lfs pull` then `rebuild_analysis.py`.
 - Bluetrum watch-face / paper / contact push uses a separate OTA channel (D5/D6 on 0xFF00), not the DF/FD command channel. Document only; never wire into the client without a reviewed design.
 - Dial `.bin` files from the vendor server are obfuscated Base64 text (`StringUtils.decodeInfo` token swap), not raw binaries.
+- Absence claims ("the app never calls X") need an app-wide smali search for the framework method, e.g. `rg "BluetoothDevice;->createBond" work/smali | grep -v <ble-lib>`, not a jadx search over a few classes. C900: an earlier "no createBond in app code" was wrong; smali found three sites. Write the reproduce command next to the claim.
+- Capability bitmaps decide which payload variant the app sends (notify switch length, message type table, face code size). Map the feature parser early; it explains most "optional" bytes.
 
 ## 10. After each pass (checklist)
 1. PROTOCOL.md: byte-level findings with tags and the source class and method.
