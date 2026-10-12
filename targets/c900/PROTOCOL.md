@@ -124,6 +124,9 @@ cmd 5 keys: 2 steps/hour, 4 HR, 5 BP, 7/8 history start/end, 9 sleep, 12 total s
 ### 7.1 Inbound map, first pass (C900-Q05, partial) [C, `NotifyWriteUtils.dataHandle`, `BleDataUtils`]
 cmd at byte 4, key at byte 6, payload from byte 9. Mapped: 0x05 health (field map pending); 0x08 alarm list; 0x09 settings reply (field map pending); **0x0C device control**: 1/15 find phone start/stop, 3/4 watch camera open/close, **8 bind accepted** (byte 9 = 1 first bind), **9 bind refused** (app disconnects), 10-13 media keys, 18 BT status, 19 bond request; 0x0E BT 3.0 info (1 classic MAC, 4 contact MD5); 0x0F face replies; 0x11 drink; 0x12 new notify switches; 0x13 OTA-new status (never used); 0x14 sedentary; **0x19 feature map** (same as 0x2A28, byte 0 = 0xAA); 0x1A support bitmaps and location requests; 0x1B assistant events. Full table and the feature bit map: `tasks/results/C900-Q05.md`.
 
+### 7.3 Decoding a capture (C900-Q18)
+`python tools/c900_decode.py captures/btsnoop_hci.log` decodes frames on `...0002`/`...0003` with the §4 layout and the §5/§7 names, and prints a summary (version byte, feature bits, bond triggers, blocked cmds, OTA traffic). Decode only; labels are this file's names, not new evidence.
+
 ## 8. Server endpoints (inventory only, no calls) [C]
 Vendor API via Retrofit (about 70 endpoints): login and account binding, `member_devices/bind_mac`, `dial/get_list`, `dial/get_detail`, `dial_local/get_list`, `order/get_onwer_dials`, `census/add_dial_down`; OTA host with `api/hry/get_update`, `api/ota/down_finish`, `api/ota/down_error`; two weather hosts; privacy pages. No secret values recorded here.
 

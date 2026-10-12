@@ -32,5 +32,6 @@ resources/**
 captures/
 targets/*/captures/
 *.btsnoop
+!tests/fixtures/*.btsnoop
 btsnoop_hci.log*
 bugreport*.zip
