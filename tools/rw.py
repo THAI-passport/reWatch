@@ -248,9 +248,31 @@ def tracked_files(root):
     return files
 
 
+def pinned_repo_copies(root):
+    """REPO_COPY paths declared in any targets/*/SOURCES(.md): the only vendor archives allowed in git."""
+    out = set()
+    tdir = os.path.join(root, "targets")
+    for t in (os.listdir(tdir) if os.path.isdir(tdir) else []):
+        for n in ("SOURCES", "SOURCES.md"):
+            p = os.path.join(tdir, t, n)
+            if os.path.isfile(p):
+                for line in open(p, encoding="utf-8", errors="replace"):
+                    m = re.match(r"^REPO_COPY=(\S+)\s*$", line.strip())
+                    if m:
+                        out.add(m.group(1))
+    return out
+
+
 def lint(root):
     problems = []
+    pinned = pinned_repo_copies(root)
     for rel in tracked_files(root):
+        if rel.startswith("resources/"):
+            if rel.endswith("/README.md"):
+                continue
+            if rel not in pinned:
+                problems.append((rel, "file under resources/ is not a pinned REPO_COPY in any targets/*/SOURCES.md"))
+            continue
         low = rel.lower()
         if low.endswith(ARTIFACT_EXT):
             problems.append((rel, "vendor artifact extension, must not be committed"))

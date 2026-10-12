@@ -21,3 +21,9 @@ reports/*
 targets/*/BUILD-INFO.txt
 testmedia/
 dumps/
+# resources/: only exactly pinned vendor archives approved by the owner (REPO_COPY in targets/*/SOURCES.md, Git LFS).
+# The *.xapk rule above still applies to loose files; decompiled output stays ignored.
+resources/**
+!resources/*/
+!resources/README.md
+!resources/c900/hiwear-plus-2.0.1.xapk.zip
