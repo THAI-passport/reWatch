@@ -26,7 +26,7 @@ Note: the data service ends in `...DCCA9F`, the OTA service in `...DCCA9E` [C].
 - The scan is unfiltered (BLESSED `scanForPeripherals`). A device is listed when it has a name and either (a) the raw scan record, printed as colon-separated hex, contains the device's own MAC followed by `12:34`, or (b) MAC followed by `56:10` (DFU mode), or (c) the name starts with `B0`, `H2` or `HY`.
 - No product name such as C900 is matched; the advertised name of a C900 is [U] (HW-2).
 - After service discovery the app reads the 5610 OTA characteristic to detect DFU mode, then requests MTU 32 normally (450 in DFU mode; the OTA tool path requests 185). App data writes are cut into 20-byte pieces regardless of MTU, 20 ms apart. Each full 20-byte piece gets up to two retries 100 ms apart; the final remainder piece gets one retry after 20 ms; a frame of 20 bytes or less is written once with no retry. A failed write disconnects at once [C smali, C900-Q04].
-- The app calls `createBond` itself in three places, never unprompted [C smali, C900-Q14, FACTS §4]: (1) inbound 0x0C key 19 -> bond the BLE address if BOND_NONE; (2) FD ack of cmd 2 key 1 in sync, feature b15 0x40 -> bond `BLE MAC with last byte ^ 0x55` if BOND_NONE; (3) inbound 0x0E key 1 (classic MAC) -> `MainActivity$4` bonds that MAC, up to 3 tries 35 s apart.
+- The app calls `createBond` itself in three places, each gated by something the watch sends or advertises (two inbound messages, one feature bit on the time-sync ack); it never bonds without one of them [C smali, C900-Q14, FACTS §4]: (1) inbound 0x0C key 19 -> bond the BLE address if BOND_NONE; (2) FD ack of cmd 2 key 1 in sync, feature b15 0x40 -> bond `BLE MAC with last byte ^ 0x55` if BOND_NONE; (3) inbound 0x0E key 1 (classic MAC) -> `MainActivity$4` bonds that MAC, up to 3 tries 35 s apart.
 - Earlier text said "no createBond in app code"; retired 2026-10-13 (FACTS §4).
 - Bind: command 3 key 0 with an 8-character random id saved per phone; unbind: command 4 key 0 [C, `GeneralUtils`].
 
@@ -139,7 +139,7 @@ Exactly 70 Retrofit endpoints in `network/request/Request.java`, all `@QueryMap`
 |---|---|
 | C900 advertised name and whether the scan record has MAC + 12 34 | HW-2 read-only scan |
 | Which of the GATT services the C900 exposes | HW-2 read-only service list |
-| Whether the watch requires bonding | HW-2 |
+| Whether the watch requires bonding | capture (Q19) or HW-3 |
 | Exact PAR container bytes (native lib) | optional native RE; not needed for first contact |
 | C900's returned OTA MTU / groupPacNum | HW-1 capture or approved OTA session |
 | Time year offset in smali | done: -0x7d0 [C] |

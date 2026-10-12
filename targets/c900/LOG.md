@@ -99,3 +99,8 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 ## 2026-10-13 Phase 1b C900-Q15 HW-0 run sheet (document only)
 - Evidence: HW-RECON.md, re-hardware-recon skill, recon-v2 §3, PROTOCOL §2-3, C900-Q14.
 - Problem: `tools/notify_log.py` subscribes to every notifiable characteristic, which would include the OTA notify characteristics. Fix: sheet forbids it for HW-3 and gives a one-UUID snippet; no tool code changed. Solved for the sheet.
+
+## 2026-10-13 notify_log.py would subscribe to OTA characteristics
+- Evidence: `tools/notify_log.py` main_async loops over all services and calls start_notify on every notify/indicate characteristic.
+- Cause: generic tool written before the c900 OTA services were known.
+- Fix: open. DRAFT task C900-Q17; HW-0 uses a single-UUID snippet until then. Also listed in FIXES.md Open.

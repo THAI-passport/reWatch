@@ -37,8 +37,8 @@ Tags: [C] app code (smali-checked where marked), [V] local re-derivation, [I] in
 ## 5. Still needed
 | Item | Settles it |
 |---|---|
-| Q05 remainder (now C900-Q14): cmd 5 health fields, cmd 9 settings reply, 0x0F face replies, FD-ack key map + createBond conditions, camera shutter, battery, b25 bit | Phase 1b static pass (DRAFT) |
-| C900 adv name, services, bonding (Q01-Q03) | HW-2/HW-3, or an owner HCI snoop |
+| Q14 step 1 remainder (now C900-Q16): cmd 5 field maps in StepUtils, HrUtils, DevBaseDataUtils, SleepUtils, TempUtils | static (DRAFT); the rest of Q14 is done |
+| C900 adv name, services, bonding (Q01-Q03) | owner HCI snoop (Q13 -> Q19) first; HW-2/HW-3 only if needed |
 | C900 `PROTOCOL_VERSION` (0x2A27), feature map bytes (0x2A28) incl. `binPreviewFlag`, contacts bit | HW-2 read-only 0x180A reads |
 | Watch's own ack x value; which keys it acks | HW-4 single writes, or a capture |
 | OTA 0x81 values (mtu, group, timeout) | capture or an approved OTA session only |
@@ -47,15 +47,16 @@ Tags: [C] app code (smali-checked where marked), [V] local re-derivation, [I] in
 | ID | Finding | Decision | Rationale |
 |---|---|---|---|
 | D-stop-b | createBond conflict with FACTS | Q05 partial; record conflict, pick no winner | OPEN-QUESTIONS stop condition (b) |
-| D-bond | Reviewer: 3 named smali hits vs one negative jadx search | Retire "no createBond"; app bonds conditionally [C]; device side [U] | A negative search is falsified by a reproducible positive hit (REVIEW-PHASE1) |
+| D-bond | Reviewer: 3 named smali hits vs one negative jadx search; Q14 mapped the triggers | Retire "no createBond"; app bonds only on 0x0C/19, 0x0E/1, or cmd 2 key 1 ack + b15 0x40 [C]; device side [U] | A negative search is falsified by a reproducible positive hit (REVIEW-PHASE1) |
 | D-nolive | Owner 2026-10-13: no live test until necessary | Phase 2 parked; HW-0 written as a doc only; static Phase 1b first | Owner instruction; software first |
+| D-next | Remaining unknowns are mostly device-side | Next: Q16 + Q17 + Q18 static, then owner capture (Q13/Q19); HW-0 last. See NEXT-STEPS.md (DRAFT) | Software first; capture is the owner's own traffic, no new contact by us |
 | D-version | Byte 4 follows 0x2A27 | HW-2 must read 0x2A27 before any write; codec must take the version as input in Phase 3 | A hard-coded 01 could be wrong on some firmware |
 | D-interval | OTA interval unused | Do not copy any interval into a future design; pacing = write-complete | Copying 300/500 would be cargo cult |
 | D-secrets | Signing key literal in app | Not recorded anywhere | AGENTS.md; no benefit |
 | D-client | Codec comment/ack inaccuracies | Leave client untouched; list for Phase 3 | Phase 1 is static docs only |
 
 ## Phase 1b (approved 2026-10-13)
-- **C900-Q14 (static):** steps 2-7 done [C]; step 1 partial (cmd 5 key map and inline SpO2; five parser classes left, stop rule). Main result: the app calls createBond only when prompted. The prompts are inbound 0x0C/19, inbound 0x0E/1 (classic MAC, up to 3 tries 35 s apart), or an ack of cmd 2 key 1 in sync with feature b15 0x40 (target MAC is the BLE MAC with its last byte XOR 0x55). Shutter = 0x0C key 2. Battery byte 0 = percent, then bind 500 ms later. Feature b25 0x80 is shared by HR auto test and DND. Details: `tasks/results/C900-Q14.md`.
+- **C900-Q14 (static):** steps 2-7 done [C]; step 1 partial (cmd 5 key map and inline SpO2; five parser classes left, stop rule). Main result: the app calls createBond only on a watch-side signal (two inbound messages or one feature bit; the third path is app-initiated after the time-sync ack, gated by the watch's b15 0x40). The prompts are inbound 0x0C/19, inbound 0x0E/1 (classic MAC, up to 3 tries 35 s apart), or an ack of cmd 2 key 1 in sync with feature b15 0x40 (target MAC is the BLE MAC with its last byte XOR 0x55). Shutter = 0x0C key 2. Battery byte 0 = percent, then bind 500 ms later. Feature b25 0x80 is shared by HR auto test and DND. Details: `tasks/results/C900-Q14.md`.
 - **C900-Q15:** `tasks/HW-0-RUNSHEET.md`, DRAFT, zero writes, not run. HW-3 uses a single-UUID listener because `tools/notify_log.py` would subscribe to OTA characteristics.
 - **Owner guide:** `docs/guides/HCI-CAPTURE-ANDROID.md`; `captures/` is git-ignored.
 - **Next:** owner decides on an optional HW-1 capture; HW-0 needs a separate approval before anything runs.

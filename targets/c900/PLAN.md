@@ -1,10 +1,8 @@
 # C900 / Hiwear Plus plan
 
-**Status: Approved for Phase 1** (2026-10-13 (Asia/Saigon), owner sign-off delegated to the requesting agent by the owner).  
-Approved scope: C900-Q04, Q05, Q07, Q08, Q09 (static inventory only, no server calls), Q06 optional. Q12 parked; Q13 answered: no capture yet (2026-10-13). Phases 2-4 and everything outside that scope remain DRAFT. Phase 1 ran 2026-10-13 (Asia/Saigon): Q04, Q06, Q07, Q08, Q09 done; Q05 partial (stop condition b, createBond conflict in FACTS). Findings: [recon-v2.md](recon-v2.md).
+**Status:** Phase 1 and Phase 1b done (approved 2026-10-13, Asia/Saigon). **Phase 1c (Q16-Q19) and everything after it is DRAFT pending owner sign-off.** Next-step comparison: [NEXT-STEPS.md](NEXT-STEPS.md). Findings: [recon-v2.md](recon-v2.md).
 
-Last draft: 2026-10-13 (Asia/Saigon). Author: Grok Bot from current PROTOCOL/FACTS/LOG/STATUS.
-Findings snapshot: [recon-v1.md](recon-v1.md).
+Last draft: 2026-10-13 (Asia/Saigon). Findings: [recon-v2.md](recon-v2.md) (current), [recon-v1.md](recon-v1.md) (first snapshot).
 
 ---
 
@@ -41,7 +39,7 @@ Findings snapshot: [recon-v1.md](recon-v1.md).
 | **3** | Client MVP (deferred) | Separate approval after Phase 2 evidence | Pair, time, notify, battery in CLI; still no OTA/faces |
 | **4** | Watch faces / rich media | Reviewed design + approval | Only after OTA path design review; never ad-hoc |
 
-Run order: Phase 1 (static) before Phase 2 (hardware) even though hardware questions are labelled P0; P0 means "most important", not "first". Phase 2 also needs HW-0 (run sheet, write budget) done (Q13 answered 2026-10-13: no capture yet), and is parked until the owner says live work is necessary.
+Run order: Phase 1 (static) before Phase 2 (hardware) even though hardware questions are labelled P0; P0 means "most important", not "first". Phase 2 also needs the HW-0 run sheet approved, should come after an owner capture if one is possible (Q13, still "no capture yet" 2026-10-13), and is parked until the owner says live work is necessary.
 
 Map to TARGET.md gates: G0–G2 done; G3 continues in Phase 1; **G4 Client deferred**; G5 after HW-2+.
 
@@ -65,20 +63,26 @@ Map to TARGET.md gates: G0–G2 done; G3 continues in Phase 1; **G4 Client defer
 - Do not expand the simulator into a device model.
 - Do not wire OTAUtils / PAR / dial push into any client path.
 
-## 6. Proposed Phase 1 scope (subject to owner edit)
-
-Only questions marked **P0/P1** and method **static** in `OPEN-QUESTIONS.md` after owner review. Expected themes (draft):
+## 6. Phase 1 (done 2026-10-13)
 
 - Ran 2026-10-13 with the approved set C900-Q04, Q05, Q07, Q08, Q09, Q06 (Q12 parked). Budget: one bootstrap, one session; stop and commit when a question hits its stop condition.
-- Finish command-channel key/payload tables for first-contact features (weather/alarms/health/contacts **payloads** as docs, not client).
-- Finish inbound DF inventory needed for listen-only.
-- Dial `.bin` header trim fields (synthetic fixture OK).
-- Explicitly **defer** PAR native layout, HryFine full compare, and any OTA send design unless owner promotes them.
+- PAR native layout, HryFine compare and any OTA send design stay deferred.
 
 ## 6b. Phase 1b (APPROVED by owner 2026-10-13)
 
 Owner 2026-10-13: no live test until necessary. Phase 1b is static only: C900-Q14 (inbound remainder, createBond conditions) and C900-Q15 (HW-0 run sheet as a document, zero writes). Phase 2 stays parked until the owner says hardware is necessary; then it starts read-only (HW-1 optional capture, HW-2, HW-3) and needs per-session approval. Bonding decision (2026-10-13): app-side createBond is [C] (FACTS §4); device side stays [U].
 
-## 7. Stop condition for Phase 0 agents
+## 6c. Phase 1c (DRAFT, pending owner sign-off)
 
-After updating PLAN.md / OPEN-QUESTIONS.md (or confirming the drafts): commit on a feature branch if asked, then **STOP and report for owner sign-off**. Do not start Phase 1.
+Static and owner-capture work only; details and rationale in [NEXT-STEPS.md](NEXT-STEPS.md).
+1. C900-Q16: cmd 5 field maps (static).
+2. C900-Q17: notify_log.py safety fix (tool; DRAFT, needs approval because it edits code).
+3. C900-Q18: DF/FD decoder over btcap JSON + synthetic fixture dry run (tool; DRAFT).
+4. C900-Q13 -> Q19: owner capture, then ingestion (gate: capture).
+5. HW-0 (Q01-Q03) only for what the capture leaves open, and only when the owner says live work is necessary.
+
+## 7. Entry criteria for Phase 3 (client)
+See NEXT-STEPS.md §6. Phase 3 and Phase 4 stay deferred.
+
+## 8. Stop rule for every agent
+After the scoped pass: commit on the feature branch, then STOP and report for owner sign-off. Never start the next phase on your own.
