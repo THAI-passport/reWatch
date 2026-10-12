@@ -211,3 +211,9 @@ Required by AGENTS.md.
 ## 2026-10-13 c900 INVARIANTS.md + guard test
 - Step: added targets/c900/INVARIANTS.md (identity, frame, commands, bonding, OTA, process quirks with the wrong version each one replaced) and tests/test_c900_invariants.py (blocklist, checksum vector, rows present). Linked from TARGET, RECON-HIWEAR-APK, NEXT-STEPS; SOP note.
   - Rationale: owner asked to stop agents dropping quirks; several facts (byte 4 version, createBond, jadx constant swaps, OTA interval) were wrong once and could regress silently.
+
+## 2026-10-13 — Phase 1c sign-off
+
+- **Step:** Recorded owner approval of C900-Q16, Q17 and Q18; Q13 capture = later; HW-0 parked; Phase 3/4 deferred (OPEN-QUESTIONS checklist, PLAN §6c, STATUS).
+  - **Decision:** Run order Q17 -> Q18 -> Q16, as instructed.
+  - **Rationale:** Q17 removes the I-50 hazard before any tooling work; Q18 needs no LFS; Q16 needs the decompiled tree.
