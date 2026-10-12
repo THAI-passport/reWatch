@@ -1,6 +1,6 @@
 # Tooling log
 
-Problems hit while building reWork's own tools (target problems go in `targets/<slug>/LOG.md`). Entry: date, area, problem, cause, solution. Newest last.
+Problems hit while building reWatch's own tools (seeded from reWork, see docs/FROM-REBEAMBOX.md) (target problems go in `targets/<slug>/LOG.md`). Entry: date, area, problem, cause, solution. Newest last.
 
 ---
 
@@ -42,7 +42,7 @@ Problems hit while building reWork's own tools (target problems go in `targets/<
 ## 2026-10-12, fresh instances rebuilt by reflex and findings were not written back
 - Problem: a new agent's default was to download and decompile, which repeats work, and results of a pass were not recorded where the next agent looks.
 - Cause: no rule said when a rebuild is justified or what to record afterwards.
-- Solution: AGENTS.md "Rebuild only when necessary" and "After every decompile pass" (PROTOCOL, FACTS, LOG, matching skill = reWork's SOP), repeated in the re-static, re-acquire and re-workflow skills; QUICKSTART in the task-pack template; a test that scripts named in docs exist. Status: Solved as process.
+- Solution: AGENTS.md "Rebuild only when necessary" and "After every decompile pass" (PROTOCOL, FACTS, LOG, matching skill = reWatch's SOP), repeated in the re-static, re-acquire and re-workflow skills; QUICKSTART in the task-pack template; a test that scripts named in docs exist. Status: Solved as process.
 
 ## 2026-10-12, pinning: floating latest links
 - Problem: a SOURCES file could pin a hash while its only URL was a floating "latest" link, and `--accept-new-hash` could be used to move on after a vendor update without a record, so the next machine would pin something else.

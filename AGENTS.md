@@ -1,6 +1,6 @@
-# AGENTS.md: reWork, a target-agnostic reverse-engineering workflow
+# AGENTS.md: reWatch, reverse engineering smartwatch companion apps
 
-You are reverse engineering a consumer device or its companion app so an open, local-only client can talk to it. This file is the contract. Skills in `.claude/skills/` hold the procedures. Read this file, then load `re-workflow` and follow it.
+You are reverse engineering a smartwatch (or band) through its companion app so an open, local-only client can talk to it. Order of work: software first (the app, its libraries, public documentation, existing captures), hardware only as a last resort and only with the owner's explicit approval (see "Software first, hardware last"). This file is the contract. Skills in `.claude/skills/` hold the procedures. Read this file, then load `re-workflow` and follow it.
 
 ## Minimal prompt you will be given
 
@@ -18,13 +18,19 @@ Everything else is optional (package name, artifact path, transport hint). If it
 6. Never hard-code a result from a simulator as "confirmed". A simulator written by you only proves consistency.
 7. Protect the device: before adding any "send often" feature, find out what a write costs (flash wear, bricking) and add a guard first. Never ship firmware-write code paths unreviewed.
 
+## Software first, hardware last
+1. Software means: the companion app (decompiled, static), its native libraries (disassembled and emulated), public documentation and SDKs, third-party write-ups, and captures the owner already has. Exhaust these before touching a device.
+2. A watch in hand is not permission to open it. Read-only BLE probing of the owner's own watch needs the user's approval for that session (see "Contact with real systems"). Physical work (USB, UART/SWD pads, flash reads, teardown) is a last resort: only when software cannot settle a named `[I]`/`[U]` claim, only with the owner's explicit approval for that action, and never as a way around a protection. Record why software could not answer first.
+3. Never write firmware, flash, watch-face or OTA data to a real watch without the write-budget rules below and explicit approval. Reading is the default; OTA code is studied, never exercised.
+4. Update `docs/SOP.md` after each pass (see "After every decompile pass").
+
 ## Evidence tags
 `[C]` confirmed in the artifact (cite file and line or method) · `[V]` verified by an emulator or test vector against real code · `[H]` confirmed on real hardware (capture or report) · `[W]` third-party claim, unverified · `[I]` inferred · `[U]` unknown.
 Conflicting values live only in `targets/<slug>/FACTS.md`; other docs link there.
 
 ## Logs you maintain
 - Problem log: `targets/<slug>/LOG.md` records every problem hit, with the evidence, the cause, and the fix, or "open" plus what is needed. Read it before resuming a target. Append the moment something goes wrong, in the same commit as the related change when practical.
-- Tooling log: `LOG.md` at the repo root records problems in reWork's own tools, same format.
+- Tooling log: `LOG.md` at the repo root records problems in reWatch's own tools, same format.
 - Fixes list: `FIXES.md` at the repo root has "Open" and "Fixed". Anything you find that needs fixing (a tool bug, a template gap, a skill that misled you) goes under Open; when fixed, move it to Fixed with what was wrong and what changed. Same commit as the change.
 - When a log entry repeats across targets, promote it into the matching skill and delete the repetition.
 
@@ -50,12 +56,12 @@ Real systems means a physical device, a vendor server, a store listing, or any l
 ## Build workflow
 - The plan lives in docs, not in your head: `targets/<slug>/TARGET.md` (goal, gates) and `PROTOCOL.md` (how things work). If a design decision changes, update the doc in the same commit.
 - Work in phases: a coherent chunk that passes its own checks (tests, `python tools/rw.py lint`). Commit after every finished phase; push after every gate. Message format: `<slug> G<n>: <what the phase delivers>` plus a short body.
-- Never push to `main` directly. Use the designated work branch and offer a pull request when a gate set is done; do not open one unasked.
+- Never push to `main` directly (the initial seed commit was the one exception). Use the designated work branch and offer a pull request when a gate set is done; do not open one unasked.
 - Capture-independent work (pure codecs, state machines, simulators, tests) may be built before hardware or captures exist. Capture-dependent work (timings, real limits, vendor quirks) waits for real data. Mark built-ahead work as such; no claim becomes `[H]` without hardware evidence.
 - Artifacts are rebuildable: record URL, SHA-256 and version in the machine-readable block of `SOURCES.md`, and on another machine run `python tools/rebuild_analysis.py <slug>` (try `--dry-run` first; `bash tools/rebuild-analysis.sh` is a wrapper). If the host is not reachable from a cloud session, add it to the environment's allowed domains or give the file with `--local-file`; use `--max-heap 3g` on small machines. It refuses to continue on a hash mismatch; `--accept-new-hash` only prints the new hash and edits nothing, and needs the user told. If the artifact cannot be rebuilt, say so and ask for the file.
 - Pin and verify by SHA-256, never by a floating "latest" link. Once an artifact is downloaded and validated, record its exact version, its SHA-256 and a versioned or mirrored URL in SOURCES (`VERSION`, `SHA256`, `URL`/`URL2`), and keep an owner-controlled exact copy; note its path or location in `COPY_LOCATION` without secrets. A rebuild always verifies against the pinned hash and refuses on a mismatch. When the vendor ships a new release, add a NEW pinned entry (new version, new hash, new SOURCES); never edit the old hash and never use `--accept-new-hash` silently (it is for inspection, prints the new hash, and the user must be told).
 - Rebuild only when necessary. A rebuild on a new instance costs a download and a decompiler run and returns nothing the target docs do not already hold unless you have a specific question. In this order: (1) grep the target's `PROTOCOL.md`, `FACTS.md`, `LOG.md` and the matching skill for the answer; (2) check whether `targets/<slug>/decompiled` exists and `BUILD-INFO.txt` matches SOURCES.md; (3) rebuild only if a claim tagged `[I]`/`[U]` needs the code, a different artifact version must be analysed, or the docs contradict each other; (4) `--dry-run` first; (5) write down which question required the rebuild. Never decompile "to explore".
-- After every decompile or code-reading pass, before you stop and in the same commit: byte-level findings go to `targets/<slug>/PROTOCOL.md` (tag, source class and method, no code pasted); disputed values to `FACTS.md`; every problem with its cause and solution (or "Unsolved" plus what was tried) to the target's `LOG.md`; procedure, tool flags, dead ends and tricks that would help on the next target go into the matching skill under `.claude/skills/` (that is reWork's SOP; if a trick applies to any target, promote it there and delete the repetition). A pass that ends with nothing recorded has to be repeated.
+- After every decompile or code-reading pass, before you stop and in the same commit: byte-level findings go to `targets/<slug>/PROTOCOL.md` (tag, source class and method, no code pasted); disputed values to `FACTS.md`; every problem with its cause and solution (or "Unsolved" plus what was tried) to the target's `LOG.md`; procedure, tool flags, dead ends and tricks that would help on the next target go into the matching skill under `.claude/skills/` (that is reWatch's per-skill SOP, and `docs/SOP.md` is the generic one; if a trick applies to any target, promote it there and delete the repetition). `docs/SOP.md` (generic procedure, tool tricks, lessons) is updated in the same commit when the pass taught something reusable. A pass that ends with nothing recorded has to be repeated.
 - Stop and ask when a step needs the user: logins, installs needing root, payments, providing hardware, or approving a write to a real device.
 - Never commit `.env`, tokens, signed URLs, personal data (addresses, phone numbers, account ids, device serials, MAC addresses), or captures that contain them. Scrub before saving; mask addresses by default.
 
@@ -90,6 +96,9 @@ tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.
 | G5 Handoff | HANDOFF.md, recon task pack specialised (`tasks/`), LOG.md complete | re-workflow, re-hardware-recon |
 
 Work gate by gate without waiting for approval between gates. Commit and push at each gate. Update `TARGET.md` gate table as you go.
+
+## Skills to load
+`re-workflow` always. Then as needed: `re-acquire` (get and pin the app), `re-static`, `re-ble-android-patterns` (find transports in decompiled Android code), `re-watch-targets` (what is specific to watches and what to record per model family), `re-jieli` (when `libjl_*` natives or the 0xAE00 service appear), `re-capture-ingestion` (HCI snoop and pcap files), `re-protocol-spec`, `re-native-emulation`, `re-client-sim`, `re-hardware-recon` (only after software is exhausted and the user approves).
 
 ## Habits that paid off
 - Start from the UI action (the click that connects or sends), not the first constant you grep.

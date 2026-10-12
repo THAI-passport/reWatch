@@ -59,7 +59,7 @@ next task suggested:
 |---|---|
 | Task result | `tasks/results/<task>-<date>.md` and a row in `STATUS.md` |
 | A problem you hit | `LOG.md` (date, gate, problem, cause, solution or open) |
-| Something in reWork itself that needs fixing | repo-root `FIXES.md` |
+| Something in reWatch itself that needs fixing | repo-root `FIXES.md` |
 | Disputed values | `FACTS.md` only |
 | Confirmed or corrected byte-level claim | `PROTOCOL.md`, with the tag changed and the source named |
 

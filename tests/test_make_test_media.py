@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 try:
     from PIL import Image
     import make_test_media
-except ImportError:                                   # Pillow is optional for reWork itself
+except ImportError:                                   # Pillow is optional for reWatch itself
     Image = None
 
 

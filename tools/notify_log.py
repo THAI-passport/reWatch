@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Passive notification logger for a real badge: subscribes to every notifiable characteristic and prints what arrives. Writes nothing
-to the badge's storage (it only enables notifications, which writes the standard CCCD descriptor).
+"""Passive notification logger for a real device: subscribes to every notifiable characteristic and prints what arrives. Writes nothing
+to the device's storage (it only enables notifications, which writes the standard CCCD descriptor).
 
     python tools/notify_log.py ADDRESS [--seconds 60] [--json out.jsonl]
 
-Use it for hardware task HW-13 (touch events) and to catch anything the badge sends unprompted. Needs bleak and a Bluetooth adapter.
+Use it for hardware task HW-13 (touch events) and to catch anything the device sends unprompted. Needs bleak and a Bluetooth adapter.
 Output lines: seconds-since-start, characteristic uuid, length, hex. The address is never printed in full.
 """
 import argparse
@@ -66,7 +66,7 @@ async def main_async(a):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("address", help="Bluetooth address (macOS: the UUID that `rebeambox scan` prints)")
+    ap.add_argument("address", help="Bluetooth address (macOS: the UUID that your BLE scanner prints)")
     ap.add_argument("--seconds", type=float, default=60.0)
     ap.add_argument("--json", help="also write one JSON object per event to this file")
     a = ap.parse_args(argv)

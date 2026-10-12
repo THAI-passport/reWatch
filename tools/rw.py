@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""reWork helper CLI (stdlib only).
+"""reWatch helper CLI (stdlib only).
 
     python tools/rw.py init <slug> [--name N] [--goal G]   create targets/<slug>/ from templates/
     python tools/rw.py doctor                              report which RE tools are installed
