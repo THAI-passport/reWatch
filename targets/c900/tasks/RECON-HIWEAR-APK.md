@@ -1,7 +1,25 @@
 # Task: Hiwear Plus APK recon (for another AI)
 
+**Cloud setup:** [docs/CLOUD-SETUP.md](../../../docs/CLOUD-SETUP.md) — run `bash tools/cloud_bootstrap.sh` until it prints `PASS`.
+
 Self-contained brief for Claude, Gemini, Antigravity, or any other agent.
 Read this file end-to-end before touching the tree. Follow reWatch `AGENTS.md`.
+
+## Starter prompt (paste to the cloud AI)
+
+```
+You are working in THAI-passport/reWatch on branch feat/c900-hiwear-plus (or the branch you were given).
+Goal: static recon of Hiwear Plus for an open-source ad-free C900 client. Never touch a watch. Never push main. No PR unless asked.
+
+1) Read AGENTS.md (ground rules only), docs/CLOUD-SETUP.md, then this whole file: targets/c900/tasks/RECON-HIWEAR-APK.md
+2) Run: bash tools/cloud_bootstrap.sh   # must end with PASS
+3) Read targets/c900/PROTOCOL.md and FACTS.md summaries; do not redo settled claims
+4) Work only the open questions, starting from the named key classes (token-saving section). Use rg; do not read the whole decompiled tree.
+5) Write findings incrementally to PROTOCOL/FACTS/LOG/docs/steps.md; result file targets/c900/tasks/results/RECON-HIWEAR-APK.md
+6) unittest + rw.py lint; commit; push the feature branch.
+Stop and report if budget is low or bootstrap is FAIL.
+```
+
 
 ## Overall goal
 
@@ -15,14 +33,18 @@ Build an **open-source, ad-free replacement client** for the **C900** smartwatch
 
 ## Setup (exact)
 
+**Preferred:** `bash tools/cloud_bootstrap.sh` (see [docs/CLOUD-SETUP.md](../../../docs/CLOUD-SETUP.md)). Stop unless the last line is `PASS`.
+
+Manual equivalent (only if the script cannot run):
+
 1. Clone the branch you were given. Install Git LFS if needed (`git lfs version`).
-2. Pull **only** the pinned archive (do not blanket-pull every LFS object if more appear later):
+2. Pull **only** the pinned archive:
 
    ```bash
    git lfs pull -I 'resources/c900/hiwear-plus-2.0.1.xapk.zip'
    ```
 
-   Note: every full download of this zip counts against the **repository owner's** Git LFS bandwidth (~105 MB each; Free plan includes 10 GiB/month). Prefer reusing an existing local copy when you already have a verified tree.
+   Note: every full download counts against the **repository owner's** Git LFS bandwidth (~105 MB each; Free plan includes 10 GiB/month). Prefer reusing a verified local tree.
 
 3. Verify hashes (must match `targets/c900/SOURCES.md`):
 
@@ -31,23 +53,38 @@ Build an **open-source, ad-free replacement client** for the **C900** smartwatch
    | Zip `resources/c900/hiwear-plus-2.0.1.xapk.zip` | `800662003d57aa272e5f829908c4c7671d1118ac4ed564242a5edcd4ca8e570e` |
    | Inner member `hiwear-plus-2.0.1.xapk` | `5fa761a4d16ae8980fc40a341264441fe042858876ce1267dab54bd5be7b8952` |
    | Base APK `com.myled.HiwearPlus.apk` (after extract) | `931efc777ec58bc408e056da31f4e85af253a0fd35dafb6e901589829fe43a5a` |
-| ABI split `config.arm64_v8a.apk` | `4c71b2819c5403cd8748931e6d24764b92ca518e677465820cb3469bf4ab7330` |
+   | ABI split `config.arm64_v8a.apk` | `4c71b2819c5403cd8748931e6d24764b92ca518e677465820cb3469bf4ab7330` |
 
-4. Tools and rebuild:
+4. Tools and rebuild: `python3 tools/setup_tools.py` then `python3 tools/rebuild_analysis.py c900 --max-heap 3g` (skip rebuild if `BUILD-INFO` matches SOURCES).
 
-   ```bash
-   python3 tools/setup_tools.py          # or use an existing ~/tools with jadx/apktool
-   python3 tools/rw.py doctor
-   python3 tools/rebuild_analysis.py c900 --max-heap 3g
-   # If artifacts already exist and BUILD-INFO matches SOURCES, skip rebuild (AGENTS.md).
-   ```
+5. Baseline: `python3 -m unittest discover -s tests` and `python3 tools/rw.py lint`.
 
-5. Baseline checks before you change anything:
 
-   ```bash
-   python3 -m unittest discover -s tests
-   python3 tools/rw.py lint
-   ```
+## Token-saving workflow (mandatory for cloud LLMs)
+
+Do **not** read the whole `targets/c900/decompiled/` tree into context. Cap every search to the open question you are answering. Prefer `rg` / `rg -l` / reading one method at a time. Write PROTOCOL/FACTS/steps after each settled point so a retry does not redo work. If the context budget is low: stop, commit what you have, fill the result report's "Stopped short" section.
+
+### Start from these paths (relative to `targets/c900/decompiled/sources/`)
+
+| Topic | Paths |
+|---|---|
+| GATT / UUIDs / MTU | `com/myled/HiwearPlus/BleConstants.java`, `com/myled/HiwearPlus/ble/MBleManager.java` |
+| Frame build / checksum | `com/myled/HiwearPlus/ble/IssuedUtil.java`, `com/myled/HiwearPlus/ble/utils/NotifyWriteUtils.java`, `com/myled/HiwearPlus/ble/utils/AckPackageConfigUtils.java` |
+| Command ids / keys | `com/myled/HiwearPlus/ble/CommandID.java`, `com/myled/HiwearPlus/ble/SettingIssuedUtils.java`, `com/myled/HiwearPlus/ble/MsgPushHelper.java`, `com/myled/HiwearPlus/ble/GeneralUtils.java` |
+| Inbound / sync follow-ups | `com/myled/HiwearPlus/ble/infoutils/BleDataUtils.java` |
+| OTA channel (D5/D6) | `com/myled/HiwearPlus/ble/ota/CommandUtils.java`, `OTAUtils.java`, `OTANotifyWriteUtils.java` |
+| Cus5610 DFU (separate) | `com/myled/HiwearPlus/ble/ota/Cus5610CommandUtils.java`, `Cus5610OTAUtils.java` |
+| Dial `.bin` / Base64 obfuscation | `com/myled/HiwearPlus/function/dial/activity/DialDetailActivity.java`, `com/myled/HiwearPlus/utils/StringUtils.java` |
+| DIY face / PAR | `com/myled/HiwearPlus/function/dial/activity/WatchFaceEditActivity.java`, `com/bluetrum/abpartool/ParTool.java`, `com/myled/HiwearPlus/utils/BitmapUtils.java` |
+| Contacts push (OTA main=4) | `com/myled/HiwearPlus/function/contact/ContactActivity.java` |
+| Smali for literals | `targets/c900/work/smali/` after `apktool d` **without** `-s` (not in decompiled/) |
+
+### Suggested rg starters
+
+```bash
+rg -n "getSendByte|DATA_HEADER|rawToPar|decodeInfo|startOTA|COMMAND_ID_" targets/c900/decompiled/sources/com/myled/HiwearPlus --glob '*.java'
+rg -n "generalSendBytes|0x31|groupPacNum" targets/c900/decompiled/sources/com/myled/HiwearPlus/ble/ota --glob '*.java'
+```
 
 ## What is already known (do not redo)
 
