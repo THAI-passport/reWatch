@@ -48,3 +48,8 @@ Problems hit while building reWatch's own tools (seeded from reWork, see docs/FR
 - Problem: a SOURCES file could pin a hash while its only URL was a floating "latest" link, and `--accept-new-hash` could be used to move on after a vendor update without a record, so the next machine would pin something else.
 - Cause: the rebuild tool only checked hashes; nothing asked for a versioned URL, an owner-controlled copy or a new entry per release.
 - Solution: AGENTS.md rule (pin by version and SHA-256, new release is a new pinned entry, never edit the old hash), `COPY_LOCATION` field and template text, warnings for a floating-only URL or a missing copy location, mismatch and accept messages that say so, tests.
+
+## 2026-10-12, imported landscape document has untagged and garbled claims
+- Problem: the owner-supplied watch landscape mixes third-party claims with no tags, has a stray JSX tag and a garbled flash-size range, and tells the reader to build inside another repo.
+- Cause: external source; written for a different workflow.
+- Solution: stored as `docs/recon/budget-smartwatch-landscape.md` with a banner and flaws table; JSX tag converted; every claim is `[W]`; the build-location advice is overridden. Status: Solved for storage; claims stay unverified until G0/G1.
