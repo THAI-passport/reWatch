@@ -108,3 +108,8 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 ## 2026-10-13 Phase 1c C900-Q17 notify_log.py OTA-safe subscribe
 - Evidence: tools/notify_log.py, tests/test_notify_log.py.
 - Problem: the tool enabled notify on every notifiable characteristic, OTA included (I-50). Fix: default deny list by characteristic and by service, `--only`, `--deny`, exit 2 on a denied `--only`, plan printed first; 6 new tests. Solved.
+
+## 2026-10-13 Phase 1c C900-Q18 capture decoder
+- Evidence: tools/btcap.py, PROTOCOL §4/§5/§7, client/c900/frames.py (read only).
+- Problem: btcap.py lists only writes and notifies, so 0x2A27/0x2A28/0x2A19 reads were invisible. Fix: the decoder pairs ATT read request/response from the capture itself; btcap.py unchanged. Solved.
+- Problem: the Phase 1b `*.btsnoop` ignore rule would hide new fixtures. Fix: `!tests/fixtures/*.btsnoop`. Solved.
