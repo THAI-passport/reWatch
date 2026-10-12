@@ -7,6 +7,9 @@ This note only holds the prompt and the pass criteria. No T900 or C900 research 
 Reverse engineer: the T900 and C900 watch app.   Goal: scan, connect, read basic status and push a watch face or notification from a Python CLI.
 ```
 
+## Seed material
+`docs/recon/budget-smartwatch-landscape.md` (all `[W]`). It names a likely app per watch and a Nordic-UART frame layout for one of them; use it to seed hypotheses, not facts. Next-pass instructions: `docs/NEXT-PASS-PROMPT.md`.
+
 ## Pass criteria
 - `targets/<slug>/` has SOURCES.md with hashes (pinned by version and SHA-256, not a floating link).
 - PROTOCOL.md where every row is tagged.
