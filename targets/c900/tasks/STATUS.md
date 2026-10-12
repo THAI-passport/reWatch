@@ -39,7 +39,7 @@ Phase 0 signed off 2026-10-13; Phase 1 static pass run the same day. Start brief
 | C900-Q12 | Cus5610 inventory | P2 | static | parked (OTA/DFU risk, not needed now) | |
 | C900-Q14 | Inbound map remainder + createBond conditions | P1 | static | done (steps 2-7); step 1 partial, remainder -> C900-Q16 | tasks/results/C900-Q14.md |
 | C900-Q15 | HW-0 run sheet (document only) | P1 | static | done: DRAFT run sheet tasks/HW-0-RUNSHEET.md (not approved; nothing run) | |
-| C900-Q16 | cmd 5 health field maps (5 parser classes) | P1 | static | todo (approved Phase 1c 2026-10-13) | |
+| C900-Q16 | cmd 5 health field maps (5 parser classes) | P1 | static | done: keys 2, 4, 5, 9, 12, 13, 15 mapped [C smali]; units of distance/calorie [U] (tasks/results/C900-Q16.md) | |
 | C900-Q17 | notify_log.py OTA-safe subscribe (tool fix) | P1 | static (code) | done: deny list + --only/--deny + tests (tasks/results/C900-Q17.md) | |
 | C900-Q18 | Capture decoder prep + fixture dry run | P1 | static (code) | done: tools/c900_decode.py + synthetic fixture + tests (tasks/results/C900-Q18.md) | |
 | C900-Q19 | Ingest owner capture | P0 | capture | blocked: needs human (capture from Q13) | |

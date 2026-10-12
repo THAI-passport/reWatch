@@ -60,3 +60,9 @@ Tags: [C] app code (smali-checked where marked), [V] local re-derivation, [I] in
 - **C900-Q15:** `tasks/HW-0-RUNSHEET.md`, DRAFT, zero writes, not run. HW-3 uses a single-UUID listener because `tools/notify_log.py` would subscribe to OTA characteristics.
 - **Owner guide:** `docs/guides/HCI-CAPTURE-ANDROID.md`; `captures/` is git-ignored.
 - **Next:** owner decides on an optional HW-1 capture; HW-0 needs a separate approval before anything runs.
+
+## Phase 1c (approved 2026-10-13: Q16-Q18; Q13 capture later; HW-0 parked; Phase 3/4 deferred)
+- **C900-Q17:** `tools/notify_log.py` always skips OTA/DFU services and characteristics (0xFF00, 0x18A8, `...dcca9e`). It has `--only` and `--deny`, and a denied `--only` exits 2. Covered by 6 tests. INVARIANTS I-50 updated.
+- **C900-Q18:** `tools/c900_decode.py` decodes DF/FD frames from a capture or btcap JSON. It reassembles frames and checks sums, adds labels, shows the reads and feature bits, and prints a summary (version byte, bond triggers, blocked cmds, OTA traffic). Decode only. Tested on a generated synthetic fixture (9 tests).
+- **C900-Q16:** cmd 5 keys 2, 4, 5, 9, 12, 13 and 15 are mapped [C smali]. Health dates use their own 2-byte packing (I-36). jadx substituted a calorie clamp constant (400000; I-24). Units are still [U].
+- **Next:** the decoder is ready for Q19 when the owner records a capture. Nothing live until the owner says so.

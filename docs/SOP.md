@@ -43,6 +43,7 @@ Disassemble with capstone and pyelftools; emulate with unicorn; port stage by st
 
 ## 7. Captures
 Ingest HCI snoop and pcap files with `tools/btcap.py`; map handles to UUIDs, reassemble across MTU chunks, validate checksums, report bad frames instead of dropping them. Scrub before storing; never commit raw captures. See `re-capture-ingestion`.
+- c900: decode frames with `tools/c900_decode.py <capture>` (decode only; hides message text, masks MACs, flags blocked cmds and OTA traffic). Live notify logging: `tools/notify_log.py --only <uuid>`; its OTA/DFU deny list is always on.
 
 ## 8. Tests and simulators
 Build a software device from the spec to test the client, but a simulator written by you proves consistency only. Keep every uncertain value a named constant or flag so first hardware contact needs flag changes. Run `python3 -m unittest discover -s tests` and `python3 tools/rw.py lint` before each commit.
@@ -73,6 +74,8 @@ Build a software device from the spec to test the client, but a simulator writte
 - Bluetrum watch-face / paper / contact push uses a separate OTA channel (D5/D6 on 0xFF00), not the DF/FD command channel. Document only; never wire into the client without a reviewed design.
 - Dial `.bin` files from the vendor server are obfuscated Base64 text (`StringUtils.decodeInfo` token swap), not raw binaries.
 - Absence claims ("the app never calls X") need an app-wide smali search for the framework method, e.g. `rg "BluetoothDevice;->createBond" work/smali | grep -v <ble-lib>`, not a jadx search over a few classes. C900: an earlier "no createBond in app code" was wrong; smali found three sites. Write the reproduce command next to the claim.
+- Treat every jadx field reference used as a number (`SomeLib.CONST`) as a possible substitution: read the literal in smali. C900-Q16 found `JCameraView.MEDIA_QUALITY_FUNNY` standing in for 400000 in a step parser.
+- Tools that touch a live device need a deny list for OTA/DFU UUIDs that cannot be turned off by a flag; test it with a fake GATT table (C900-Q17).
 - Capability bitmaps decide which payload variant the app sends (notify switch length, message type table, face code size). Map the feature parser early; it explains most "optional" bytes.
 
 ## 10. After each pass (checklist)

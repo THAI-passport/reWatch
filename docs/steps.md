@@ -237,3 +237,13 @@ Required by AGENTS.md.
   - **Rationale:** A real capture carries notification text and the watch's classic MAC; output may get pasted into result files.
 - **Decision:** Flag OTA traffic and count it, never decode it.
   - **Rationale:** C900-Q19 stop rule and I-40.
+
+## 2026-10-13 — C900-Q16
+
+- **Step:** Read the five parser classes plus two helpers (HexUtil, DevDateBean), all literals checked in smali.
+  - **Decision:** All seven keys mapped [C smali]; units of distance and calorie, type bytes and modeData meanings left [U].
+  - **Rationale:** The code stores those without unit or label; inferring them would be [I] at best, so none was promoted.
+- **Decision:** Synthetic examples computed with code, not by hand.
+  - **Rationale:** SOP 9.1 (hand sums were wrong before).
+- **Decision:** Did not extend `tools/c900_decode.py` with field decoders.
+  - **Rationale:** Not in Q16's spec; the maps are ready for it when a capture arrives (noted as left).
