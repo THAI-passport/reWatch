@@ -142,3 +142,9 @@ Required by AGENTS.md.
   - **Rationale:** The task asked to resolve the conflict, not to choose a number. Following every read of the field showed neither value controls timing, which is the fact a future client needs.
 - **Decision:** Documented width edge cases (signed group/timeout bytes) and the missing reply checksum.
   - **Rationale:** These are the "false safe to send" traps Q07 exists to prevent. Client must not implement.
+
+## 2026-10-13 — C900-Q09 server inventory
+
+- **Step:** Parsed the single Retrofit interface with a script (verb, path, method, parameter style), listed base-URL constants, and read the request-signing helper for its shape.
+  - **Decision:** Q09 done [C]: 70 endpoints, 7 hosts, MD5 `sign` scheme. Secret values left out on purpose.
+  - **Rationale:** The owner approved static inventory only, with no server calls. AGENTS.md forbids committing tokens; the algorithm shape is enough to know the client must not call these, and recording the key would add risk with no benefit.

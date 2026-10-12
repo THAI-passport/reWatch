@@ -124,6 +124,9 @@ cmd at byte 4, key at byte 6, payload from byte 9. Mapped: 0x05 health (field ma
 ## 8. Server endpoints (inventory only, no calls) [C]
 Vendor API via Retrofit (about 70 endpoints): login and account binding, `member_devices/bind_mac`, `dial/get_list`, `dial/get_detail`, `dial_local/get_list`, `order/get_onwer_dials`, `census/add_dial_down`; OTA host with `api/hry/get_update`, `api/ota/down_finish`, `api/ota/down_error`; two weather hosts; privacy pages. No secret values recorded here.
 
+### 8.1 Inventory (C900-Q09) [C]
+Exactly 70 Retrofit endpoints in `network/request/Request.java`, all `@QueryMap`/`@FieldMap`. Hosts: main API `kezhiapp.lianhezhuli.com/api/` (also the assistant SSE), debug `ceshilafei.howruf.com/api/`, OTA `ota.lianhezhuli.com/api/` (`hry/get_update`, `ota/down_finish`, `ota/down_error`: never call), weather `natualam.howruf.com` (current) and `repellent.maswear.net` (7-day), static pages `privacy.lhzl666.com`, web `dial.lhzl666.com`. Dial `.bin` download URLs are dynamic (from `dial/get_detail`). Auth: no auth headers; a `sign` parameter = MD5 of sorted `k=v&` pairs (plus timestamp and stored token) followed by `key=<app secret>`; the secret value is not recorded. `member_devices/bind_mac` is called after the watch accepts a first bind (inbound 0x0C key 8). Grouped table: `tasks/results/C900-Q09.md`.
+
 ## 9. Worked examples (own arithmetic from the [C] rules)
 - Settings query, cmd 9 key 0, no payload: `DF 00 05 EE 09 01 00 00 00` (0xDF + 0x05 + 0x09 + 0x01 = 0xEE) [V against the rule as read from code; not seen on a wire].
 - Time sync, cmd 2 key 1, 2026-10-13 14:05:30: payload `6A 9A E1 5E`; full frame built by `frames.build(0x02, 0x01, time_payload(...))` [V against smali packing; not seen on a wire].

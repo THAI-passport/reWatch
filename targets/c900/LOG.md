@@ -74,3 +74,8 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Evidence: `OTANotifyWriteUtils` (`<init>`, `dataHandle`, send runnable, `onWrite`), `OTAUtils.sendData/startOTA`, `CommandUtils`.
 - Problem: PROTOCOL said interval "default 300 if 0; field init is 500" and recon flagged it as a conflict. Cause: jadx printed the init as `CropImageView.DEFAULT_IMAGE_TO_CROP_BOUNDS_ANIM_DURATION` (value 500); nobody had checked whether the field is read. Fix: smali shows both literals are real and the field is never used for timing. Solved.
 - No send code written; client unchanged.
+
+## 2026-10-13 Phase 1 C900-Q09 server inventory (static)
+- Evidence: `network/request/Request.java`, `network/Urls.java`, `network/sse/SSEManager.java`, `utils/SignUtils.java`, `function/dial/activity/DialDetailActivity.java`.
+- Problem: risk of copying secrets (signing key literal, speech SDK credential fields) into the repo. Fix: every grep piped through a scrubber that masks key/token/sign values and long tokens; recorded algorithm shape and field names only; scanned the result file with the same scrubber before commit (no matches). Solved.
+- No network calls, DNS lookups or downloads.
