@@ -134,3 +134,11 @@ Required by AGENTS.md.
   - **Rationale:** OPEN-QUESTIONS stop condition (b): a value that conflicts with FACTS.md is recorded there and no winner is picked. Verified by an app-wide smali search before recording, so the conflict is real and reproducible.
 - **Decision:** Wrote the mapped part (14 cmds, 0x0C keys, feature bits) and listed six next reads in the result file.
   - **Rationale:** A partial result with exact next steps lets the next pass resume without re-reading the dispatcher.
+
+## 2026-10-13 — C900-Q07 OTA ready reply and interval
+
+- **Step:** Read the 0x81/0x82/0x83 handler, the field initializer, the OTA send runnable and write callback in smali; searched all dex dirs for readers of `sendInterval`.
+  - **Decision:** Q07 done [C]. The 300 vs 500 ms conflict is resolved: 500 is the init, 300 is the zero-reply substitute, and the value is never applied. Pacing is callback-driven with a 10 ms sleep.
+  - **Rationale:** The task asked to resolve the conflict, not to choose a number. Following every read of the field showed neither value controls timing, which is the fact a future client needs.
+- **Decision:** Documented width edge cases (signed group/timeout bytes) and the missing reply checksum.
+  - **Rationale:** These are the "false safe to send" traps Q07 exists to prevent. Client must not implement.
