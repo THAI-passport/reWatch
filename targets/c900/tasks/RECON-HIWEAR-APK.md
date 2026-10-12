@@ -102,7 +102,7 @@ Owner must explicitly approve which question IDs from `OPEN-QUESTIONS.md` are in
 
 ### Token-saving (Phase 1 only)
 
-Do **not** slurping the whole `decompiled/` tree. Start from:
+Do **not** slurp the whole `decompiled/` tree. Start from:
 
 | Topic | Paths under `targets/c900/decompiled/sources/` |
 |---|---|

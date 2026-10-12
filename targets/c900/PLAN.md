@@ -41,6 +41,8 @@ Findings snapshot: [recon-v1.md](recon-v1.md).
 | **3** | Client MVP (deferred) | Separate approval after Phase 2 evidence | Pair, time, notify, battery in CLI; still no OTA/faces |
 | **4** | Watch faces / rich media | Reviewed design + approval | Only after OTA path design review; never ad-hoc |
 
+Run order: Phase 1 (static) before Phase 2 (hardware) even though hardware questions are labelled P0; P0 means "most important", not "first". Phase 2 also needs HW-0 (run sheet, write budget) done and a Q13 answer from the owner.
+
 Map to TARGET.md gates: G0–G2 done; G3 continues in Phase 1; **G4 Client deferred**; G5 after HW-2+.
 
 ## 4. Risks
@@ -52,6 +54,9 @@ Map to TARGET.md gates: G0–G2 done; G3 continues in Phase 1; **G4 Client defer
 | Jadx constant substitution | Smali for every numeric that matters (already hit on -0x7d0) |
 | Scope creep into OTA/faces | Faces and Cus5610 stay document-only until Phase 4 |
 | Cloud agent redoes settled work | Phase 0 deliverable is the plan; token-saving class list for Phase 1 only |
+| Owner statements tagged `[owner]` read as `[C]` | `[owner]` is not an AGENTS.md tag; weigh as `[W]` until code or hardware confirms |
+| A capture the owner already has is overlooked | Ask first (C900-Q13); captures are software and avoid live probing |
+| First-pass `[C]` values from jadx (100 s timeout, OTA interval 300/500) | Smali check in Q04/Q07 before they are used in any run sheet |
 | Implementation before understanding | Client marked deferred; Phase 0 forbids new client code |
 
 ## 5. Deferred: client / implementation
@@ -64,6 +69,7 @@ Map to TARGET.md gates: G0–G2 done; G3 continues in Phase 1; **G4 Client defer
 
 Only questions marked **P0/P1** and method **static** in `OPEN-QUESTIONS.md` after owner review. Expected themes (draft):
 
+- Recommended set: C900-Q04, Q05, Q07, Q08 (Q06 optional; Q09/Q12 parked unless promoted). Budget: one bootstrap, one session; stop and commit when a question hits its stop condition.
 - Finish command-channel key/payload tables for first-contact features (weather/alarms/health/contacts **payloads** as docs, not client).
 - Finish inbound DF inventory needed for listen-only.
 - Dial `.bin` header trim fields (synthetic fixture OK).
