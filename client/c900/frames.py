@@ -1,6 +1,6 @@
 """C900 frame codec for the Hiwear Plus 2.0.1 command channel.
 
-Status 2026-10-13: layout, checksum, ack and opcodes are read from the app's code [C]
+Status 2026-10-13: **client feature work DEFERRED** (targets/c900/PLAN.md Phase 3). Layout, checksum, ack and opcodes are read from the app's code [C]
 (targets/c900/PROTOCOL.md sections 4-6, smali of SettingIssuedUtils and CommandID). UNVERIFIED on
 hardware: nothing here has been sent to a watch. build() refuses the dangerous command ids in
 BLOCKED_CMDS (OTA, unbind, reset, factory test, factory restore).
