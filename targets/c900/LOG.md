@@ -95,3 +95,7 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Evidence: `HealthUtils.analusis`, `UserInfoAndRemindUtils`, `BleDataUtils.handleWatchFaceInfo/setSettingSuccess`, `MainActivity$4`, `DeviceContro`, `NotifyWriteUtils.onRead/readFeatures` (jadx + smali).
 - Problem: step 1 field maps sit in five parser classes not named in the step. Fix: stopped per the step stop rule; key map and inline SpO2 recorded, parsers listed. Partial.
 - Problem: grep of readFeatures smali showed the b25 flags several times (default branches). Fix: read the window after the `0x1a` length check and traced the mask register back to `const/16 v4, 0x80`. Solved.
+
+## 2026-10-13 Phase 1b C900-Q15 HW-0 run sheet (document only)
+- Evidence: HW-RECON.md, re-hardware-recon skill, recon-v2 §3, PROTOCOL §2-3, C900-Q14.
+- Problem: `tools/notify_log.py` subscribes to every notifiable characteristic, which would include the OTA notify characteristics. Fix: sheet forbids it for HW-3 and gives a one-UUID snippet; no tool code changed. Solved for the sheet.
