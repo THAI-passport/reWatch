@@ -26,8 +26,8 @@ Note: the data service ends in `...DCCA9F`, the OTA service in `...DCCA9E` [C].
 - The scan is unfiltered (BLESSED `scanForPeripherals`). A device is listed when it has a name and either (a) the raw scan record, printed as colon-separated hex, contains the device's own MAC followed by `12:34`, or (b) MAC followed by `56:10` (DFU mode), or (c) the name starts with `B0`, `H2` or `HY`.
 - No product name such as C900 is matched; the advertised name of a C900 is [U] (HW-2).
 - After service discovery the app reads the 5610 OTA characteristic to detect DFU mode, then requests MTU 32 normally (450 in DFU mode; the OTA tool path requests 185). App data writes are cut into 20-byte pieces regardless of MTU, 20 ms apart. Each full 20-byte piece gets up to two retries 100 ms apart; the final remainder piece gets one retry after 20 ms; a frame of 20 bytes or less is written once with no retry. A failed write disconnects at once [C smali, C900-Q04].
-- No `createBond` call in the app's own code [C]; BLESSED reacts to bonding if the watch asks [C library]; whether the C900 asks is [U].
-- **Conflict (C900-Q05, see FACTS §4):** smali shows three app-code `createBond` sites (`BleDataUtils.setDeviceContro` on inbound 0x0C key 19, `BleDataUtils.setSettingSuccess`, `MainActivity$4.run`). Not resolved here.
+- The app calls `createBond` itself in three places [C smali, see FACTS §4]: on inbound 0x0C key 19 when unbonded, in an FD-ack follow-up (`BleDataUtils.setSettingSuccess`), and in `MainActivity$4.run`; trigger conditions of the last two are [U] (C900-Q14). BLESSED also reacts if the watch asks [C library]. Whether the C900 asks is [U].
+- Earlier text said "no createBond in app code"; retired 2026-10-13 (FACTS §4).
 - Bind: command 3 key 0 with an 8-character random id saved per phone; unbind: command 4 key 0 [C, `GeneralUtils`].
 
 ## 4. Framing [C, `IssuedUtil`, `NotifyWriteUtils`, `AckPackageConfigUtils`]
@@ -142,7 +142,7 @@ Exactly 70 Retrofit endpoints in `network/request/Request.java`, all `@QueryMap`
 | Time year offset in smali | done: -0x7d0 [C] |
 | Whether Hiwear Plus and HryFine use the same opcodes | decompile HryFine (optional) |
 | C900 `PROTOCOL_VERSION` (frame byte 4) and feature map (incl. `binPreviewFlag`, contacts bit) | HW-2 read-only 0x2A27 / 0x2A28 reads |
-| Whether the C900 requests classic bonding (0x0C key 19) | HW-2/HW-3; app-side createBond is a recorded conflict (FACTS §4) |
+| Whether the C900 requests classic bonding (0x0C key 19) | HW-2/HW-3; app side calls createBond conditionally (FACTS §4) |
 | Watch ack x value; which cmd 2 keys the C900 acks | HW-4 single writes or a capture |
 | Ack timeout value | done: 100 s [C smali] |
 | OTA send interval 300 vs 500 | done: neither is applied [C smali] |

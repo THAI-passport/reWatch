@@ -25,7 +25,7 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | Ack | `FD 00 05 sum cmd key len len status` | same layout; status 1 = ok | confirmed [C] |
 | Gemini frame builder | total_len = 6 + payload | len = 5 + payload | contradicted [C]; its own table says "excluding first 4 bytes", which gives 5 |
 | Advertised names C900, Watch-Call, Hiwear-* | names listed | app matches MAC+12:34 in the scan record or names B0/H2/HY | unverified [U]; HW-2 |
-| No bonding | stated | no createBond in app code | consistent [C], device side [U] |
+| No bonding | stated | **retired 2026-10-13** (REVIEW-PHASE1): app code calls `createBond` at 3 sites (see §4) | app side: Gemini claim contradicted [C]; device side [U] (C900-Q03) |
 | Dial format ("ZL" or "AB_DIAL" magic, RGB565 at 0x100) | layout given | Bluetrum par conversion in native code; format not read | [U] |
 | Hiwear is a reskin of HryFine | stated | shared `api/hry` endpoint and vendor | partly supported [I] |
 | Sensors are synthetic | stated | not settled by app code | [W] |
@@ -58,7 +58,7 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | Send retries: only full 20-byte pieces get 2x100 ms retries; last piece 1x20 ms; <=20-byte frames none | [C] | send runnable smali consts 0x14 / 0x64; earlier PROTOCOL §3 said two retries per piece |
 | cmd 0x1A key 21 = exit find-phone, not a language query | [C] | `GeneralUtils.reqeustExitFindPhone` smali `0x1a`/`0x15`; jadx printed `KEY_SETTING_SET_LANGUAGE` |
 | SimWatch ack x = `00 01` in `client/c900/frames.ack()` | [I] | not from code; app ignores bytes 6-7 of watch acks. Fix in Phase 3 |
-| **CONFLICT** App code calls `BluetoothDevice.createBond` | [C] smali vs earlier [C] | smali: `BleDataUtils.setDeviceContro` (0x0C key 19, BOND_NONE only), `BleDataUtils.setSettingSuccess`, `MainActivity$4.run`. Conflicts with §2 row "No bonding" and PROTOCOL §3. Not resolved (C900-Q05 stop condition b). Device side still [U] (C900-Q03) |
+| **RESOLVED 2026-10-13** App code calls `BluetoothDevice.createBond` (conditionally) | [C] smali | smali: `BleDataUtils.setDeviceContro` (0x0C key 19, BOND_NONE only), `BleDataUtils.setSettingSuccess`, `MainActivity$4.run`. Earlier "no createBond" was a negative search result on jadx output; three named positive smali hits outrank it (REVIEW-PHASE1). §2 row retired. Gaps: the trigger conditions of the `setSettingSuccess` and `MainActivity$4` sites are not mapped (C900-Q14). Re-check when the tree exists: `rg -n "BluetoothDevice;->createBond" targets/c900/work/smali \| grep -v welie` must print 3 lines. Device side still [U] (C900-Q03) |
 | Bind accepted / refused arrive as inbound cmd 0x0C key 8 / key 9 | [C] | `BleDataUtils.setDeviceContro` (C900-Q05) |
 | Feature map is delivered both by the 0x2A28 read and by the cmd 0x19 reply; byte 0 = 0xAA | [C] | `NotifyWriteUtils.dataHandle` case 25 -> `readFeatures` |
 | cmd 2 key 26 payload 1 = 12 h, 0 = 24 h | [C] | sync sends `settingHourUnit(false)` with `isHour24 = false` |

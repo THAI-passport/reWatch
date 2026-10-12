@@ -41,7 +41,7 @@ Findings snapshot: [recon-v1.md](recon-v1.md).
 | **3** | Client MVP (deferred) | Separate approval after Phase 2 evidence | Pair, time, notify, battery in CLI; still no OTA/faces |
 | **4** | Watch faces / rich media | Reviewed design + approval | Only after OTA path design review; never ad-hoc |
 
-Run order: Phase 1 (static) before Phase 2 (hardware) even though hardware questions are labelled P0; P0 means "most important", not "first". Phase 2 also needs HW-0 (run sheet, write budget) done and a Q13 answer from the owner.
+Run order: Phase 1 (static) before Phase 2 (hardware) even though hardware questions are labelled P0; P0 means "most important", not "first". Phase 2 also needs HW-0 (run sheet, write budget) done (Q13 answered 2026-10-13: no capture yet), and is parked until the owner says live work is necessary.
 
 Map to TARGET.md gates: G0–G2 done; G3 continues in Phase 1; **G4 Client deferred**; G5 after HW-2+.
 
@@ -69,11 +69,15 @@ Map to TARGET.md gates: G0–G2 done; G3 continues in Phase 1; **G4 Client defer
 
 Only questions marked **P0/P1** and method **static** in `OPEN-QUESTIONS.md` after owner review. Expected themes (draft):
 
-- Recommended set: C900-Q04, Q05, Q07, Q08 (Q06 optional; Q09/Q12 parked unless promoted). Budget: one bootstrap, one session; stop and commit when a question hits its stop condition.
+- Ran 2026-10-13 with the approved set C900-Q04, Q05, Q07, Q08, Q09, Q06 (Q12 parked). Budget: one bootstrap, one session; stop and commit when a question hits its stop condition.
 - Finish command-channel key/payload tables for first-contact features (weather/alarms/health/contacts **payloads** as docs, not client).
 - Finish inbound DF inventory needed for listen-only.
 - Dial `.bin` header trim fields (synthetic fixture OK).
 - Explicitly **defer** PAR native layout, HryFine full compare, and any OTA send design unless owner promotes them.
+
+## 6b. Proposed Phase 1b (DRAFT, pending owner sign-off)
+
+Owner 2026-10-13: no live test until necessary. Phase 1b is static only: C900-Q14 (inbound remainder, createBond conditions) and C900-Q15 (HW-0 run sheet as a document, zero writes). Phase 2 stays parked until the owner says hardware is necessary; then it starts read-only (HW-1 optional capture, HW-2, HW-3) and needs per-session approval. Bonding decision (2026-10-13): app-side createBond is [C] (FACTS §4); device side stays [U].
 
 ## 7. Stop condition for Phase 0 agents
 
