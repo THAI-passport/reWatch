@@ -113,3 +113,8 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Evidence: tools/btcap.py, PROTOCOL §4/§5/§7, client/c900/frames.py (read only).
 - Problem: btcap.py lists only writes and notifies, so 0x2A27/0x2A28/0x2A19 reads were invisible. Fix: the decoder pairs ATT read request/response from the capture itself; btcap.py unchanged. Solved.
 - Problem: the Phase 1b `*.btsnoop` ignore rule would hide new fixtures. Fix: `!tests/fixtures/*.btsnoop`. Solved.
+
+## 2026-10-13 Phase 1c C900-Q16 cmd 5 field maps (static)
+- Evidence: StepUtils, HrUtils, DevBaseDataUtils (getDateBean, getBloodBean, getSportModeData), SleepUtils.receiveTotalSleepData, TempUtils (jadx + smali); helper classes HexUtil, DevDateBean (two, within the stop rule).
+- Problem: jadx showed `JCameraView.MEDIA_QUALITY_FUNNY` as the calorie clamp in getSportBy1Hour. Fix: smali `const v11, 0x61a80` = 400000; INVARIANTS I-24 extended. Solved.
+- Problem: the health date packing looks like the time-sync packing but is different. Fix: new INVARIANTS I-36 and FACTS row. Solved.

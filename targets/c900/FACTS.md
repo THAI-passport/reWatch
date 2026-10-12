@@ -70,3 +70,6 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | `HexUtil.byte2IntLR` is big-endian over its argument order; inbound sedentary threshold (0x14) is u16 BE, same as outbound | [C] | `HexUtil.byte2IntLR`; closes a C900-Q05 [U] |
 | createBond conditions: 0x0C/19 (BOND_NONE); cmd 2 key 1 ack in sync + feature b15 0x40 -> MAC^0x55 last byte; 0x0E/1 classic MAC -> up to 3 tries, 35 s | [C] smali | C900-Q14 steps 4-5 (`xor-int/lit8 0x55`, `0xa`, `0xc`, `0x88b8`) |
 | Feature b25 0x80 drives both `isShowHrAutoTest` and `isShowDnd` | [C] smali | `readFeatures` (`v4 = 0x80`, index `0x19`); C900-Q14 step 7 |
+| cmd 5 field maps for keys 2, 4, 5, 9, 12, 13, 15 (offsets, widths, bounds) | [C] smali | C900-Q16 |
+| Health date is 2 bytes: year-2000 = (b0&0x7F)>>1, month = (b0&1)<<3 \| b1>>5, day = b1&0x1F (differs from cmd 2 key 1 time packing) | [C] smali | `DevBaseDataUtils.getDateBean`; C900-Q16 |
+| Steps-per-hour clamp: steps > 20000 sets calorie to 400000 (`0x61a80`; jadx shows `JCameraView.MEDIA_QUALITY_FUNNY`) | [C] smali | `StepUtils.getSportBy1Hour`; C900-Q16 |

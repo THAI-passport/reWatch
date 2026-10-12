@@ -30,7 +30,7 @@ Rule for agents: before you finish a pass, grep your diff for each "Wrong versio
 | I-21 | Time sync = cmd 2 key 1, year stored as year - 2000 (`-0x7d0`) | cmd 0x0A, or full year | [C smali] | results/S2 |
 | I-22 | cmd 2 key 26 payload 1 = 12 h, 0 = 24 h | 1 = 24 h | [C] | C900-Q05 |
 | I-23 | cmd 0x1A key 21 = exit find-phone | language (jadx label) | [C smali] | C900-Q04 |
-| I-24 | jadx substitutes same-valued library constants (CHATGPT_ID, GET_FUNTION, CropImageView 500, FileUriModel "/") | trust jadx names for numbers | [C] | C900-Q04, Q06, Q07 |
+| I-24 | jadx substitutes same-valued library constants (CHATGPT_ID, GET_FUNTION, CropImageView 500, FileUriModel "/", JCameraView.MEDIA_QUALITY_FUNNY = 400000) | trust jadx names for numbers | [C] | C900-Q04, Q06, Q07 |
 | I-25 | Negative claims ("app never calls X") need a smali search | jadx search found nothing, so [C] | lesson | LOG.md 2026-10-13; docs/SOP.md |
 
 ## Bonding, features, inbound
@@ -41,6 +41,7 @@ Rule for agents: before you finish a pass, grep your diff for each "Wrong versio
 | I-32 | Feature map byte 0 must be 0xAA; arrives by 0x2A28 read and cmd 0x19 | any byte 0 is fine | [C] | C900-Q05 |
 | I-33 | Feature b25 0x80 hides both HR auto test and DND | jadx duplicate typo | [C smali] | C900-Q14 step 7 |
 | I-34 | `HexUtil.byte2IntLR` is big-endian over argument order | little-endian ("LR") | [C] | C900-Q06 |
+| I-36 | Health records use a 2-byte date: year-2000 = (b0&0x7F)>>1, month = (b0&1)<<3 \| b1>>5, day = b1&0x1F; payload integers are big-endian | reuse the cmd 2 key 1 time packing, or little-endian | [C smali] | C900-Q16 |
 | I-35 | Connect order: 0x2A27 -> 0x2A26 -> features -> battery -> (500 ms) bind cmd 3 key 0 | bind first | [C] | C900-Q14 step 6 |
 
 ## OTA, faces, contacts (document only, never implement without Phase 4 approval)
