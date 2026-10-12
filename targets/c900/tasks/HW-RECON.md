@@ -1,3 +1,7 @@
+Plan for Hiwear Plus (2026-10-13). Nothing here has been run. Every session needs the owner's approval first.
+First contact, in order: (1) HW-2 read-only scan with the watch on its pairing screen: record name, the raw scan record (does it contain the MAC followed by 12 34?), RSSI. (2) Connect without bonding, list services; confirm `6E400001...DCCA9F`, 0x180F, 0x180A; read 0x2A25 to 0x2A28; enable notify on `...0003` and 0x2A19 and listen for 60 s; disconnect. No writes. (3) Only with approval: one time-sync frame, then stop and check the screen.
+Never write to 0xFF00/0xFF02, 0x18A8/0x2AA9 or `6E40FF01...`; never send commands 0x01, 0x04, 0x06, 0x07, 0x0D, 0x13.
+
 # Hardware recon tasks: C900 watch
 
 Needs a physical device. Read `README.md` first. Executor key: `HUMAN+AI` = a person runs commands on a machine with the right adapter, the AI prepares the run sheet and interprets pasted output; `HUMAN` = only a person, only with written owner approval. Replace `ADDR`, `CLIENT` and file names with the target's actual values (see `client/c900/`). Keep `ADDR` in a shell variable; never write real addresses into committed files. After each write wait out the minimum interval and photograph or record the device.

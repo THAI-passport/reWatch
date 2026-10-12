@@ -60,6 +60,14 @@ Build a software device from the spec to test the client, but a simulator writte
 - Framing checksums: HryFine Sum8 checksum requires clearing byte[3] to 0x00 prior to computing the arithmetic sum of the full frame modulo 256.
 - In-memory simulation speed: do not introduce artificial chunk pacing sleeps in unit test simulators; guard sleep delays with hardware link checks so test suites finish in milliseconds.
 
+## 9.1 Lessons from C900 / Hiwear Plus (2026-10-13)
+- Confirm the companion app with the owner before anything else. Two days of C900 notes were written for the wrong app (HryFine/HiWatch Pro) from a landscape write-up. Retail pages of the exact model ("APP: Hiwear plus") settle it in one search.
+- Same vendor, different app: white-label families (here Shenzhen United Power, "lianhezhuli") share backends (`api/hry`) but opcodes must still be read per app.
+- A service named like a command channel can be the OTA channel (0xFF00 here). Read the constant names and the callers before tagging a service; never trust a write-up's label.
+- Watch-face upload may ride on the firmware-update machinery. Treat it as an OTA-class write: design review and owner approval first.
+- Third-party or AI-written RE documents: copy into `targets/<slug>/sources/`, check every claim against code, list disputes in FACTS.md. In this case the header was right and most opcodes were wrong, two of them destructive (unbind, factory test).
+- Self-made vectors: compute them with the codec, not by hand; a hand sum in a draft was off by one.
+
 ## 10. After each pass (checklist)
 1. PROTOCOL.md: byte-level findings with tags and the source class and method.
 2. FACTS.md: disputed values.

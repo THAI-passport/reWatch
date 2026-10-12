@@ -3,6 +3,11 @@
 Every layout here comes from a third-party write-up (docs/recon/budget-smartwatch-landscape.md,
 section 3.2) and is [W]. Nothing is confirmed. Uncertain values are named constants so the first
 code read or capture needs constant changes, not rewrites. See targets/c900/PROTOCOL.md and FACTS.md.
+
+Status 2026-10-13: BUILT AHEAD, UNVERIFIED on hardware. The C900 app is Hiwear Plus (com.myled.HiwearPlus).
+Its code confirms the frame and ack layout and the checksum used here [C]. The opcodes below
+(CMD_TIME/SUB_TIME, CMD_INFO/SUB_INFO) are NOT what the app sends (time sync is cmd 0x02 key 1; there is
+no 0xF3 command) and must not be sent to a real watch. Task S7 replaces them.
 """
 
 APP_HEADER = 0xDF      # [W]
