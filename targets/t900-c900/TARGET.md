@@ -16,7 +16,7 @@
 |---|---|---|
 | G0 Brief | done | Slug, goal, assumptions, and hardware/software scope defined |
 | G1 Acquire | done | Identified packages com.lianhezhuli.hyfit and com.jusheng.hiwatchpro; clean-room wire spec |
-| G2 Surface map | todo | |
+| G2 Surface map | done | Mapped NUS (C900), JieLi RCSP (T900), standard GATT, and prohibited OTA UUIDs |
 | G3 Spec | todo | |
 | G4 Client | todo | |
 | G5 Handoff | todo | |
