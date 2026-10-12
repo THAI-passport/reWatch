@@ -45,3 +45,7 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Cause: needed for PROTOCOL completeness; client must not send.
 - Fix: PROTOCOL section 6 documents D5/D6 framing, CRC poly 0x31, dial.bin obfuscated Base64, PAR path. PAR container bytes remain [U] (native). No client OTA path. Solved for documentation.
 
+## 2026-10-13 LFS bandwidth exposure (docs check)
+- Evidence: GitHub docs — Free plan includes 10 GiB LFS storage and 10 GiB LFS bandwidth per month; downloads (including public clones and Actions with LFS) count against the **repository owner**. Archive is 104797741 bytes (~0.098 GiB) so about **102** full downloads fit in the monthly bandwidth quota. Overage: with budget $0 or no payment method, usage is blocked (not auto-charged); with payment method and budget deleted/raised, overages bill. CI currently omits `lfs: true` (checkout default false). Could not read live usage: `gh` token lacks billing/`user` scope; no settings changed.
+- Fix: document in RECON task; keep CI without LFS fetch; agents should `git lfs pull -I` only the one path. Open for owner to confirm budget UI if desired.
+
