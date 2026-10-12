@@ -170,3 +170,8 @@ Required by AGENTS.md.
 - Decision (D-bond): retire FACTS §2 "no createBond in app code". Rationale: it was a negative jadx search; three named smali call sites are reproducible positive evidence. App bonds conditionally [C]; device side [U] (Q03); trigger conditions of two sites -> new C900-Q14.
 - Decision (D-nolive): owner said no live test until necessary; next phase proposed as Phase 1b static (Q14 inbound remainder, Q15 HW-0 run sheet as a document). Both DRAFT.
 - Step: closed Q04, Q06-Q09; Q05 closed partial; aligned recon-v2, PLAN (stale Q09/Q12 line), STATUS. Fixed a self-contradictory cell in the Q05 result. Report: targets/c900/tasks/results/REVIEW-PHASE1.md.
+
+## 2026-10-13 — Phase 1b sign-off recorded
+
+- **Decision:** Owner approved Phase 1b (2026-10-13): C900-Q14 static, C900-Q15 run sheet as a document only, plus an owner HCI-capture guide. Hardware stays parked.
+  - **Rationale:** Owner wants no live test until necessary; all three items are static or documents.

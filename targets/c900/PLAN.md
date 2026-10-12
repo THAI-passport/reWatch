@@ -75,7 +75,7 @@ Only questions marked **P0/P1** and method **static** in `OPEN-QUESTIONS.md` aft
 - Dial `.bin` header trim fields (synthetic fixture OK).
 - Explicitly **defer** PAR native layout, HryFine full compare, and any OTA send design unless owner promotes them.
 
-## 6b. Proposed Phase 1b (DRAFT, pending owner sign-off)
+## 6b. Phase 1b (APPROVED by owner 2026-10-13)
 
 Owner 2026-10-13: no live test until necessary. Phase 1b is static only: C900-Q14 (inbound remainder, createBond conditions) and C900-Q15 (HW-0 run sheet as a document, zero writes). Phase 2 stays parked until the owner says hardware is necessary; then it starts read-only (HW-1 optional capture, HW-2, HW-3) and needs per-session approval. Bonding decision (2026-10-13): app-side createBond is [C] (FACTS §4); device side stays [U].
 
