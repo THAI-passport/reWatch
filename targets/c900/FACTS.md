@@ -39,3 +39,15 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | Length meaning (total = Len + 4) | confirmed [C] |
 | Opcodes 0x02/0x0A time, 0xF3/0x00 info (used by `client/c900/frames.py`) | contradicted [C], see section 2 |
 | OTA service 0x18A8 is dangerous | consistent; [C] that the app uses it only for firmware |
+
+## 4. Confirmed this pass (2026-10-13, static)
+| Claim | Tag | Evidence |
+|---|---|---|
+| Time year offset is exactly -2000 (0x7d0) | [C] | `SettingIssuedUtils.settingSysTime` smali: `add-int/lit16 v2, v2, -0x7d0` (jadx had printed `BaseResp.CODE_ERROR_PARAMS`) |
+| Command ids match CommandID.smali | [C] | OTA 0x01, SETTING 0x02, BIND 0x03, UNBIND 0x04, RESET 0x06, FACTORY_TEST 0x07, DEVICE_SETTING 0x09, WATCH_FACE 0x0F, OTA_NEW 0x13, RESTORE 0x0D |
+| Dangerous ids never built by client | [C] | `client/c900/frames.BLOCKED_CMDS = {0x01,0x04,0x06,0x07,0x0D,0x13}` |
+| Dial `.bin` is obfuscated Base64 text, not raw bytes | [C] | `DialDetailActivity.startPush` + `StringUtils.decodeInfo` |
+| Watch-face / paper / contact push rides OTAUtils on 0xFF00 with D5/D6 framing | [C] | `OTAUtils`, `CommandUtils` (main 5/2/4); CRC poly 0x31 |
+| Cus5610 (0x18A8) is a separate DFU path, not used for dial push | [C] | `Cus5610CommandUtils` inventory only |
+| Repo holds the pinned XAPK zip (owner exception) | [C] | `resources/c900/hiwear-plus-2.0.1.xapk.zip` LFS; SOURCES `REPO_COPY` |
+

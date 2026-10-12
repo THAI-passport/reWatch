@@ -53,22 +53,64 @@ Flow: one command in flight; the next waits for the ack; no ack within 100 s dis
 | 0x13 | OTA (new) | 1 info, 2 start: firmware path, NEVER used |
 | 0x19, 0x1A | feature and function queries | 3 social, 5 payment, 7 power save |
 | 0x1B | assistant (chat) | not needed |
-Time sync payload (cmd 2 key 1): 4 bytes packing, high bit first, year-2000 (6 bits), month (4), day (5), hour (5), minute (6), second (6) [C, jadx; the year offset was printed as an unrelated library constant of value -2000, smali not yet read].
+Time sync payload (cmd 2 key 1): 4 bytes packing, high bit first, year-2000 (6 bits), month (4), day (5), hour (5), minute (6), second (6) [C, `SettingIssuedUtils.settingSysTime` smali: `add-int/lit16 v2, v2, -0x7d0` confirms the year offset is exactly -2000 / 0x7d0]. Packing in client: `client/c900/frames.time_payload`.
 Message push (cmd 2 key 18): `type, 0, 0, UTF-8 text` with text "title:body" cut at 196 bytes [C].
 
-## 6. Watch faces [C for the flow, [U] for the format]
-- Store faces: a `.bin` file downloaded from the vendor server is read as text, turned into bytes and sent with the OTA transfer class (main id 5, sub 1) over the OTA service. Watch-face upload therefore shares the firmware-update machinery [C, `DialDetailActivity`, `OTAUtils`].
-- Custom background: the picture is converted by the Bluetrum native `rawToPar` (raw pixels to "par" image) and saved as `watchBg.bin`, then sent the same way; time position is set with cmd 0x0F key 5 [C].
-- The par format and the transfer framing on 0xFF02 are [U]; studying them needs the OTA classes, which are read only. Client rule: no watch-face upload until a reviewed design and owner approval (ground rule 7).
+## 6. Watch faces and OTA-channel transfer [C; no client sending]
 
-## 7. Inbound (watch to app) [C, `NotifyWriteUtils`]
-`DF` frames with cmd 5 (health and sport records), settings and alarm replies, find-phone requests, camera shutter; `FD` acks with cmd 2 (settings), 3 (bind ok), 4 (unbind ok) and others; battery level on 0x2A19.
+Documented for the protocol only. Client rule: no watch-face upload, no OTA write, and no firmware path until a reviewed design and owner approval (ground rule 7). `BLOCKED_CMDS` in `client/c900/frames.py` also refuses the command-channel OTA ids.
+
+### 6.1 Store face (`.bin` from the vendor) [C, `DialDetailActivity.startPush` / `getFileBuffer`]
+1. Download lands as `<filesDir>/dial/<name>.bin`.
+2. The file is opened as text (line by line). The text is an obfuscated Base64 string: `StringUtils.decodeInfo` replaces three MD5-of-literal tokens with `=`, `+`, `/` then Base64-decodes (`decodeInfoToBytes`). Token seeds (own MD5, documented so a rebuild can verify): `ZZ22` -> `37396d18...f110` (=), `Z22Z` -> `f9319252...8abd` (+), `XGHJ` -> `34657488...062a` (/).
+3. Unless `BleDataUtils.binPreviewFlag` is set, the buffer is trimmed to a length read from the decoded header: index `i = ((b[16]-b[17]-1)*20)`, then little-endian u32 at `i+22..i+25` via `HexUtil.byte2IntLR`; clamp to `[1, len]`. That trimmed buffer is what is transferred.
+4. Transfer uses `OTAUtils(context, main=5, sub=1, bytes, ...)` (CommandUtils.CMD_WATCH_FACE = 5, START_OTA / PAPER-style sub 1).
+
+### 6.2 Custom / DIY background [C, `WatchFaceEditActivity.compressParData`]
+- Bitmap -> raw RGBA via `ImageUtils.getRawImageData`, then Bluetrum native `ParTool.rawToPar(raw, w, h, false, false, false)`.
+- Result stored in `BitmapUtils.bmp565Bytes` (name is historical; content is the PAR blob). If larger than `WatchFaceBean.getDefaultPaperSize()`, JPEG quality steps down by 5 until it fits or quality hits 5.
+- Upload path: `OTAUtils(..., main=2, sub=1, ...)` (CommandUtils.CMD_PAPER = 2). Time layout on the face still uses command-channel cmd 0x0F key 5.
+
+### 6.3 OTA-channel framing on service 0xFF00 / write 0xFF02 / notify 0xFF03 [C, `CommandUtils`, `OTAUtils`, `OTANotifyWriteUtils`]
+Separate from the DF/FD command channel. Headers are signed bytes -43 / -42 (= 0xD5 / 0xD6).
+
+Control frame (app -> watch), `CommandUtils.generalSendBytes`:
+`D5  main  sub  fun  00  00  plen_hi  plen_lo  [payload...]  sum`
+- `sum` = (sum of every byte including a zero at the sum slot) mod 256, written in the last byte.
+- `startOTA(main, sub, fun=1, mtu-3, file_len)` payload is 6 bytes: `mtu_hi mtu_lo len_be32`.
+- Group CRC: fun=2, payload 1 byte (running CRC of the group).
+- File CRC: fun=3, payload 1 byte (running CRC of the whole file).
+- Reboot: fun=4, no payload (skipped after main in {2,4,5} so paper / contact / watch-face transfers do not reboot).
+
+Data frame (app -> watch): `D6` + up to `(deviceMtu - 1)` bytes of file. Chunks are not ACKed individually; the group CRC is.
+
+Session [C, `OTAUtils` / `OTANotifyWriteUtils`]:
+1. Request MTU 185; disable command-channel notify; after 2 s enable OTA notify. 60 s overall timeout disconnects.
+2. On OTA-ready: write `startOTA`. Watch replies with a D5 control whose fun (byte 3) is `0x81`; payload carries `deviceMtu` (u16), `sendInterval` ms (u16, default 300 if 0; field init is 500), `groupPacNum` (u8), timeout units (u8 * 5000 ms).
+3. Split file into packets of `deviceMtu - 1`. Group them by `groupPacNum`. For each group: write each `D6`+chunk (CRC8-style running xor poly 0x31 left-shift, same for per-group and whole-file CRC), then fun=2 CRC; watch fun=`0x82` status 0 means next group. After last group: fun=3 file CRC; watch fun=`0x83` status 0 finishes. Error header D6 on notify, or status != 0, aborts.
+4. On finish for main in {2,4,5}: restore MTU 32 and re-enable command notify. Otherwise send reboot.
+
+CRC note [C, smali of `OTAUtils.sendData`]: for each byte `x` of a chunk, both the group accumulator and the file accumulator do `acc ^= x` then 8 rounds of `(acc << 1) ^ 0x31` if the high bit was set else `acc << 1`. Only the low 8 bits are sent.
+
+### 6.4 Cus5610 / DFU path (not used for dial push) [C, inventory]
+`Cus5610CommandUtils` / `Cus5610OTAUtils` speak a different D5 framing (fun codes for partition / 4K check / dial area / reboot) over the Bluetrum DFU service `0x18A8`. Dial and paper push above use the generic OTAUtils path on 0xFF00, not Cus5610. No further detail until a firmware task is approved.
+
+### 6.5 What stays [U]
+- Exact PAR container layout (native `libabpartool`; only the first 16 bytes are logged by the app).
+- Whether every C900 dial.bin uses the trim rule or `binPreviewFlag`.
+- Wire confirmation of MTU / groupPacNum values the C900 returns.
+
+## 7. Inbound (watch to app) [C, `NotifyWriteUtils`, `BleDataUtils.setSettingSuccess`]
+`DF` frames with cmd 5 (health and sport records), settings and alarm replies, find-phone requests, camera shutter; `FD` acks with cmd 2 (settings keys), 3 (bind ok), 4 (unbind ok) and others; battery level on 0x2A19.
+
+Ack-driven follow-ups during the sync sequence [C, `BleDataUtils.setSettingSuccess`]: on bind/settings acks the app may createBond if unbound, write cmd 0x0E key 3, push profile / username, request settings info (cmd 9), sport target, and time sync (cmd 2 key 1). Exact key map for every inbound DF payload is still being tabulated (S5).
 
 ## 8. Server endpoints (inventory only, no calls) [C]
 Vendor API via Retrofit (about 70 endpoints): login and account binding, `member_devices/bind_mac`, `dial/get_list`, `dial/get_detail`, `dial_local/get_list`, `order/get_onwer_dials`, `census/add_dial_down`; OTA host with `api/hry/get_update`, `api/ota/down_finish`, `api/ota/down_error`; two weather hosts; privacy pages. No secret values recorded here.
 
-## 9. Worked example (own arithmetic from the [C] rules)
-Settings query, cmd 9 key 0, no payload: `DF 00 05 EE 09 01 00 00 00` (0xDF + 0x05 + 0x09 + 0x01 = 0xEE) [V against the rule as read from code; not seen on a wire].
+## 9. Worked examples (own arithmetic from the [C] rules)
+- Settings query, cmd 9 key 0, no payload: `DF 00 05 EE 09 01 00 00 00` (0xDF + 0x05 + 0x09 + 0x01 = 0xEE) [V against the rule as read from code; not seen on a wire].
+- Time sync, cmd 2 key 1, 2026-10-13 14:05:30: payload `6A 9A E1 5E`; full frame built by `frames.build(0x02, 0x01, time_payload(...))` [V against smali packing; not seen on a wire].
 
 ## 10. Unknowns and the test that settles each
 | Unknown | Test |
@@ -76,6 +118,7 @@ Settings query, cmd 9 key 0, no payload: `DF 00 05 EE 09 01 00 00 00` (0xDF + 0x
 | C900 advertised name and whether the scan record has MAC + 12 34 | HW-2 read-only scan |
 | Which of the GATT services the C900 exposes | HW-2 read-only service list |
 | Whether the watch requires bonding | HW-2 |
-| Watch-face par format and OTA-channel framing | static S4 (read only), later capture HW-1 |
-| Time year offset in smali | S2 |
+| Exact PAR container bytes (native lib) | optional native RE; not needed for first contact |
+| C900's returned OTA MTU / groupPacNum | HW-1 capture or approved OTA session |
+| Time year offset in smali | done: -0x7d0 [C] |
 | Whether Hiwear Plus and HryFine use the same opcodes | decompile HryFine (optional) |

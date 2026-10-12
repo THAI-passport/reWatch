@@ -37,3 +37,7 @@ Start at the UI action (connect, send, apply watch face), follow it to the sende
 
 ## When the decompiler fails
 Use smali (`apktool d --no-res`) or a second decompiler (`tools/recover-failed-methods.sh`). Record behaviour, not code. See `re-static`.
+
+## Bluetrum OTA / dial push channel (Hiwear Plus, 2026-10-13)
+Some United Power / Bluetrum apps keep a second framing on an OTA GATT service (e.g. 0xFF00 write 0xFF02): control header 0xD5, data 0xD6, CRC left-shift poly 0x31, ready reply fun 0x81 with MTU/interval/groupPacNum. Watch-face and paper uploads often ride this path (`OTAUtils`), separate from the DF/FD command channel. Document only until a reviewed design and owner approval; never send from the client by default.
+

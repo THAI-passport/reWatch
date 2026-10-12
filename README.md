@@ -46,7 +46,8 @@ The agent reads `AGENTS.md`, loads the `re-workflow` skill, and runs gates G0 to
 
 ## Manual quick start
 ```
-python tools/setup_tools.py        # once; optional --emulation (Windows: run it from PowerShell)
+python tools/setup_tools.py
+# If a target uses a pinned REPO_COPY under resources/: install Git LFS, then `git lfs install && git lfs pull`        # once; optional --emulation (Windows: run it from PowerShell)
 python tools/rw.py doctor
 python tools/rw.py init mywatch --name "My watch" --goal "sync status from CLI"
 python tools/rw.py hash targets/mywatch/artifacts/app.xapk --slug mywatch

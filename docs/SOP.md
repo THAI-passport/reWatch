@@ -68,6 +68,11 @@ Build a software device from the spec to test the client, but a simulator writte
 - Third-party or AI-written RE documents: copy into `targets/<slug>/sources/`, check every claim against code, list disputes in FACTS.md. In this case the header was right and most opcodes were wrong, two of them destructive (unbind, factory test).
 - Self-made vectors: compute them with the codec, not by hand; a hand sum in a draft was off by one.
 
+- Jadx substitutes library constants for equal-valued literals (e.g. `BaseResp.CODE_ERROR_PARAMS` for -2000). Confirm every numeric that matters in smali (`apktool d` without `-s`).
+- Owner-approved pinned archives live under `resources/<slug>/` as a single-member zip in Git LFS, declared as `REPO_COPY` + `REPO_COPY_SHA256`. Fresh clone: `git lfs pull` then `rebuild_analysis.py`.
+- Bluetrum watch-face / paper / contact push uses a separate OTA channel (D5/D6 on 0xFF00), not the DF/FD command channel. Document only; never wire into the client without a reviewed design.
+- Dial `.bin` files from the vendor server are obfuscated Base64 text (`StringUtils.decodeInfo` token swap), not raw binaries.
+
 ## 10. After each pass (checklist)
 1. PROTOCOL.md: byte-level findings with tags and the source class and method.
 2. FACTS.md: disputed values.
