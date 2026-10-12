@@ -1,6 +1,6 @@
 # C900 / Hiwear Plus — open questions (assignable)
 
-**Status: DRAFT — pending owner review (Phase 0).**  
+**Status: Phase 0 signed off 2026-10-13 for the approved Phase 1 scope (C900-Q04, Q05, Q07, Q08, Q09; Q06 optional).** All other entries stay DRAFT. Phase 1 has not started.  
 Start from [recon-v1.md](recon-v1.md). Each ID is owner-free and assignable to a subagent.
 
 **Priority means importance, not run order.** P0 items need the watch and therefore run last (after HW-0 and per-session owner approval). Recommended run order once Phase 0 is signed: Q13 (ask owner) -> Q08 -> Q04 -> Q05 -> Q07 -> Q06 -> HW-0 -> Q01 -> Q02 -> Q03.
@@ -169,9 +169,9 @@ Fields: **Inputs** · **Method** · **Gate** (`static` | `hardware-approval`) ·
 
 ## Owner Phase 0 checklist
 
-- [ ] Priorities OK
-- [ ] Phase 1 may run: (recommended C900-Q04, Q05, Q07, Q08; Q06 optional)
-- [ ] Q13: do you already have an HCI snoop capture? (yes/no)
-- [ ] Q09 / Q12: run in Phase 1 or keep parked?
-- [ ] Confirm deferred D01–D07 / Q11–Q12
-- [ ] Sign-off:
+- [x] Priorities OK
+- [x] Phase 1 APPROVED: C900-Q04, Q05, Q07, Q08; Q06 optional
+- [ ] Q13: do you already have an HCI snoop capture? OPEN, pending owner answer
+- [x] Q09 APPROVED for Phase 1 (static inventory only, no server calls); Q12 PARKED (OTA/DFU risk, not needed now)
+- [x] Deferred D01–D07 and Q11 stay deferred; Q12 parked
+- [x] Sign-off: 2026-10-13 (Asia/Saigon), owner sign-off delegated to the requesting agent by the owner. Rationale: the approved items are static, document-only and needed for listen-only and first-contact planning; Q12 touches the firmware path with no near-term use; Q13 needs a fact only the owner has.
