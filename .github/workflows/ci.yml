@@ -1,0 +1,19 @@
+name: ci
+on:
+  push:
+    branches: [main, feat-rebuild-analysis]
+  pull_request:
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python tools/rw.py lint
+      - run: python -m unittest discover -s tests
