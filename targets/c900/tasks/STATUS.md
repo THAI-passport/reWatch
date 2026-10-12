@@ -37,7 +37,7 @@ Draft IDs — Phase 0 must approve before Phase 1 static work. Start brief: [rec
 | C900-Q10 | HryFine compare | P2 | static | skipped: needs pin | |
 | C900-Q11 | PAR native layout | P2 | static | deferred | |
 | C900-Q12 | Cus5610 inventory | P2 | static | parked (OTA/DFU risk, not needed now) | |
-| C900-Q13 | Existing owner capture (HW-1) | P0 | owner supplies, then static | open: pending owner answer | |
+| C900-Q13 | Existing owner capture (HW-1) | P0 | owner supplies, then static | No capture yet (2026-10-13); optional owner-run Android HCI snoop before HW-0 | |
 | C900-D01–D07 | Client/impl items | Deferred | — | deferred | PLAN.md Phase 3–4 |
 
 ## Hardware (prepared, not run; owner approval per session)
