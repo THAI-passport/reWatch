@@ -31,6 +31,8 @@ The agent reads `AGENTS.md`, loads the `re-workflow` skill, and runs gates G0 to
 | `.claude/skills/re-jieli` | Jieli chip family: recognition, RCSP frames, E1/SAFER+ auth, large-file transfer, FatFS, OTA awareness, emulation |
 | `.claude/skills/re-capture-ingestion` | HCI snoop and pcap workflow with `tools/btcap.py` |
 | `.claude/skills/re-hardware-recon` | First contact with a real device, write budget, task packs for weaker agents, gated teardown |
+| `docs/recon/budget-smartwatch-landscape.md` | Imported third-party landscape of T900/C900-class watches (all `[W]`, with a flaws table) |
+| `docs/NEXT-PASS-PROMPT.md` | Prompt for an agent pass over reBeamBox, reWork and reWatch |
 | `templates/` | TARGET, SOURCES, FACTS, PROTOCOL, LOG, HANDOFF |
 | `tools/rw.py` | `init`, `doctor`, `hash`, `recon`, `lint` (stdlib only) |
 | `tools/btcap.py` | btsnoop/pcap/pcapng to ATT write/notify table by UUID |
