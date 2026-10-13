@@ -166,3 +166,13 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Problem: the Mac is paired/connected to the watch over Classic, which fails LIVE-SESSION-1 go/no-go. Fix: owner chose Option A (disconnect in macOS Bluetooth settings, keep keys, waive no-go item with risk noted in OPEN-QUESTIONS.md). Solved.
 - Problem: probe hangs instead of failing when the shell lacks macOS Bluetooth permission. Open: FIXES.
 - Problem: incident text repeated a Jieli claim contrary to I-02 and overstated sanitize. Fix: corrections in LIVE-PREFLIGHT-REVIEW section 3.
+
+## 2026-10-13 Live Session 1 (first contact on real hardware)
+- Evidence: `captures/c900-probe-scan-20261013-133720.log`, `captures/c900-probe-inspect-20261013-133934.log`, `targets/c900/tasks/results/LIVE-SESSION-1-2026-10-13.md`.
+- Findings:
+  - Q01 settled [H]: Advertised name `'Watch Ultra'`, mfg data `314c:4142d0xxxxxx1234` (company 0x314C, watch MAC followed by marker `12 34`).
+  - Q02 settled [H]: Command service `6e400001-b5a3-f393-e0a9-e50e24dcca9f` (`0002` write, `0003` notify), Battery `0x180F`, Device Info `0x180A`, and 3 OTA services (`0xFF00`, `0xFF10`, `0xFF12`).
+  - Feature map settled [H]: `0xAA` marker, len 27, hex `aacfe081dff6fc3800000000000010e64108cf1400000000000000` (`isBLE3=True`, `isSupportPair=True`).
+  - Q03 settled [H]: Zero unsolicited frames during 30 s listen; no pairing prompts triggered.
+- Problem: `0x2A27` hardware revision read as `"10000"`, causing `protocol_major` to return `None` (probe regex `r"(\d{1,3})(?:\.|$)"` limited digits to 3).
+- Status: Solved (hardware session 1 complete with 0 errors/aborts; protocol major parsing open for probe fix before Phase 2).

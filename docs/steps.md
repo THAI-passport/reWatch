@@ -305,3 +305,11 @@ Required by AGENTS.md.
 - **Step:** Solicited owner decision on Classic pairing state from `LIVE-PREFLIGHT-REVIEW.md` §4.
   - **Decision:** Owner chose Option A (disconnect in macOS Bluetooth settings, keep keys, waive no-go item with risk noted). Recorded decision in `targets/c900/OPEN-QUESTIONS.md`.
   - **Rationale:** Ground rules require owner sign-off for live-session waivers; AI does not touch device pairing state.
+
+## 2026-10-13 Live Session 1 execution (read-only first contact)
+- **Step:** Owner ran scan and inspect steps in interactive Terminal per LIVE-SESSION-1.md.
+  - **Decision:** Scan settled Q01 [H] (`Watch Ultra`, company ID 0x314C, MAC with marker `12 34`).
+  - **Decision:** Inspect settled Q02 [H] (command NUS service `6E400001-...` present; 3 OTA services untouched; battery 61%; feature map confirmed with `isBLE3=True`, `isSupportPair=True`).
+  - **Decision:** Zero unsolicited frames during 30s listen; no pairing dialogs triggered.
+  - **Decision:** Noted `0x2A27` hardware revision read as `"10000"`, which probe regex `r"(\d{1,3})(?:\.|$)"` did not parse as major version.
+  - **Rationale:** Strict ground rules: write results only from owner's logs; never invent hardware results. Report: `targets/c900/tasks/results/LIVE-SESSION-1-2026-10-13.md`.
