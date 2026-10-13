@@ -214,3 +214,7 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
   - Zero LE SMP/encryption [H]: Zero packets on L2CAP CID 0x0006; zero `HCI_LE_Start_Encryption` or `Encryption_Change` events. Transport remained unencrypted.
 - Status: Solved.
 
+
+## 2026-10-13 Codec ver parameter (owner approved)
+- Change: `frames.build(cmd, key, payload, ver=DEFAULT_VER)`, `C900_VER = 0x10` [H], `ver_from_hw_revision`, `ack(cmd, key, x, status)`, SimWatch acks with x = frame length; probe derives ver from 0x2A27 and accepts only `REVIEWED_VERS` {0x01, 0x10}. Tests: capture vector (time sync 2026-10-13 16:23:11, ver 0x10), unreviewed ver refuses, "10000" -> 0x10 sent.
+- Problem: Q19 excerpts had wrong length bytes (hand-copied). Evidence: ack x and decoder. Fix: noted in Q19 section 8; tests use I-11.

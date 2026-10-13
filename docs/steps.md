@@ -344,3 +344,8 @@ Required by AGENTS.md.
   - **Decision:** Zero LE SMP or link encryption [H]: Zero packets on L2CAP CID 0x0006; zero `HCI_LE_Start_Encryption` or `Encryption_Change` events. LE link remained in cleartext.
   - **Rationale:** AGENT-BRIEF task; report in `targets/c900/tasks/results/C900-Q19.md` Section 7. Event names and relative times only; no addresses.
 
+
+## 2026-10-13 Codec ver parameter and session 2 readiness (Asia/Saigon)
+- **Step:** Owner approved the codec change. **Decision:** `ver` is a build() parameter with the old default, so all earlier vectors are unchanged; the probe sends the 0x2A27-derived value only if it is reviewed (0x01 default, 0x10 C900 [H]). **Rationale:** matches the app byte for byte without letting an unexpected device value through.
+- **Decision:** SimWatch acks with x = acked frame length. **Rationale:** I-18 [H]; still a simulator (consistency only).
+- **Decision:** reviewed Q19 section 7; recorded excerpt length typos. Session 2 needs the owner's written approval; `find` first.

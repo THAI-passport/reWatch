@@ -647,7 +647,7 @@ class DeepPass1Fixes(unittest.TestCase):
         self.assertEqual(FakeClient.instances[-1].write_responses, [False, False])  # 2 pieces
 
     def test_protocol_version_mismatch_refuses_before_any_write(self):
-        for value in (b"V2.0", b"", b"garbage"):
+        for value in (b"V2.0", b"", b"garbage", b"20000"):
             class C(FakeClient):
                 async def read_gatt_char(self, uuid, _v=value):
                     if _u(uuid).startswith("00002a27"):
@@ -668,9 +668,10 @@ class DeepPass1Fixes(unittest.TestCase):
         self.assertIsNone(probe.protocol_major(None))
         self.assertEqual(probe.protocol_major(b"10000"), 10000)   # real C900 value [H]
 
-    def test_real_c900_version_string_refuses_write(self):
-        """Live session 1: 0x2A27 = "10000" -> app ver byte 0x10, so the probe's ver=1 frame must not go out."""
+    def test_real_c900_version_sends_ver_0x10(self):
+        """0x2A27 = "10000" -> frame goes out with ver 0x10, exactly like the app (C900-Q19 [H])."""
         self.assertEqual(probe.version_byte(probe.protocol_major(b"10000")), 0x10)
+        sent = []
 
         class C(FakeClient):
             async def read_gatt_char(self, uuid):
@@ -678,10 +679,19 @@ class DeepPass1Fixes(unittest.TestCase):
                     return b"10000"
                 return await super().read_gatt_char(uuid)
 
+            async def write_gatt_char(self, uuid, data, response=False):
+                sent.append(bytes(data))
+                await super().write_gatt_char(uuid, data, response=response)
+
         rc = self._run(C, ["safe-write", "--address", "AA:BB:CC:DD:EE:01", "--command", "find", "--i-approve-writes"])
-        self.assertEqual(rc, probe.EXIT_SAFETY)
-        self.assertEqual(FakeClient.instances[-1].write_responses, [])
+        self.assertEqual(rc, 0)
+        self.assertEqual(sent[0][5], 0x10)
+        self.assertEqual(frames.parse(sent[0])[1:3], (0x02, 0x0B))
         self.assertIn("ver_byte=0x10", self._log())
+
+    def test_unreviewed_ver_refuses(self):
+        with self.assertRaises(probe.SafetyError):
+            probe.build_allowlisted("find", ver=0x02)
 
     def test_unknown_vendor_services_from_real_watch_denied(self):
         for short in ("ff10", "fff1", "ff12", "ff13", "ff14"):

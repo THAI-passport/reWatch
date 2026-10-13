@@ -173,3 +173,8 @@ All of section 4, plus: `SAFETY_STOP unexpected ack`, `ack status=...`, any inbo
 
 ### 9.6 Record
 Per run: the ack bytes the probe logged (cmd, key, status, x), the watch's visible effect, and the time to ack. These settle FACTS "watch ack bytes 6-7" (I-18) and "which cmd 2 keys the C900 acks" as [H].
+
+### 9.7 Update 2026-10-13 (after C900-Q19 and the codec change)
+- The probe now sends `ver = 0x10` on this watch (derived from 0x2A27 like the app); expect `READ 2a27 value=10000 protocol_major=10000 ver_byte=0x10`.
+- Expected acks if the watch accepts without bind (unknown): `ACK ok ... x=0x000a x_is_frame_len=True` for find (10-byte frame), `x=0x000d` for time (13), `x=0x0018` for message (24). `x_is_frame_len=False` is a finding to record, not an abort.
+- `time` is still last: on this watch feature b15 0x40 is set, and in C900-Q19 the phone tried to page the Classic address right after the time-sync ack. The probe never bonds, but record any dialog.
