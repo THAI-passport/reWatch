@@ -154,3 +154,9 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Problem: test fake returned empty bytes for every Device Information read (matched short UUIDs only), so reads were never tested. Fix: fake resolves full base UUIDs. Solved.
 - Problem: "byte 4" for the version byte (I-10, FACTS, NEXT-STEPS) vs "cmd at byte 4" (PROTOCOL 7.1). Cause: mixed numbering. Fix: numbering note on I-10 (0-based index 5), NEXT-STEPS step 3 corrected; decoder already used index 5. Solved (docs).
 - Open: Q01 raw scan record is not visible through bleak on macOS; needs a capture or PacketLogger (owner, optional).
+
+## 2026-10-13 Live Bluetooth pre-flight, dual-profile discovery, and TCC sandbox state
+- Evidence: `system_profiler SPBluetoothDataType`, `targets/c900/tasks/results/INCIDENT-2026-10-13-LIVE-BLUETOOTH-PREFLIGHT.md`.
+- Finding: owner connected watch via macOS System Settings (`Connected: Watch Ultra`, services `0x800039 <HFP AVRCP A2DP HID ACL>`). This is Classic Bluetooth (BR/EDR) audio, not the BLE GATT command interface (`6E400001-...`). Bluetrum/JieLi clone watches feature dual-profile architecture; GATT telemetry requires BLE connection.
+- Problem: automated BLE scan from background IDE agent hangs on CoreBluetooth dispatch. Cause: macOS TCC sandbox (`CBManager.authorization() == 0`). Non-interactive subshells cannot display interactive TCC Bluetooth prompts.
+- Resolution: verified all 44 unit tests pass in `.venv-probe` with pinned hashes; documented findings and anti-RE trap evaluation in `INCIDENT-2026-10-13-LIVE-BLUETOOTH-PREFLIGHT.md`. Live probe commands remain marked `[human]` for owner execution in interactive macOS Terminal. Solved (docs / preflight).
