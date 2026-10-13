@@ -20,6 +20,9 @@ import java.util.UUID
  * Android BluetoothGatt adapter turning [Session.Action] into serialised GATT operations.
  * Enforces strictly ONE GATT operation in flight at a time, spaces ATT pieces [Gatt.PIECE_GAP_MS] apart,
  * and never touches denied UUIDs (I-14, I-54). Never calls createBond (I-30).
+ *
+ * Threading model: posts every [BluetoothGattCallback] event to [handler] so that [Session],
+ * [rewatch.c900.CommandQueue], and [rewatch.c900.HealthSync] are touched strictly on the main looper thread.
  */
 class GattLink(
     private val context: Context,
@@ -35,6 +38,7 @@ class GattLink(
         fun onCommandReceived(cmd: Frames.Inbound.Cmd, frameLen: Int)
         fun onAskUserBond(reason: String)
         fun onError(reason: String)
+        fun onTerminalFail(reason: String)
     }
 
     private var bluetoothGatt: BluetoothGatt? = null
@@ -48,26 +52,42 @@ class GattLink(
 
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-            if (status != BluetoothGatt.GATT_SUCCESS || newState == BluetoothProfile.STATE_DISCONNECTED) {
-                pacingScheduler.clear()
-                activeOp = null
-                frameReader = FrameReader()
-                listener.onDisconnected(status, newState)
-            } else if (newState == BluetoothProfile.STATE_CONNECTED) {
-                listener.onConnected()
-                gatt.discoverServices()
+            handler.post {
+                if (status != BluetoothGatt.GATT_SUCCESS || newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    pacingScheduler.clear()
+                    activeOp = null
+                    frameReader = FrameReader()
+                    try {
+                        gatt.disconnect()
+                        gatt.close()
+                    } catch (_: SecurityException) {
+                    }
+                    if (bluetoothGatt === gatt) {
+                        bluetoothGatt = null
+                    }
+                    listener.onDisconnected(status, newState)
+                } else if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    listener.onConnected()
+                    try {
+                        gatt.discoverServices()
+                    } catch (_: SecurityException) {
+                        listener.onError("discoverServices security exception")
+                    }
+                }
             }
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-            if (status != BluetoothGatt.GATT_SUCCESS) {
-                listener.onError("discoverServices failed: status $status")
-                return
+            handler.post {
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    listener.onError("discoverServices failed: status $status")
+                    return@post
+                }
+                val serviceUuids = gatt.services.map { it.uuid.toString() }
+                val cmdService = gatt.services.firstOrNull { it.uuid.toString().equals(Gatt.COMMAND_SERVICE, ignoreCase = true) }
+                val commandChars = cmdService?.characteristics?.map { it.uuid.toString() } ?: emptyList()
+                listener.onServicesDiscovered(serviceUuids, commandChars)
             }
-            val serviceUuids = gatt.services.map { it.uuid.toString() }
-            val cmdService = gatt.services.firstOrNull { it.uuid.toString().equals(Gatt.COMMAND_SERVICE, ignoreCase = true) }
-            val commandChars = cmdService?.characteristics?.map { it.uuid.toString() } ?: emptyList()
-            listener.onServicesDiscovered(serviceUuids, commandChars)
         }
 
         override fun onCharacteristicRead(
@@ -76,7 +96,9 @@ class GattLink(
             value: ByteArray,
             status: Int
         ) {
-            handleReadResult(characteristic.uuid.toString(), if (status == BluetoothGatt.GATT_SUCCESS) value else null)
+            handler.post {
+                handleReadResult(characteristic.uuid.toString(), if (status == BluetoothGatt.GATT_SUCCESS) value else null)
+            }
         }
 
         @Suppress("DEPRECATION")
@@ -86,7 +108,9 @@ class GattLink(
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            handleReadResult(characteristic.uuid.toString(), if (status == BluetoothGatt.GATT_SUCCESS) characteristic.value else null)
+            handler.post {
+                handleReadResult(characteristic.uuid.toString(), if (status == BluetoothGatt.GATT_SUCCESS) characteristic.value else null)
+            }
         }
 
         override fun onCharacteristicWrite(
@@ -94,10 +118,12 @@ class GattLink(
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            val op = activeOp
-            if (op is GattOp.WritePiece) {
-                activeOp = null
-                pacingScheduler.onComplete(op)
+            handler.post {
+                val op = activeOp
+                if (op is GattOp.WritePiece) {
+                    activeOp = null
+                    pacingScheduler.onComplete(op)
+                }
             }
         }
 
@@ -106,10 +132,12 @@ class GattLink(
             descriptor: BluetoothGattDescriptor,
             status: Int
         ) {
-            val op = activeOp
-            if (op is GattOp.EnableNotify) {
-                activeOp = null
-                pacingScheduler.onComplete(op)
+            handler.post {
+                val op = activeOp
+                if (op is GattOp.EnableNotify) {
+                    activeOp = null
+                    pacingScheduler.onComplete(op)
+                }
             }
         }
 
@@ -118,7 +146,9 @@ class GattLink(
             characteristic: BluetoothGattCharacteristic,
             value: ByteArray
         ) {
-            handleNotificationBytes(characteristic.uuid.toString(), value)
+            handler.post {
+                handleNotificationBytes(characteristic.uuid.toString(), value)
+            }
         }
 
         @Suppress("DEPRECATION")
@@ -127,7 +157,9 @@ class GattLink(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
         ) {
-            handleNotificationBytes(characteristic.uuid.toString(), characteristic.value ?: ByteArray(0))
+            handler.post {
+                handleNotificationBytes(characteristic.uuid.toString(), characteristic.value ?: ByteArray(0))
+            }
         }
     }
 
@@ -192,7 +224,7 @@ class GattLink(
             }
             is Session.Action.Fail -> {
                 disconnect()
-                listener.onError(action.reason)
+                listener.onTerminalFail(action.reason)
             }
         }
     }

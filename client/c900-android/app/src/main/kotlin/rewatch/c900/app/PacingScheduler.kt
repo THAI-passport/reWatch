@@ -1,5 +1,6 @@
 package rewatch.c900.app
 
+import android.os.SystemClock
 import rewatch.c900.Gatt
 
 sealed class GattOp {
@@ -20,7 +21,7 @@ sealed class GattOp {
 class PacingScheduler(
     private val execute: (GattOp) -> Unit,
     private val postDelayed: (delayMs: Long, task: () -> Unit) -> Unit,
-    private val nowMs: () -> Long = { System.currentTimeMillis() },
+    private val nowMs: () -> Long = { SystemClock.elapsedRealtime() },
     private val pieceGapMs: Long = Gatt.PIECE_GAP_MS
 ) {
     private val queue = ArrayDeque<GattOp>()

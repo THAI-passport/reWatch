@@ -31,6 +31,13 @@ object NotificationMapper {
     const val TYPE_VK = 22
     const val TYPE_OUTLOOK = 23
 
+    /**
+     * By default, unmapped apps are ignored (not pushed) to prevent high-frequency write flood
+     * and flash wear (ground rule 7). The vendor app only pushes "other" when explicitly enabled
+     * by the user (MsgPushHelper.getShowOtherNotify [C]).
+     */
+    const val PUSH_UNMAPPED = false
+
     private val IGNORED_PACKAGES = setOf(
         "android",
         "com.android.systemui",
@@ -115,12 +122,14 @@ object NotificationMapper {
 
     /**
      * Map package name to notification type code.
-     * Returns -1 if package should be ignored, or 13 (Other) if unmapped.
+     * Returns TYPE_IGNORE (-1) for unmapped apps unless [pushUnmapped] is enabled.
      */
-    fun mapPackage(packageName: String?): Int {
+    fun mapPackage(packageName: String?, pushUnmapped: Boolean = PUSH_UNMAPPED): Int {
         if (packageName.isNullOrBlank()) return TYPE_IGNORE
         val pkg = packageName.trim().lowercase()
         if (pkg in IGNORED_PACKAGES) return TYPE_IGNORE
-        return PACKAGE_MAP[pkg] ?: TYPE_OTHER
+        val mapped = PACKAGE_MAP[pkg]
+        if (mapped != null) return mapped
+        return if (pushUnmapped) TYPE_OTHER else TYPE_IGNORE
     }
 }

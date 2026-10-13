@@ -43,10 +43,18 @@ class NotificationMapperTest {
     }
 
     @Test
-    fun testUnmappedApplicationsMapToOther() {
-        assertEquals(NotificationMapper.TYPE_OTHER, NotificationMapper.mapPackage("com.spotify.music"))
-        assertEquals(NotificationMapper.TYPE_OTHER, NotificationMapper.mapPackage("org.mozilla.firefox"))
-        assertEquals(NotificationMapper.TYPE_OTHER, NotificationMapper.mapPackage("com.github.android"))
+    fun testUnmappedApplicationsMapToIgnoreByDefault() {
+        assertEquals(false, NotificationMapper.PUSH_UNMAPPED)
+        assertEquals(NotificationMapper.TYPE_IGNORE, NotificationMapper.mapPackage("com.spotify.music"))
+        assertEquals(NotificationMapper.TYPE_IGNORE, NotificationMapper.mapPackage("org.mozilla.firefox"))
+        assertEquals(NotificationMapper.TYPE_IGNORE, NotificationMapper.mapPackage("com.github.android"))
+    }
+
+    @Test
+    fun testUnmappedApplicationsMapToOtherWhenEnabled() {
+        assertEquals(NotificationMapper.TYPE_OTHER, NotificationMapper.mapPackage("com.spotify.music", pushUnmapped = true))
+        assertEquals(NotificationMapper.TYPE_OTHER, NotificationMapper.mapPackage("org.mozilla.firefox", pushUnmapped = true))
+        assertEquals(NotificationMapper.TYPE_OTHER, NotificationMapper.mapPackage("com.github.android", pushUnmapped = true))
         assertEquals(13, NotificationMapper.TYPE_OTHER)
     }
 
