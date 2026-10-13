@@ -100,3 +100,5 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | Bind handshake sequence is cmd 0x03 key 0 -> cmd 0x0C key 8 -> acks | [H] | `captures/btsnoop_hci.log.last`: t=1.959s - 2.548s |
 | Watch ack x = total length of the acked frame (`plen + 9`), not a sequence | [H] | `captures/btsnoop_hci.log.last`: verified across all acknowledged commands (time sync x=13, matching x=10, token x=17, message x=37/22) |
 | Time sync payload is the I-21 packed format (`6a9b05cb` = 2026-10-13 16:23:11), not a Unix timestamp | [H] | C900-Q19 section 6; reproduced by `frames.time_payload` |
+| App never references 0xFF10/0xFF12/FFF1/FF13/FF14 | [C negative] | results/S-21-S-22.md |
+| QR text = BLE MAC only (`LE`+MAC, or `?para=`MAC), 17 chars | [C] | results/S-21-S-22.md |

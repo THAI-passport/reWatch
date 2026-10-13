@@ -3,6 +3,7 @@
 Things that need fixing in reWatch itself (tools, templates, skills), and things already fixed. Add to Open when you find something; move to Fixed with what was wrong and what changed. Same commit as the change.
 
 ## Open
+- Cloud sessions cannot reach dl.google.com (Android Gradle plugin, SDK), so the C900 Android app shell cannot be built here; only the pure Kotlin/JVM core is built and tested in the cloud. The app shell needs the owner's machine or an allowed host.
 - Skills and tools are untested end to end on a real target; run the benchmark in README.md and record gaps here.
 - `tools/setup_tools.py` pins jadx and apktool versions and verifies SHA-256 only when `JADX_SHA256`/`APKTOOL_SHA256` are set (it prints the computed hashes); the JDK is the latest 17. Pin real hashes once a machine with github access has downloaded them.
 - Windows is untested locally: CI covers `rebuild_analysis.py` and `setup_tools.py`, but the fake-jadx tests skip there and a real run on Windows has not happened. macOS is likewise untested locally (the JDK bundle layout is unit tested).
