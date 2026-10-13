@@ -424,3 +424,35 @@ Required by AGENTS.md.
 
 ## 2026-10-14 Review of owner-machine pass (Asia/Saigon)
 - **Step:** made `Session` follow the owner decision for inbound 0x0E key 1. **Decision:** cache the 6-byte classic MAC in memory and ack, no prompt; rejected: leaving code as is, also dropping the 0x0C key 19 prompt. **Rationale:** CLIENT-DESIGN and code disagreed; the decision covers 0x0E key 1 only, and 0x0C key 19 is an explicit pairing request. **Evidence:** owner decision in CLIENT-DESIGN 3.4. **Revisit if:** the owner wants classic audio pairing from the open client.
+
+## 2026-10-14 G4 Android app shell implementation (Asia/Saigon)
+- **Step:** Added `:app` module in `client/c900-android` configured with AGP 8.7.0, Kotlin 2.0.21, minSdk 26, targetSdk 35, single plain `MainActivity`, and dependency on `:core`. Configured user-space Android SDK via `local.properties`.
+  **Decision:** Minimal Android SDK framework classes without Compose or external UI libraries; rejected: Jetpack Compose.
+  **Rationale:** The G4 app shell goal is a headless/minimal container hosting background connection services that compiles to a debug APK without UI dependencies.
+  **Evidence:** [V] `:app:assembleDebug` and `:app:testDebugUnitTest` pass.
+  **Revisit if:** Full UI screens (Device, Settings, Health) are implemented in Phase 3b.
+- **Step:** Implemented `PacingScheduler` enforcing single in-flight GATT operation and 20 ms piece pacing.
+  **Decision:** Interval tracked from piece execution dispatch (`lastWriteAt`), scheduling subsequent writes after remaining interval; rejected: unpaced bursts or fire-and-forget.
+  **Rationale:** Bluetooth controller buffers drop packets or desync when ATT pieces arrive without pacing (I-16, R08 F-05); decouples scheduling from Android Bluetooth stack for JVM unit testing.
+  **Evidence:** [C] smali `const-wide/16 0x14` in send runnable; [V] `PacingSchedulerTest.testWritePiecesPaced20MsApart`.
+  **Revisit if:** Real HCI capture shows different write gap on C900 hardware.
+- **Step:** Added fail-closed `Gatt.isDenied(uuid)` checks across `GattLink.findCharacteristic`, `GattLink.executeOp`, and `PacingScheduler.enqueue`.
+  **Decision:** Refuse and drop any read, write, or descriptor notification write targeting denied OTA/DFU UUIDs (`0xFF00`, `0x18A8`, `*dcca9e`, `5610`); rejected: allowing caller-specified GATT UUIDs.
+  **Rationale:** Enforces strict OTA isolation (I-14, I-54); prevents companion client from ever touching OTA/firmware channels.
+  **Evidence:** [C] Invariants I-14, I-54; [V] `PacingSchedulerTest.testDeniedUuidsAreNeverQueued`.
+  **Revisit if:** Phase 4 reviewed OTA design is approved by owner.
+- **Step:** Implemented `WatchService` foreground service (`connectedDevice` type) owning `Session`, `CommandQueue`, `HealthSync`, and `GattLink`.
+  **Decision:** Reconnect delays set to 10000 ms on disconnect, 3000 ms on connect failure; rejected: immediate reconnect loop.
+  **Rationale:** PROTOCOL section 11 and smali `BaseReconnectBlueActivity.onDisConnected` (`const-wide/16 10000`) and `reConnectBlue` (`const-wide/16 3000`). Prevents phone battery drain and Bluetooth controller lockups.
+  **Evidence:** [C] smali constants 10000 ms / 3000 ms; PROTOCOL section 11.
+  **Revisit if:** Real device test indicates different backoff is needed.
+- **Step:** Implemented inbound 0x0E key 1 silent memory cache and 0x0C key 19 notification prompt in `WatchService`.
+  **Decision:** Silent memory cache for 0x0E key 1, notification prompt with default No for 0x0C key 19; rejected: calling `createBond` or prompting on 0x0E key 1.
+  **Rationale:** Owner decision 2026-10-14 in CLIENT-DESIGN 3.4 for unattended operation while sleeping; Invariant I-30 for zero spontaneous bonding.
+  **Evidence:** [C] CLIENT-DESIGN 3.4; Invariant I-30.
+  **Revisit if:** Owner requests interactive BT Classic audio pairing.
+- **Step:** Implemented `NotificationMapper` and `DisconnectedMessageQueue`.
+  **Decision:** Extended type table with Other=13; bounded FIFO dropping oldest beyond 5; zero logging of notification text; rejected: type 255 for other, unbounded queue.
+  **Rationale:** Feature byte 15 bit 0x02 is set on C900 Watch Ultra (`BleDataUtils.isNewMsgPushSetting`); smali `MsgPushHelper.onAppMsgReceive` caps queue to 5 (`size > 4 -> remove(0)`); privacy hard rule forbids logging private notification content.
+  **Evidence:** [C] smali `MsgPushHelper.getNewType` and `onAppMsgReceive`; [V] `NotificationMapperTest`, `DisconnectedMessageQueueTest`.
+  **Revisit if:** Feature map byte 15 bit 0x02 is clear on another device family.
