@@ -123,3 +123,9 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Evidence: `tools/c900_decode.py` hid only cmd 2 key 18; keys 17 (caller), 36 (user name), 4 (profile) and 0x1A 23/24 (location) printed as hex.
 - Cause: privacy list built from the message-push case only.
 - Fix: PRIVATE table + test (REVIEW-PHASE1C).
+
+## 2026-10-13 Probe tool
+- Built `tools/c900_probe.py` for owner Mac (bleak 3.0.2, hashed requirements-probe.txt).
+- Modes: scan, inspect (CCCD-only write), safe-write (allowlist + dual approval).
+- Hard safety in code: allowlist, BLOCKED_CMDS, OTA UUID refuse, no bonding, bond-trigger abort, caps, sanitized device strings, logs to captures/ masked.
+- Tests: `tests/test_c900_probe.py` (fake bleak). Docs: PROBE-GUIDE.md, PROBE-SECURITY.md, PROMPT-GEMINI-PROBE-REVIEW.md.

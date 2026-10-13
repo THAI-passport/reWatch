@@ -43,6 +43,7 @@ Disassemble with capstone and pyelftools; emulate with unicorn; port stage by st
 
 ## 7. Captures
 Ingest HCI snoop and pcap files with `tools/btcap.py`; map handles to UUIDs, reassemble across MTU chunks, validate checksums, report bad frames instead of dropping them. Scrub before storing; never commit raw captures. See `re-capture-ingestion`.
+- c900 first contact on a real watch: owner runs `tools/c900_probe.py` per `targets/c900/tasks/PROBE-GUIDE.md` (hashed deps in `requirements-probe.txt`). Do not unbind; turn phone Bluetooth off.
 - c900: decode frames with `tools/c900_decode.py <capture>` (decode only; hides message text, masks MACs, flags blocked cmds and OTA traffic). Live notify logging: `tools/notify_log.py --only <uuid>`; its OTA/DFU deny list is always on.
 
 ## 8. Tests and simulators

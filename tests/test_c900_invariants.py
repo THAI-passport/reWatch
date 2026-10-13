@@ -17,7 +17,7 @@ class C900Invariants(unittest.TestCase):
     def test_rows_present(self):
         with open(INV, encoding="utf-8") as f:
             text = f.read()
-        for row in ["I-01", "I-10", "I-13", "I-20", "I-25", "I-30", "I-40", "I-41", "I-50", "I-53"]:
+        for row in ["I-01", "I-10", "I-13", "I-20", "I-25", "I-30", "I-40", "I-41", "I-50", "I-53", "I-54", "I-55"]:
             self.assertIn("| " + row + " |", text, row)
 
 

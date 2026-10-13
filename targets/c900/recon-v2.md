@@ -67,3 +67,7 @@ Tags: [C] app code (smali-checked where marked), [V] local re-derivation, [I] in
 - **C900-Q18:** `tools/c900_decode.py` decodes DF/FD frames from a capture or btcap JSON. It reassembles frames and checks sums, adds labels, shows the reads and feature bits, and prints a summary (version byte, bond triggers, blocked cmds, OTA traffic). Decode only. Tested on a generated synthetic fixture (9 tests).
 - **C900-Q16:** cmd 5 keys 2, 4, 5, 9, 12, 13 and 15 are mapped [C smali]. Health dates use their own 2-byte packing (I-36). jadx substituted a calorie clamp constant (400000; I-24). Units are still [U].
 - **Next:** the decoder is ready for Q19 when the owner records a capture. Nothing live until the owner says so.
+
+## Probe tool (2026-10-13)
+- `tools/c900_probe.py` + `requirements-probe.txt` + `tasks/PROBE-GUIDE.md`. Owner-run on Mac; HW-0 stays parked until they say live work is necessary, but the tool is ready.
+- Independent review prompt: `tasks/PROMPT-GEMINI-PROBE-REVIEW.md`.
