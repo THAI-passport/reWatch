@@ -35,3 +35,7 @@ targets/*/captures/
 !tests/fixtures/*.btsnoop
 btsnoop_hci.log*
 bugreport*.zip
+# Gradle outputs (client/c900-android)
+client/c900-android/.gradle/
+client/c900-android/**/build/
+client/c900-android/.kotlin/

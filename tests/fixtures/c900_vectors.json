@@ -1,0 +1,153 @@
+{
+ "frames": [
+  {
+   "name": "settings_query",
+   "cmd": 9,
+   "key": 0,
+   "payload": "",
+   "ver": 1,
+   "frame": "df0005ee0901000000"
+  },
+  {
+   "name": "find_on_c900",
+   "cmd": 2,
+   "key": 11,
+   "payload": "01",
+   "ver": 16,
+   "frame": "df00060402100b000101"
+  },
+  {
+   "name": "find_off_c900",
+   "cmd": 2,
+   "key": 11,
+   "payload": "00",
+   "ver": 16,
+   "frame": "df00060302100b000100"
+  },
+  {
+   "name": "time_c900_q19",
+   "cmd": 2,
+   "key": 1,
+   "payload": "6a9b05cb",
+   "ver": 16,
+   "frame": "df0009d402100100046a9b05cb"
+  },
+  {
+   "name": "message_sms",
+   "cmd": 2,
+   "key": 18,
+   "payload": "010000726557617463683a74657374",
+   "ver": 16,
+   "frame": "df0014ef021012000f010000726557617463683a74657374"
+  },
+  {
+   "name": "hour12",
+   "cmd": 2,
+   "key": 26,
+   "payload": "01",
+   "ver": 16,
+   "frame": "df00061302101a000101"
+  }
+ ],
+ "acks": [
+  {
+   "name": "settings_query",
+   "cmd": 9,
+   "key": 0,
+   "x": 9,
+   "ack": "fd0005150900000901"
+  },
+  {
+   "name": "find_on_c900",
+   "cmd": 2,
+   "key": 11,
+   "x": 10,
+   "ack": "fd00051a020b000a01"
+  },
+  {
+   "name": "find_off_c900",
+   "cmd": 2,
+   "key": 11,
+   "x": 10,
+   "ack": "fd00051a020b000a01"
+  },
+  {
+   "name": "time_c900_q19",
+   "cmd": 2,
+   "key": 1,
+   "x": 13,
+   "ack": "fd0005130201000d01"
+  },
+  {
+   "name": "message_sms",
+   "cmd": 2,
+   "key": 18,
+   "x": 24,
+   "ack": "fd00052f0212001801"
+  },
+  {
+   "name": "hour12",
+   "cmd": 2,
+   "key": 26,
+   "x": 10,
+   "ack": "fd000529021a000a01"
+  }
+ ],
+ "times": [
+  {
+   "t": [
+    2026,
+    10,
+    13,
+    16,
+    23,
+    11
+   ],
+   "payload": "6a9b05cb"
+  },
+  {
+   "t": [
+    2000,
+    1,
+    1,
+    0,
+    0,
+    0
+   ],
+   "payload": "00420000"
+  },
+  {
+   "t": [
+    2063,
+    12,
+    31,
+    23,
+    59,
+    59
+   ],
+   "payload": "ff3f7efb"
+  }
+ ],
+ "hw_revision": [
+  {
+   "raw": "10000",
+   "ver": 16
+  },
+  {
+   "raw": "V1.2",
+   "ver": 1
+  },
+  {
+   "raw": "v3",
+   "ver": 3
+  },
+  {
+   "raw": "",
+   "ver": null
+  },
+  {
+   "raw": "HW-A",
+   "ver": null
+  }
+ ]
+}

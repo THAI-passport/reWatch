@@ -86,3 +86,6 @@ See NEXT-STEPS.md §6. Phase 3 and Phase 4 stay deferred.
 
 ## 8. Stop rule for every agent
 After the scoped pass: commit on the feature branch, then STOP and report for owner sign-off. Never start the next phase on your own.
+
+## 9. Phase 3 (APPROVED 2026-10-13)
+Android Kotlin. 3a core done in `client/c900-android/core` (codec, reader, allowlisted commands, queue, session; tests against shared vectors). Next: app shell on a machine with Google Maven; then 3b (bind decision, health sync). Bind stays out until decided.
