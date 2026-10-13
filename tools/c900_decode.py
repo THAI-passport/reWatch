@@ -9,7 +9,7 @@ Steps: ATT rows from tools/btcap.py (capture) or its --json output; keep the com
 (default `6e400002-...dcca9f` / `6e400003-...dcca9f`, PROTOCOL §2); reassemble DF/FD frames to len + 4 bytes per
 direction; check the sum (PROTOCOL §4); label cmd/key from PROTOCOL §5/§7 names; flag blocked cmds (INVARIANTS I-20)
 and any traffic on OTA characteristics. From a capture file (not JSON) it also pairs ATT reads to show 0x2A27/0x2A26/0x2A28/0x2A19
-and decodes feature bits. Privacy: message text (cmd 2 key 18) and MACs (0x0E key 1) are hidden unless --show-text / masked always.
+and decodes feature bits. Privacy: message text, caller, user name, profile and location payloads (cmd 2 keys 18/17/36/4, 0x1A 23/24) and MACs (0x0E key 1) are hidden unless --show-text / masked always.
 Labels are names already in PROTOCOL.md, not new claims; a decoded capture value is [H] only once written to a result file.
 """
 import argparse
@@ -33,7 +33,7 @@ CMD = {0x01: "OTA (old)", 0x02: "settings", 0x03: "bind", 0x04: "unbind", 0x05: 
 KEYS = {
     0x02: {1: "time sync", 2: "alarms", 3: "step goal", 4: "profile", 5: "sedentary", 6: "wearing hand", 7: "notification switches",
            8: "power save", 9: "raise-to-wake", 10: "matching", 11: "find watch", 12: "camera mode", 13: "heart switch",
-           18: "message push", 26: "12/24 h"},
+           17: "call state", 18: "message push", 26: "12/24 h", 36: "user name"},
     0x05: {1: "history request", 2: "steps per hour", 4: "heart rate", 5: "blood pressure", 6: "real-time steps", 7: "history start",
            8: "history end", 9: "sleep", 10: "today", 12: "total steps", 13: "temperature", 14: "SpO2", 15: "sport sessions"},
     0x0C: {1: "find phone start", 2: "camera shutter", 3: "camera open", 4: "camera close", 5: "heart test stopped",
@@ -45,6 +45,9 @@ KEYS = {
     0x1A: {3: "social support", 5: "payment support", 7: "power-save support", 9: "power save set", 21: "exit find-phone",
            23: "altitude", 24: "location"},
 }
+# Payloads that carry personal data (C900-Q04/Q05): hidden unless --show-text.
+PRIVATE = {(0x02, 18): "message text", (0x02, 17): "caller", (0x02, 36): "user name", (0x02, 4): "profile",
+           (0x1A, 23): "altitude", (0x1A, 24): "location"}
 FEATURE_BITS = [(1, 0x80, "isBLE3"), (15, 0x40, "isSupportPair (createBond after time ack)"),
                 (18, 0x20, "binPreviewFlag (dial trim allowed)"), (25, 0x80, "hide HR auto test and DND")]
 
@@ -77,8 +80,9 @@ def decode_frame(f, direction, show_text=False):
     plen = (f[7] << 8) | f[8]
     payload = f[9:9 + plen]
     d.update(type="cmd", cmd=f[4], ver=f[5], key=f[6], plen=plen, plen_ok=plen == len(f) - 9, label=label(f[4], f[6]))
-    if f[4] == 0x02 and f[6] == 18 and not show_text:
-        d["payload"] = "<%d bytes hidden (message text)>" % len(payload)
+    private = PRIVATE.get((f[4], f[6]))
+    if private and not show_text:
+        d["payload"] = "<%d bytes hidden (%s)>" % (len(payload), private)
     elif f[4] == 0x0E and f[6] == 1 and len(payload) >= 6:
         d["payload"] = "xx:xx:xx:xx:%02x:%02x (masked MAC)" % (payload[4], payload[5])
     else:
