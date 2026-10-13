@@ -198,3 +198,9 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Problem: ack x called a sequence. Fix: it is the acked frame length; I-18 updated to [H].
 - Found by the scan: `re-watch-targets` skill had the Nordic UART UUID as `...B5A9...` (typo, standard is B5A3); fixed. Legacy t900-c900 client and source copy keep the typo (superseded, allow-listed).
 - Found by the scan: owner home path in legacy handoff and incident file; masked.
+
+## 2026-10-13 Hardening before handing to the live agent
+- Problem: lint did not stop a committed capture or probe log (only .gitignore did). Fix: lint rule + test. Solved.
+- Problem: personal-data scan was a separate manual step. Fix: lint runs it over targets/docs/.claude; pre-commit hook installer. Solved.
+- Problem: probe hung in a shell without macOS Bluetooth permission (pre-flight incident). Fix: `bt_preflight`, tests. Solved; untested on a real Mac.
+- Added `tasks/AGENT-BRIEF.md` (state, never-list, results procedure, decision table).

@@ -316,6 +316,34 @@ def _bleak():
     return _b
 
 
+_cb_authorization = None  # tests may set a callable returning the CBManager authorization int
+
+
+def bt_preflight(platform=None, isatty=None):
+    """macOS only: fail fast instead of hanging inside CoreBluetooth when this process has no
+    Bluetooth permission (seen 2026-10-13: an agent shell blocked with authorization 0).
+    0 not determined, 1 restricted, 2 denied, 3 allowed. Returns a note string or raises."""
+    platform = platform or sys.platform
+    if platform != "darwin":
+        return "preflight skipped (not macOS)"
+    try:
+        if _cb_authorization is not None:
+            auth = int(_cb_authorization())
+        else:
+            import CoreBluetooth  # pyobjc, installed with bleak on macOS
+            auth = int(CoreBluetooth.CBManager.authorization())
+    except Exception as e:  # noqa: BLE001
+        return "preflight unknown (%s)" % sanitize(str(e), 40)
+    if auth in (1, 2):
+        raise SafetyError("macOS Bluetooth permission %s for this app; enable it in System Settings, "
+                          "Privacy and Security, Bluetooth, for your Terminal" % ("restricted" if auth == 1 else "denied"))
+    tty = sys.stdin.isatty() if isatty is None else isatty
+    if auth == 0 and not tty:
+        raise SafetyError("Bluetooth permission not granted and no interactive terminal: the owner must run "
+                          "the probe in their own Terminal (agent shells hang here)")
+    return "preflight bluetooth authorization=%d" % auth
+
+
 async def mode_scan(seconds, log):
     bleak = _bleak()
     log.emit("SCAN start seconds=%d (read-only, no connect)" % seconds)
@@ -773,6 +801,7 @@ async def _amain(args, confirm_fn=_confirm_tty):
     budget = Budget()
     # Ctrl-C -> disconnect path via CancelledError in the finally of each mode.
     try:
+        log.emit(bt_preflight())
         if args.mode == "scan":
             await asyncio.wait_for(mode_scan(args.seconds, log), timeout=GLOBAL_TIMEOUT_S)
             return EXIT_OK

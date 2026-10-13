@@ -81,6 +81,19 @@ class InitHashLint(unittest.TestCase):
         bad = [r for r, w in rw.lint(d) if "resources/" in r]
         self.assertEqual(bad, ["resources/x/stray.zip"])
 
+    def test_lint_flags_captures_and_personal_data(self):
+        d = tempfile.mkdtemp()
+        os.makedirs(os.path.join(d, "captures"))
+        os.makedirs(os.path.join(d, "targets", "x", "tasks", "results"))
+        open(os.path.join(d, "captures", "c900-probe-scan-1.log"), "w").write("x")
+        open(os.path.join(d, "btsnoop_hci.log"), "wb").write(b"x")
+        open(os.path.join(d, "targets", "x", "tasks", "results", "R.md"), "w").write("watch 5a:1b:2c:xx:xx:xx\n")
+        probs = rw.lint(d)
+        where = " ".join(r for r, _ in probs)
+        self.assertIn("captures/c900-probe-scan-1.log", where)
+        self.assertIn("btsnoop_hci.log", where)
+        self.assertIn("R.md:1", where)
+
     def test_repo_itself_is_lint_clean(self):
         self.assertEqual(rw.lint(ROOT), [])
 
