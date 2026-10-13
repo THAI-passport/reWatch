@@ -78,6 +78,9 @@ _CTRL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 _MAC_FULL = re.compile(r"(?i)\b([0-9a-f]{2}:){5}[0-9a-f]{2}\b")
 
 
+_UUID_FULL = re.compile(r"(?i)\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b")
+
+
 def sanitize(value, cap=STRING_CAP):
     """Make a device-supplied string printable, length-capped, never a path/format/command."""
     if value is None:
@@ -90,7 +93,7 @@ def sanitize(value, cap=STRING_CAP):
     s = _CTRL.sub("?", str(value))
     s = s.replace("%", "_").replace("{", "(").replace("}", ")")  # kill format/path tricks
     s = s.replace("\n", " ").replace("\r", " ").replace("\t", " ")
-    s = s.replace("../", "").replace("..\\", "")
+    s = re.sub(r"\.\.+[/\\]", "", s)
     if len(s) > cap:
         s = s[:cap] + "..."
     return s
@@ -109,8 +112,15 @@ def redact_line(line):
     """Mask MACs and drop likely personal fields from a log line before writing."""
     s = _MAC_FULL.sub(lambda m: mask_mac(m.group(0)), str(line))
     # Never keep notification / caller / location style payloads in the log.
-    if "message push" in s.lower() or "caller" in s.lower() or "location" in s.lower():
-        s = s.split("payload", 1)[0] + "payload=<redacted>"
+    for kw in ("message push", "caller", "location"):
+        if kw in s.lower():
+            idx = s.lower().find("payload")
+            if idx != -1:
+                s = s[:idx] + "payload=<redacted>"
+            else:
+                idx = s.lower().find(kw)
+                s = s[:idx + len(kw)] + "=<redacted>"
+            break
     return s
 
 
@@ -118,9 +128,11 @@ def is_ota_uuid(uuid):
     u = str(uuid or "").strip().lower()
     if u.endswith(OTA_SERVICE_SUFFIX):
         return True
+    if "5610" in u:
+        return True
     short = u[4:8] if len(u) == 36 and u.startswith("0000") else (u if len(u) in (4, 8) else "")
-    if len(u) == 8:
-        short = u[:4] if u.endswith("0000") else u
+    if len(u) == 8 and u.startswith("0000"):
+        short = u[4:8]
     # expand short forms
     if len(u) == 4:
         short = u
@@ -129,8 +141,7 @@ def is_ota_uuid(uuid):
     # also match full bluetooth-base forms of the short list
     for s in OTA_SHORT:
         if u == ("0000%s-0000-1000-8000-00805f9b34fb" % s) or u.endswith(s):
-            if s in OTA_SHORT:
-                return True
+            return True
     return u.endswith("dcca9e")
 
 
@@ -288,19 +299,23 @@ def _require_command_layout(services):
     ota_present = []
     for svc in services:
         su = norm_uuid(getattr(svc, "uuid", ""))
-        if is_ota_uuid(su) or su.endswith(OTA_SERVICE_SUFFIX):
+        is_ota_svc = is_ota_uuid(su) or su.endswith(OTA_SERVICE_SUFFIX)
+        if is_ota_svc:
             ota_present.append(su)
         for ch in getattr(svc, "characteristics", []) or []:
             cu = norm_uuid(ch.uuid)
-            if is_ota_uuid(cu):
+            if is_ota_uuid(cu) or cu.endswith(OTA_SERVICE_SUFFIX):
                 ota_present.append(cu)
-            if cu == WRITE_UUID and ("write" in ch.properties or "write-without-response" in ch.properties):
-                have_write = True
-            if cu == NOTIFY_UUID and ("notify" in ch.properties or "indicate" in ch.properties):
-                have_notify = True
-            # Hard refuse: a characteristic that looks like DF write but lives under OTA suffix
-            if cu.endswith("0002") and cu.endswith(OTA_SERVICE_SUFFIX):
+            # Hard refuse: write char under OTA service or matching OTA write / lookalike
+            if is_ota_svc and cu == WRITE_UUID:
+                raise SafetyError("refusing: write characteristic on OTA service %s/%s" % (su, cu))
+            if cu.startswith("6e400002") and cu.endswith(OTA_SERVICE_SUFFIX):
                 raise SafetyError("refusing: write characteristic on OTA service %s" % cu)
+            if not is_ota_svc:
+                if cu == WRITE_UUID and ("write" in ch.properties or "write-without-response" in ch.properties):
+                    have_write = True
+                if cu == NOTIFY_UUID and ("notify" in ch.properties or "indicate" in ch.properties):
+                    have_notify = True
     if not (have_write and have_notify):
         raise SafetyError("unexpected service layout: missing command write/notify (...DCCA9F 0002/0003)")
     return ota_present
@@ -338,8 +353,15 @@ async def mode_inspect(address, listen_s, log, budget, name_filter=None):
     def on_notify(_handle, data):
         try:
             buf.extend(data)
-            while len(buf) >= 3:
+            while buf:
+                while buf and buf[0] not in (_frames.APP_HEADER, _frames.ACK_HEADER):
+                    del buf[0]
+                if len(buf) < 3:
+                    break
                 total = ((buf[1] << 8) | buf[2]) + 4
+                if total < 9 or total > 1024:
+                    del buf[0]
+                    continue
                 if len(buf) < total:
                     break
                 frame = bytes(buf[:total]); del buf[:total]
@@ -461,21 +483,32 @@ async def mode_safe_write(address, command, log, budget, approve, confirm_fn, na
     buf = bytearray()
 
     def on_notify(_h, data):
-        buf.extend(data)
-        while len(buf) >= 3:
-            total = ((buf[1] << 8) | buf[2]) + 4
-            if len(buf) < total:
-                break
-            info = parse_inbound(bytes(buf[:total])); del buf[:total]
-            if info["kind"] == "cmd" and (info["cmd"], info["key"]) in BOND_TRIGGERS:
-                ack_box["abort"] = "bond-trigger inbound cmd=0x%02x key=%d" % (info["cmd"], info["key"])
-                return
-            if info["kind"] == "ack":
-                ack_box["ack"] = info
+        try:
+            buf.extend(data)
+            while buf:
+                while buf and buf[0] not in (_frames.APP_HEADER, _frames.ACK_HEADER):
+                    del buf[0]
+                if len(buf) < 3:
+                    break
+                total = ((buf[1] << 8) | buf[2]) + 4
+                if total < 9 or total > 1024:
+                    del buf[0]
+                    continue
+                if len(buf) < total:
+                    break
+                info = parse_inbound(bytes(buf[:total])); del buf[:total]
+                if info["kind"] == "cmd" and (info["cmd"], info["key"]) in BOND_TRIGGERS:
+                    ack_box["abort"] = "bond-trigger inbound cmd=0x%02x key=%d" % (info["cmd"], info["key"])
+                    return
+                if info["kind"] == "ack":
+                    ack_box["ack"] = info
+        except Exception as e:  # noqa: BLE001
+            ack_box["abort"] = "notify handler error: %s" % sanitize(str(e), 60)
 
     try:
         await client.connect()
-        if bool(getattr(client, "is_paired", False)):
+        paired_before = bool(getattr(client, "is_paired", False))
+        if paired_before:
             # Already paired is OK (owner may have paired earlier); we still never call pair().
             log.emit("NOTE already paired; probe will not request bonding")
         _require_command_layout(client.services)
@@ -483,17 +516,13 @@ async def mode_safe_write(address, command, log, budget, approve, confirm_fn, na
             raise SafetyError("internal: WRITE_UUID is not the command characteristic")
         # Subscribe so we can see the ack. CCCD write only on command notify.
         await client.start_notify(NOTIFY_UUID, on_notify)
-        # Chunk into 20-byte ATT pieces (I-16). Cap already charged once for the logical write.
-        budget.charge_write()
+        # Chunk into 20-byte ATT pieces (I-16).
         pieces = [frame[i:i + 20] for i in range(0, len(frame), 20)]
-        if budget.writes - 1 + len(pieces) > MAX_WRITES:
-            # Count each ATT write toward the cap for defense in depth.
-            pass
+        if budget.writes + len(pieces) > MAX_WRITES:
+            raise SafetyError("refusing write: %d piece(s) exceeds remaining write cap (%d/%d)" %
+                              (len(pieces), budget.writes, MAX_WRITES))
         for i, piece in enumerate(pieces):
-            if budget.writes > MAX_WRITES:
-                raise SafetyError("write cap %d reached mid-frame" % MAX_WRITES)
-            if i > 0:
-                budget.charge_write()
+            budget.charge_write()
             await _write_cmd_piece(client, piece)
             log.emit("TX piece %d/%d len=%d" % (i + 1, len(pieces), len(piece)))
         # Wait for ack matching cmd/key.
@@ -505,6 +534,9 @@ async def mode_safe_write(address, command, log, budget, approve, confirm_fn, na
             if not client.is_connected:
                 budget.note_disconnect()
                 raise SafetyError("disconnect while waiting for ack")
+            # Pairing detection: if the stack flips is_paired after we connected, stop.
+            if (not paired_before) and bool(getattr(client, "is_paired", False)):
+                raise SafetyError("pairing/bonding detected (probe never requests this)")
             a = ack_box["ack"]
             if a is not None:
                 if a["cmd"] != cmd or a["key"] != key:
@@ -540,13 +572,15 @@ def build_parser():
     p.add_argument("--seconds", type=float, default=SCAN_DEFAULT_S)
     p.add_argument("--log-dir")
     p = sub.add_parser("inspect", help="connect, read, listen on command notify only")
-    p.add_argument("--address")
-    p.add_argument("--name", help="exact local-name match (alternative to --address)")
+    g = p.add_mutually_exclusive_group()
+    g.add_argument("--address")
+    g.add_argument("--name", help="exact local-name match (alternative to --address)")
     p.add_argument("--listen", type=float, default=LISTEN_DEFAULT_S)
     p.add_argument("--log-dir")
     p = sub.add_parser("safe-write", help="one allowlisted write after dual approval")
-    p.add_argument("--address")
-    p.add_argument("--name")
+    g = p.add_mutually_exclusive_group()
+    g.add_argument("--address")
+    g.add_argument("--name", help="exact local-name match (alternative to --address)")
     p.add_argument("--command", required=True, choices=sorted(set(ALLOWLIST.values())))
     p.add_argument("--i-approve-writes", action="store_true")
     p.add_argument("--log-dir")

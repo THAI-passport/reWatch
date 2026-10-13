@@ -23,3 +23,8 @@ Things that need fixing in reWatch itself (tools, templates, skills), and things
 ### 2026-10-13 — pinned vendor archive for cloud rebuild
 - Wrong: no way to rebuild a target whose download host is blocked or unsigned without the user uploading the file each time; committing binaries was flatly forbidden.
 - Changed: owner-approved exception under `resources/<slug>/` via Git LFS + `REPO_COPY` / `REPO_COPY_SHA256` in SOURCES; lint enforces declaration; rebuild extracts the single inner member after hash check.
+
+### 2026-10-13 — c900 probe hardening
+- Wrong: `_require_command_layout` had an impossible `and` check on OTA lookalike write chars and didn't verify parent service; `is_ota_uuid` missed custom 5610 UUIDs; `mode_safe_write` missed pairing check during wait; `on_notify` locked up on leading non-header byte; `redact_line` failed without exact keyword "payload"; write cap pre-check had a `pass` statement allowing partial frame sends.
+- Changed: tightened OTA UUID matching, strictly validated service context, added active pairing polling, resynchronized stream framing in `on_notify`, enforced atomic write cap, hardened personal data redaction, made CLI `--address`/`--name` mutually exclusive, and added 6 unit test suites in `tests/test_c900_probe.py`.
+

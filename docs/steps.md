@@ -262,3 +262,11 @@ Required by AGENTS.md.
 - **Decision:** Do not ask the owner to unbind; turn phone Bluetooth off instead.
   - **Rationale:** Unbind is a blocked command and loses the vendor pairing the owner still wants.
 - **Decision:** Ready-to-paste Gemini review prompt at `tasks/PROMPT-GEMINI-PROBE-REVIEW.md` (read-only, feature branch only).
+
+## 2026-10-13 — Adversarial probe review and hardening (c900_probe.py)
+
+- **Step:** Conducted independent adversarial security and correctness review of `tools/c900_probe.py` per `tasks/PROMPT-GEMINI-PROBE-REVIEW.md`. Report written to `targets/c900/tasks/results/REVIEW-PROBE-SECURITY.md`.
+  - **Decision:** Fixed 6 findings: (1) corrected OTA lookalike write check in `_require_command_layout` and prevented OTA services from fulfilling command characteristics; (2) added 5610 substring matching in `is_ota_uuid`; (3) added active pairing detection to `mode_safe_write` wait loop; (4) added header resynchronization in `on_notify` so leading noise does not lock frame parsing or blind bond aborts; (5) fixed whole-line personal data redaction in `redact_line` when literal "payload" keyword is absent; (6) enforced atomic write cap pre-check before sending piece 1.
+  - **Decision:** Added 6 new unit test suites in `tests/test_c900_probe.py` (23 probe tests, 108 total repo tests passing).
+  - **Rationale:** Strict adherence to INVARIANTS I-13/I-14/I-20/I-30/I-54/I-55 and the non-negotiable device safety ground rules.
+

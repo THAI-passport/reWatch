@@ -129,3 +129,13 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Modes: scan, inspect (CCCD-only write), safe-write (allowlist + dual approval).
 - Hard safety in code: allowlist, BLOCKED_CMDS, OTA UUID refuse, no bonding, bond-trigger abort, caps, sanitized device strings, logs to captures/ masked.
 - Tests: `tests/test_c900_probe.py` (fake bleak). Docs: PROBE-GUIDE.md, PROBE-SECURITY.md, PROMPT-GEMINI-PROBE-REVIEW.md.
+
+## 2026-10-13 Adversarial probe review and hardening
+- Evidence: `REVIEW-PROBE-SECURITY.md`, `tools/c900_probe.py`, `tests/test_c900_probe.py`.
+- Problem: `_require_command_layout` OTA lookalike check had impossible `and` condition (`cu.endswith("0002") and cu.endswith(OTA_SERVICE_SUFFIX)`) and did not verify parent service was not OTA. Fix: check `is_ota_svc and cu == WRITE_UUID` and `cu.startswith("6e400002") and cu.endswith(OTA_SERVICE_SUFFIX)`. Solved.
+- Problem: `is_ota_uuid` missed custom 128-bit Bluetrum 5610 UUIDs. Fix: added `"5610" in u` and fixed 32-bit UUID extraction. Solved.
+- Problem: `mode_safe_write` omitted pairing check during wait loop. Fix: stored `paired_before` and added active `is_paired` check in wait loop. Solved.
+- Problem: leading noise byte in `on_notify` locked buffer and blinded bond-trigger aborts. Fix: drop non-header leading bytes until `0xDF`/`0xFD` and validate `9 <= total <= 1024`. Solved.
+- Problem: `redact_line` leaked personal data if literal "payload" keyword was absent. Fix: redact caller, location, message push without requiring keyword. Solved.
+- Problem: write cap pre-check had `pass` allowing mid-frame abort. Fix: atomic pre-check before piece 1. Solved.
+- Tests: 6 new unit tests in `tests/test_c900_probe.py` (23 total, all passing). Solved.
