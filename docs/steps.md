@@ -331,3 +331,8 @@ Required by AGENTS.md.
 - **Step:** Reviewed Q19 text (raw capture not available here). **Decision:** accept ver 0x10, bind sequence, ack values, 0x0E/1 frames as [H]; correct the time-sync and ack-x interpretations; mask OUI. **Rationale:** I-21 decode and `frames.time_payload` reproduce `6a9b05cb` exactly; x equals plen + 9 = frame length.
 - **Decision:** INVARIANTS I-10 (C900 value), I-18, I-21 updated with [H] evidence. **Rationale:** capture is higher evidence than [C]/[I].
 - **Step:** Added `tools/privacy_scan.py` (stdlib) + tests and skill `re-privacy-scrub`. **Rationale:** three leaks in one day came from agents writing results by hand; a mechanical check plus a written procedure catches the repeat pattern. Kept out of `rw.py lint` for now because test fixtures hold synthetic addresses; FIXES Open tracks wiring it into lint.
+
+## 2026-10-13 Hardening before live-agent handoff (Asia/Saigon)
+- **Decision:** move safety from prompts into checks: lint rejects captures/probe logs and personal data; opt-in pre-commit hook; probe permission preflight. **Rationale:** each of today's incidents (leaks, hung scan, tempting "fixes") came from an agent following prose; mechanical checks hold even when the brief is skipped.
+- **Decision:** one-page `tasks/AGENT-BRIEF.md` instead of long pasted prompts. **Rationale:** a weaker agent gets state, prohibitions and commands in one place.
+- **Not done (needs owner OK):** codec `ver` parameter (Phase 3 code); history rewrite of leaked commits.

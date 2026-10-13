@@ -770,5 +770,29 @@ class DeepPass1Fixes(unittest.TestCase):
                 probe.build_parser().parse_args(bad)
 
 
+class Preflight(unittest.TestCase):
+    def tearDown(self):
+        probe._cb_authorization = None
+
+    def test_non_mac_skips(self):
+        self.assertIn("skipped", probe.bt_preflight(platform="linux"))
+
+    def test_denied_and_restricted_refuse(self):
+        for v in (1, 2):
+            probe._cb_authorization = lambda v=v: v
+            with self.assertRaises(probe.SafetyError):
+                probe.bt_preflight(platform="darwin", isatty=True)
+
+    def test_not_determined_needs_interactive_terminal(self):
+        probe._cb_authorization = lambda: 0
+        with self.assertRaises(probe.SafetyError):
+            probe.bt_preflight(platform="darwin", isatty=False)
+        self.assertIn("authorization=0", probe.bt_preflight(platform="darwin", isatty=True))
+
+    def test_allowed(self):
+        probe._cb_authorization = lambda: 3
+        self.assertIn("authorization=3", probe.bt_preflight(platform="darwin", isatty=False))
+
+
 if __name__ == "__main__":
     unittest.main()

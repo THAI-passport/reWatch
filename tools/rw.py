@@ -263,10 +263,43 @@ def pinned_repo_copies(root):
     return out
 
 
+CAPTURE_RX = re.compile(r"(?i)(^|/)captures/|btsnoop|\.(pklg|pcap|pcapng|cfa|snoop)$|bugreport.*\.zip$|(^|/)c900-probe-[^/]*\.log$")
+PRIVACY_DIRS = ("targets/", "docs/", ".claude/")
+
+
+def _privacy_findings(root, rels):
+    """Personal-data scan (tools/privacy_scan.py) over committed docs; tests/fixtures are excluded."""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import privacy_scan  # noqa: E402
+    except Exception:  # noqa: BLE001
+        return []
+    allow = []
+    af = os.path.join(root, ".privacy-allow")
+    if os.path.isfile(af):
+        allow = [ln.strip() for ln in open(af, encoding="utf-8") if ln.strip() and not ln.startswith("#")]
+    out = []
+    for rel in rels:
+        if not rel.startswith(PRIVACY_DIRS) or os.path.splitext(rel)[1].lower() not in privacy_scan.TEXT_EXT:
+            continue
+        try:
+            text = open(os.path.join(root, rel), encoding="utf-8", errors="replace").read()
+        except OSError:
+            continue
+        for h in privacy_scan.scan_text(text, allow):
+            out.append(("%s:%d" % (rel, h["line"]), "personal data? %s %s (see skill re-privacy-scrub)" % (h["kind"], h["match"])))
+    return out
+
+
 def lint(root):
     problems = []
     pinned = pinned_repo_copies(root)
-    for rel in tracked_files(root):
+    files = tracked_files(root)
+    problems.extend(_privacy_findings(root, files))
+    for rel in files:
+        if CAPTURE_RX.search(rel) and not rel.startswith("tests/fixtures/"):  # fixtures are synthetic
+            problems.append((rel, "capture or probe log; keep it in git-ignored captures/, never commit"))
+            continue
         if rel.startswith("resources/"):
             if rel.endswith("/README.md"):
                 continue
