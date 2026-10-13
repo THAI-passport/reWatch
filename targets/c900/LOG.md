@@ -240,9 +240,9 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Built `client/c900-android/core` (Kotlin/JVM) and shared vectors `tests/fixtures/c900_vectors.json` from the Python codec.
 - Problem: Google Maven unreachable (no Android Gradle plugin); Maven Central returned 429 for a while. Fix: core is pure Kotlin/JVM; build retried with backoff. App shell open.
 
-## 2026-10-13 Live Session 3 (safe-write message)
-- Evidence: `captures/c900-probe-safe-write-20261013-183426.log`, `targets/c900/tasks/results/LIVE-SESSION-3-2026-10-13.md`.
-- Behavior: 24-byte message frame transmitted in two pieces (`20` bytes, `4` bytes). Following transmission, the watch sent unsolicited `cmd 0x0E key 1` (Classic Bluetooth MAC broadcast).
-- Probe safety action: `BOND_TRIGGERS` rule triggered immediately on `0x0E / 1`, executing clean disconnect (`DISCONNECT ok`, `EXIT_SAFETY`, code 3).
-- Wire finding: Watch sends `0x0E / 1` inbound during connection/message transfer, matching C900-Q19 capture observation. No unreviewed bonding or link keys established.
-- Status: Solved (safety stop operated as designed).
+## 2026-10-13 Live Session 3 (safe-write message & time)
+- Evidence: `captures/c900-probe-safe-write-20261013-183426.log`, `captures/c900-probe-safe-write-20261013-190018.log`, `captures/c900-probe-safe-write-20261013-190223.log`, `targets/c900/tasks/results/LIVE-SESSION-3-2026-10-13.md`.
+- Message findings: 24-byte frame transmitted in two pieces (20 B, 4 B). Owner confirmed notification "reWatch test" appeared on watch display [H owner]. Watch emitted `cmd 0x0E key 1` (Classic Bluetooth MAC broadcast), and probe `BOND_TRIGGERS` rule triggered immediate clean disconnect (code 3).
+- Time sync findings: 13-byte packed time frame transmitted in single piece. Watch immediately returned `ACK ok cmd=0x02 key=0x01 status=1 x=0x000d x_is_frame_len=True`. Confirms I-18 live (x = 13 == frame length). Zero pairing dialogs triggered on macOS. Exit code 0 across multiple runs.
+- Invariant I-35 concluded: Watch executes all three basic safe-write commands (find, message alert, time sync) without requiring an initial bind handshake (cmd 3 key 0).
+- Status: Solved.
