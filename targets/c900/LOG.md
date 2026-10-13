@@ -246,3 +246,8 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Time sync findings: 13-byte packed time frame transmitted in single piece. Watch immediately returned `ACK ok cmd=0x02 key=0x01 status=1 x=0x000d x_is_frame_len=True`. Confirms I-18 live (x = 13 == frame length). Zero pairing dialogs triggered on macOS. Exit code 0 across multiple runs.
 - Invariant I-35 concluded: Watch executes all three basic safe-write commands (find, message alert, time sync) without requiring an initial bind handshake (cmd 3 key 0).
 - Status: Solved.
+
+## 2026-10-13 Robustness pack for parallel agents
+- Added `tasks/robust/` (README framework, template, R01-R04, R06-R10, PROMPT) and `tools/dexgrep.py` + `requirements-static.txt` (androguard reader for machines without jadx).
+- R05 dropped from the pack; not written.
+- Notes from reviewing LIVE-SESSION-3: message ack never received (probe stopped on unsolicited 0x0E/1); several `time` runs although the sheet said no retries; "zero link keys created" cannot be known on macOS. Handed to R09 to word corrections.
