@@ -365,3 +365,7 @@ Required by AGENTS.md.
   - **Decision:** Successful second run settled: wire `ver=0x10` confirmed working live against `0x2A27` read [H]; single 10-byte piece sent (`TX piece 1/1 len=10`) [H]; immediate ACK `x=0x000a x_is_frame_len=True status=1` [H]; watch executed alert ("the bracelet has been found!" with vibration) [H owner].
   - **Decision:** Confirmed invariant I-18 live (ack field x = frame length = 10); narrowed invariant I-35 (hardware executes find alert without requiring prior bind).
   - **Rationale:** Strict adherence to AGENTS.md, `re-privacy-scrub`, and safety protocol. Report: `targets/c900/tasks/results/LIVE-SESSION-2-2026-10-13.md`.
+
+## 2026-10-13 Post-Session 2 doc sync (AGENT-BRIEF, NEXT-STEPS, Asia/Saigon)
+- **Step:** Synchronized task state in `targets/c900/tasks/AGENT-BRIEF.md` and `targets/c900/NEXT-STEPS.md` to reflect Session 2 `find` completion [H] and remaining unapproved commands (`time`, `message`).
+  - **Rationale:** AGENTS.md requirement: brief and plan docs must reflect true workspace state so any subsequent agent has exact context without having to deduce it.
