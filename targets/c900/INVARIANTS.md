@@ -13,7 +13,7 @@ Rule for agents: before you finish a pass, grep your diff for each "Wrong versio
 ## Frame and link
 | ID | True | Wrong version | Tag | Proof |
 |---|---|---|---|---|
-| I-10 | Byte 4 is `PROTOCOL_VERSION` (default 1, overwritten from 0x2A27 major). Numbering note (DEEP-PASS-1): "byte 4" here counts the `ver` field as the 5th byte; in 0-based frame indexing (`DF`=0, cmd=4, key=6, as in PROTOCOL sections 4 and 7.1) `ver` is index **5** | byte 4 is a fixed `01`; or read 0-based index 4 as the version (that is cmd) | [C smali] | C900-Q04; `IssuedUtil.getSendByte` |
+| I-10 | Byte 4 is `PROTOCOL_VERSION` (default 1, overwritten from 0x2A27 major). C900 value on the wire: **0x10** (0x2A27 = "10000") [H], C900-Q19. Numbering note (DEEP-PASS-1): "byte 4" here counts the `ver` field as the 5th byte; in 0-based frame indexing (`DF`=0, cmd=4, key=6, as in PROTOCOL sections 4 and 7.1) `ver` is index **5** | byte 4 is a fixed `01`; or read 0-based index 4 as the version (that is cmd) | [C smali] | C900-Q04; `IssuedUtil.getSendByte` |
 | I-11 | len = payload + 5; total = len + 4 | len = payload + 6 (Gemini) | [C]/[V] | PROTOCOL §4; vector `df0005ee0901000000` |
 | I-12 | Sum = all bytes mod 256 with byte 3 taken as 0 | sum excludes header / is a CRC | [C]/[V] | PROTOCOL §4 |
 | I-13 | Command service ends `...DCCA9F`; the OTA one ends `...DCCA9E` | they are the same service | [C] | PROTOCOL §2 |
@@ -21,13 +21,13 @@ Rule for agents: before you finish a pass, grep your diff for each "Wrong versio
 | I-15 | One command in flight; 100 s ack timeout (`0x186a0`) | fire-and-forget, short timeout | [C smali] | C900-Q04 |
 | I-16 | Retries: full 20-byte pieces 2x100 ms; last piece 1x20 ms; frames <=20 B none | two retries on every piece | [C smali] | C900-Q04 |
 | I-17 | App NAK on bad sum: x = 3, status 0; ACK x = 0, status 1 | app acks always x = 0 | [C smali] | C900-Q04 |
-| I-18 | Watch ack bytes 6-7 are unknown; SimWatch `00 01` is a guess | SimWatch ack is real | [I] | FACTS §4 |
+| I-18 | Watch ack bytes 6-7 = total length of the acknowledged frame (plen + 9), status 1; SimWatch `00 01` was a guess (updated 2026-10-13) | SimWatch ack is real; or x is a sequence number | [H] | C900-Q19 section 4 and 6 |
 
 ## Commands
 | ID | True | Wrong version | Tag | Proof |
 |---|---|---|---|---|
 | I-20 | Blocked forever: 0x01 OTA, 0x04 UNBIND, 0x06 RESET, 0x07 FACTORY_TEST, 0x0D RESTORE, 0x13 OTA_NEW | 0x04 = watch-face prep, 0x07 = find device (Gemini) | [C] | CommandID; `frames.BLOCKED_CMDS` |
-| I-21 | Time sync = cmd 2 key 1, year stored as year - 2000 (`-0x7d0`) | cmd 0x0A, or full year | [C smali] | results/S2 |
+| I-21 | Time sync = cmd 2 key 1, year stored as year - 2000 (`-0x7d0`), 4 packed bytes; seen on the wire 2026-10-13 | cmd 0x0A, or full year, or a Unix timestamp | [C smali] + [H] | results/S2; C900-Q19 section 6 |
 | I-22 | cmd 2 key 26 payload 1 = 12 h, 0 = 24 h | 1 = 24 h | [C] | C900-Q05 |
 | I-23 | cmd 0x1A key 21 = exit find-phone | language (jadx label) | [C smali] | C900-Q04 |
 | I-24 | jadx substitutes same-valued library constants (CHATGPT_ID, GET_FUNTION, CropImageView 500, FileUriModel "/", JCameraView.MEDIA_QUALITY_FUNNY = 400000) | trust jadx names for numbers | [C] | C900-Q04, Q06, Q07 |

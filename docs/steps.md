@@ -322,7 +322,12 @@ Required by AGENTS.md.
 ## 2026-10-13 Android HCI snoop capture decode (C900-Q19)
 - **Step:** Pulled bug report from Android phone via ADB, extracted `btsnoop_hci.log.last`, and decoded with `tools/c900_decode.py` into `captures/decoded.txt` (220 ATT PDUs, 137 data PDUs; 0 bad sums).
   - **Decision:** Wire version byte settled [H]: App sends `ver = 0x10` (16 decimal) across all 63 TX frames; watch sends `ver = 0x01` on its DF frames.
-  - **Decision:** Bonding mechanism settled [H]: Watch sends unsolicited `cmd 0x0E key 0x01` carrying Classic BT MAC (`41:42:D0:xx:xx:xx`), triggering phone `createBond()`. Correlates with feature bit 15 (`0x40`).
+  - **Decision:** Bonding mechanism settled [H]: Watch sends unsolicited `cmd 0x0E key 0x01` carrying Classic BT MAC (`XX:XX:XX:XX:XX:XX`), triggering phone `createBond()`. Correlates with feature bit 15 (`0x40`).
   - **Decision:** Bind sequence settled [H]: App sends 8-byte token under `cmd 0x03 key 0`; watch replies with `cmd 0x0C key 8` (bind accepted) and ACK `x=17 status=1`.
   - **Decision:** Watch ACK formula settled [H]: `FD 00 05 <sum> <cmd> <key> <seq_hi> <seq_lo> <status>` where `status=1` and `x = plen + 9`.
   - **Rationale:** NEXT-STEPS §4 capture decision tree; report in `targets/c900/tasks/results/C900-Q19.md`. Raw capture and phone diagnostics stay git-ignored.
+
+## 2026-10-13 Review of C900-Q19; privacy scrub skill and scanner (Asia/Saigon)
+- **Step:** Reviewed Q19 text (raw capture not available here). **Decision:** accept ver 0x10, bind sequence, ack values, 0x0E/1 frames as [H]; correct the time-sync and ack-x interpretations; mask OUI. **Rationale:** I-21 decode and `frames.time_payload` reproduce `6a9b05cb` exactly; x equals plen + 9 = frame length.
+- **Decision:** INVARIANTS I-10 (C900 value), I-18, I-21 updated with [H] evidence. **Rationale:** capture is higher evidence than [C]/[I].
+- **Step:** Added `tools/privacy_scan.py` (stdlib) + tests and skill `re-privacy-scrub`. **Rationale:** three leaks in one day came from agents writing results by hand; a mechanical check plus a written procedure catches the repeat pattern. Kept out of `rw.py lint` for now because test fixtures hold synthetic addresses; FIXES Open tracks wiring it into lint.
