@@ -241,6 +241,13 @@ Plan and comparison: [NEXT-STEPS.md](NEXT-STEPS.md). Gates now include `capture`
   - Risk waiver: Waives the strict "never paired" no-go checklist item with risk noted in writing (dual-mode chip LE cross-transport key derivation risk acknowledged).
   - Probe posture: Read-only first contact (scan + inspect, 0 GATT data writes) via owner's interactive Terminal session using per-Mac CoreBluetooth BLE UUID.
 
+### Owner Live Session 2 Pre-flight Decision (2026-10-13)
+- **Live work necessity:** Owner approved: "live work is necessary" for scope = LIVE-SESSION-2 (safe-write) (2026-10-13 Asia/Saigon).
+- **Approved commands:** `find` command only (`cmd=0x02 key=0x0B`, payload `0x01`). `time` and `message` commands remain unapproved until `find` behavior is evaluated.
+- **Pre-flight verification:** Codec updated to `ver = 0x10` (`client/c900/frames.py` and `tools/c900_probe.py`, settled [H] in C900-Q19 / INVARIANTS I-10); all 177 unit tests pass; `python3 tools/rw.py lint` reports 0 problems.
+- **Risk acknowledgement & budget:** Owner accepts that the watch may NAK or ignore without prior bind (ack timeout recorded as a result, not retried). Budget: 1 connection, 1 GATT write (1 piece of 10 bytes), 1 GATT read (0x2A27), 30 s ack timeout. Owner knows how to silence/stop find on the watch.
+- **Execution posture:** Owner runs the command in interactive macOS Terminal with `--i-approve-writes`. AI does not execute radio/probe commands.
+
 ### Owner Phase 1c checklist (SIGNED 2026-10-13)
 - [x] Approve C900-Q16 (static, one bootstrap)
 - [x] Approve C900-Q17 (tool fix; edits `tools/notify_log.py`)

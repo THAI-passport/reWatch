@@ -221,3 +221,13 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 
 ## 2026-10-13 Owner QR observation
 - Owner: QR scan in Hiwear Plus connects immediately after unbind. Recorded in results/OWNER-QR-2026-10-13.md. Not a protocol requirement (session 1 connected without it); QR contents [U]; S-22 static check opened. Photos not committed (name, address).
+
+## 2026-10-13 Live Session 2 (safe-write find)
+- Evidence: `captures/c900-probe-safe-write-20261013-180232.log`, `captures/c900-probe-safe-write-20261013-180245.log`, `targets/c900/tasks/results/LIVE-SESSION-2-2026-10-13.md`.
+- Confirmation fail-safe tested: First run input `j` at confirmation prompt aborted with `SAFETY_STOP confirmation mismatch; nothing sent` (exit code 3). Radio untouched.
+- Wire results:
+  - Wire version byte confirmed [H]: Probe derived `ver_byte=0x10` from 0x2A27 ("10000"); transmitted frame with `ver=0x10`; accepted by watch.
+  - Watch ACK confirmed [H]: `ACK ok cmd=0x02 key=0x0b status=1 x=0x000a x_is_frame_len=True`. Confirms I-18 on direct radio probe without bind.
+  - Physical reaction confirmed [H owner]: Watch screen displayed "the bracelet has been found!" with vibration.
+  - Invariant I-35 narrowed [H]: Watch executes `find` alert command without requiring a prior bind token (cmd 3 key 0).
+- Status: Solved.

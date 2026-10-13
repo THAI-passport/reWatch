@@ -352,3 +352,16 @@ Required by AGENTS.md.
 
 ## 2026-10-13 Owner QR observation (Asia/Saigon)
 - **Decision:** record as app UX [H owner]; protocol does not need it (probe and capture evidence). **Rationale:** separate "how the app picks a device" from "what the watch requires". Open S-22 (smali of scan-code screen) to rule out a key in the QR.
+
+## 2026-10-13 Live Session 2 pre-flight and owner approval (Asia/Saigon)
+- **Step:** Verified workspace on `feat/c900-hiwear-plus`, all 177 tests pass, `rw.py lint` 0 problems.
+- **Step:** Reviewed `AGENT-BRIEF.md` and `LIVE-SESSION-1.md` Section 9.
+- **Decision:** Recorded owner written approval for `find` safe-write command in `targets/c900/OPEN-QUESTIONS.md`. Prepared exact interactive Terminal command for owner execution with `--i-approve-writes`.
+  - **Rationale:** AGENTS.md ground rules require owner written approval for live safe-writes naming the exact command; probe execution is performed by the owner in an interactive macOS Terminal session, never by the AI.
+
+## 2026-10-13 Live Session 2 execution (safe-write find, Asia/Saigon)
+- **Step:** Owner ran `safe-write --command find` in interactive Terminal.
+  - **Decision:** Fail-safe gate verified: typed `j` aborted immediately without sending bytes (`SAFETY_STOP confirmation mismatch; nothing sent`).
+  - **Decision:** Successful second run settled: wire `ver=0x10` confirmed working live against `0x2A27` read [H]; single 10-byte piece sent (`TX piece 1/1 len=10`) [H]; immediate ACK `x=0x000a x_is_frame_len=True status=1` [H]; watch executed alert ("the bracelet has been found!" with vibration) [H owner].
+  - **Decision:** Confirmed invariant I-18 live (ack field x = frame length = 10); narrowed invariant I-35 (hardware executes find alert without requiring prior bind).
+  - **Rationale:** Strict adherence to AGENTS.md, `re-privacy-scrub`, and safety protocol. Report: `targets/c900/tasks/results/LIVE-SESSION-2-2026-10-13.md`.

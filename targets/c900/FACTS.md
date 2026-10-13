@@ -20,6 +20,13 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | 0x2A28 | `aacfe081dff6fc3800000000000010e64108cf1400000000000000` (27 B) | [H] | b15 0x40 set: app bonds after time-sync ack (I-30) |
 | Idle behaviour | 0 frames in 30 s, no bond request | [H] | without bind |
 
+### 1.2 Hardware facts (LIVE-SESSION-2 2026-10-13, safe-write find, results/LIVE-SESSION-2-2026-10-13.md)
+| Topic | Value | Tag | Note |
+|---|---|---|---|
+| Find command acceptance | Watch accepts and executes find (`cmd=0x02 key=0x0B`, payload `0x01`) without prior bind (cmd 3 key 0) | [H] | Watch display showed "the bracelet has been found!" with vibration [H owner] |
+| 0x2A27 derived ver | `ver_byte=0x10` from `0x2A27` ("10000") verified on live radio write; accepted by watch | [H] | exit code 0 |
+| Watch ACK line | `cmd=0x02 key=0x0b status=1 x=0x000a x_is_frame_len=True` | [H] | x=10 matches frame length 10 bytes; confirms I-18 live |
+
 ## 2. Disputes with the Gemini document (`sources/gemini-hiwear-re.md`)
 | Topic | Gemini says | App code says | Verdict |
 |---|---|---|---|
