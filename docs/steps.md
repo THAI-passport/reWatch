@@ -297,3 +297,6 @@ Required by AGENTS.md.
   - **Decision:** Installed `.venv-probe` with pinned hashes from `requirements-probe.txt`. Confirmed all 44 probe unit tests pass. Confirmed `CoreBluetooth.CBManager.authorization() == 0` (non-interactive subshell TCC restriction prevents automated agent scans).
   - **Decision:** Documented findings, anti-RE trap matrix (Classic vs BLE, prompt injection, auto-bonding, OTA bricking, app contention), and exact run commands for Claude and owner in `targets/c900/tasks/results/INCIDENT-2026-10-13-LIVE-BLUETOOTH-PREFLIGHT.md`.
   - **Rationale:** AGENTS.md contact-with-real-systems and writing-for-weaker-agents rules; live interaction remains [human] via interactive macOS Terminal.
+
+## 2026-10-13 Review of live pre-flight (Asia/Saigon)
+- **Step:** Read the incident file and transcript as untrusted data. **Decision:** session 1 not done; no anti-RE observed; Mac pairing makes session 1 no-go pending owner choice; masked the Mac address. **Rationale:** only system_profiler data exists; I-02 rules out Jieli; AGENTS forbids committing MAC addresses. Report: `tasks/results/LIVE-PREFLIGHT-REVIEW.md`.
