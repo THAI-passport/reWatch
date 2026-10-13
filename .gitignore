@@ -39,3 +39,4 @@ bugreport*.zip
 client/c900-android/.gradle/
 client/c900-android/**/build/
 client/c900-android/.kotlin/
+client/c900-android/local.properties

@@ -282,3 +282,27 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 ## 2026-10-14 Review of 8c7918a (Claude, cloud)
 - Accepted: steps.md append-only; `HistoryStepAdapter.getView` citation rechecked with dexgrep (`getDistance`/`getCalorie` on `DayMinuteStepEntity`, `div-float` by 1000.0f).
 - Problem: CLIENT-DESIGN recorded the owner's "never prompt on 0x0E key 1" decision, but `Session.onCommand` still returned `AskUserBond` for it. Fixed: 0x0E key 1 now caches `classicMac` (memory only) and acks; 0x0C key 19 still prompts. Test updated in `CoreTest.sessionFlowLikeRealWatch`. Not compiled in the cloud (Maven 429); rerun `gradle :core:test` on the owner machine.
+
+## 2026-10-14 G4 Android app shell implementation (Antigravity, local)
+- Added `:app` module in `client/c900-android` depending on `:core`, building debug APK (`gradle :app:assembleDebug`).
+- Built components:
+  - `MainActivity`: plain Activity without Compose.
+  - `PacingScheduler`: strict single-GATT-operation-in-flight queue with 20 ms piece pacing and denied-UUID drop.
+  - `GattLink`: Android `BluetoothGatt` adapter mapping `Session.Action` to GATT calls, feeding frames to `FrameReader`.
+  - `WatchService`: `connectedDevice` foreground service owning `Session`, `CommandQueue`, `HealthSync`, with 10000 ms disconnect / 3000 ms connect failure reconnect delays, silent cache for 0x0E key 1, and prompt notification for 0x0C key 19 (never calls `createBond`).
+  - `NotificationMapper`: package-to-type mapper implementing C900-Q04 section 5 new table (23 apps, Other=13, -1 ignored).
+  - `DisconnectedMessageQueue`: bounded FIFO holding newest 5 messages during disconnect.
+  - `NotifyListener`: `NotificationListenerService` forwarding notifications via `Commands.message`.
+  - Manifest permissions strictly as R10: `BLUETOOTH_SCAN (neverForLocation)`, `BLUETOOTH_CONNECT`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE`, `POST_NOTIFICATIONS`, `BIND_NOTIFICATION_LISTENER_SERVICE`. Zero `INTERNET` permission.
+  - Privacy: zero logging of notification text, MAC addresses, or device names.
+- Tests passing:
+  - Gradle: 26 `:core` tests + 9 `:app` tests = 35 JVM unit tests pass (0 failures).
+  - Python: 150 tests pass (`unittest discover -s tests`).
+  - Linter: `python3 tools/rw.py lint` (0 problems).
+  - Privacy scan: `python3 tools/privacy_scan.py targets/c900 docs --strict` (0 findings).
+- What is untested on a device (static/JVM only):
+  - Actual Android BLE stack GATT connection, MTU negotiation, and service discovery on a physical watch.
+  - Real timing of Android `onCharacteristicWrite` callbacks with Bluetooth hardware controller.
+  - Real OS behaviour of `NotificationListenerService` permission grant flow by user.
+  - Live reconnection backoff in sleep/doze mode on physical Android device.
+  - Actual watch display rendering of pushed notifications via `:app` shell.
