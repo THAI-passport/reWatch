@@ -118,3 +118,8 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Evidence: StepUtils, HrUtils, DevBaseDataUtils (getDateBean, getBloodBean, getSportModeData), SleepUtils.receiveTotalSleepData, TempUtils (jadx + smali); helper classes HexUtil, DevDateBean (two, within the stop rule).
 - Problem: jadx showed `JCameraView.MEDIA_QUALITY_FUNNY` as the calorie clamp in getSportBy1Hour. Fix: smali `const v11, 0x61a80` = 400000; INVARIANTS I-24 extended. Solved.
 - Problem: the health date packing looks like the time-sync packing but is different. Fix: new INVARIANTS I-36 and FACTS row. Solved.
+
+## 2026-10-13 decoder printed personal payloads
+- Evidence: `tools/c900_decode.py` hid only cmd 2 key 18; keys 17 (caller), 36 (user name), 4 (profile) and 0x1A 23/24 (location) printed as hex.
+- Cause: privacy list built from the message-push case only.
+- Fix: PRIVATE table + test (REVIEW-PHASE1C).

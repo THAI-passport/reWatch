@@ -47,6 +47,17 @@ class Decode(unittest.TestCase):
         self.assertIn("xx:xx:xx:xx:00:01", out)
         self.assertNotIn("020000000001", out)
 
+    def test_private_payloads_hidden(self):
+        def frame(cmd, key, payload):
+            f = bytearray([0xDF, 0, len(payload) + 5, 0, cmd, 1, key, 0, len(payload)]) + payload
+            f[3] = dec.checksum(f)
+            return bytes(f)
+        for cmd, key in ((0x02, 17), (0x02, 36), (0x02, 4), (0x1A, 24)):
+            d = dec.decode_frame(frame(cmd, key, b"secret"), "tx")
+            self.assertNotIn(b"secret".hex(), d["payload"], (cmd, key))
+            self.assertIn("hidden", d["payload"])
+        self.assertEqual(dec.decode_frame(frame(0x02, 17, b"secret"), "tx", show_text=True)["payload"], b"secret".hex())
+
     def test_summary_block(self):
         s = self.s
         self.assertEqual(s["versions_seen"], [1])

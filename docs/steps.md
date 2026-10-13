@@ -247,3 +247,8 @@ Required by AGENTS.md.
   - **Rationale:** SOP 9.1 (hand sums were wrong before).
 - **Decision:** Did not extend `tools/c900_decode.py` with field decoders.
   - **Rationale:** Not in Q16's spec; the maps are ready for it when a capture arrives (noted as left).
+
+## 2026-10-13 REVIEW-PHASE1C
+- Step: reviewed Q16 (health maps), Q17 (notify_log deny list), Q18 (decoder); ran the decoder on the synthetic fixture.
+- Fix: decoder now hides caller, user name, profile and location payloads too (PRIVATE table, test). Rationale: owner privacy; those payloads go over the wire during sync.
+- Decision: next step is the owner capture (NEXT-STEPS §3 revised, pre-recording checklist added); feed the capture file not btcap JSON (JSON lacks reads). HW-0 run sheet may use `notify_log.py --only`. PROTOCOL §7 stale "pending" text fixed.
