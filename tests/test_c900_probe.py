@@ -174,6 +174,9 @@ class Sanitize(unittest.TestCase):
         self.assertEqual(probe.mask_mac("AA:BB:CC:DD:EE:FF"), "AA:BB:CC:xx:xx:xx")
         self.assertIn("xx:xx:xx", probe.redact_line("saw AA:BB:CC:DD:EE:FF"))
         self.assertIn("<redacted>", probe.redact_line("message push payload=secret"))
+        redacted_caller = probe.redact_line("caller id from +123456789")
+        self.assertIn("<redacted>", redacted_caller)
+        self.assertNotIn("+123456789", redacted_caller)
 
 
 class Allowlist(unittest.TestCase):
@@ -203,7 +206,8 @@ class Allowlist(unittest.TestCase):
 class OtaRefusal(unittest.TestCase):
     def test_is_ota_uuid(self):
         for u in ("ff00", "0000ff02-0000-1000-8000-00805f9b34fb", "18a8",
-                  "6e40ff01-b5a3-f393-e0a9-e50e24dcca9e", "6e40ff03-b5a3-f393-e0a9-e50e24dcca9e", "5610"):
+                  "6e40ff01-b5a3-f393-e0a9-e50e24dcca9e", "6e40ff03-b5a3-f393-e0a9-e50e24dcca9e", "5610",
+                  "12345610-1111-2222-3333-444455556666"):
             self.assertTrue(probe.is_ota_uuid(u), u)
         self.assertFalse(probe.is_ota_uuid(probe.WRITE_UUID))
         self.assertFalse(probe.is_ota_uuid(probe.NOTIFY_UUID))
@@ -211,6 +215,31 @@ class OtaRefusal(unittest.TestCase):
     def test_layout_requires_command_service(self):
         bad = [FakeSvc("0000180f-0000-1000-8000-00805f9b34fb",
                        [FakeChar("00002a19-0000-1000-8000-00805f9b34fb", ["read"])])]
+        with self.assertRaises(probe.SafetyError):
+            probe._require_command_layout(bad)
+
+    def test_ota_lookalike_write_refused(self):
+        n = lambda u, *p: FakeChar(u, list(p))  # noqa: E731
+        bad = [
+            FakeSvc("6e400001-b5a3-f393-e0a9-e50e24dcca9f", [
+                n(probe.WRITE_UUID, "write"),
+                n(probe.NOTIFY_UUID, "notify"),
+            ]),
+            FakeSvc("6e40ff01-b5a3-f393-e0a9-e50e24dcca9e", [
+                n("6e400002-b5a3-f393-e0a9-e50e24dcca9e", "write"),
+            ]),
+        ]
+        with self.assertRaises(probe.SafetyError):
+            probe._require_command_layout(bad)
+
+    def test_write_uuid_under_ota_svc_refused(self):
+        n = lambda u, *p: FakeChar(u, list(p))  # noqa: E731
+        bad = [
+            FakeSvc("0000ff00-0000-1000-8000-00805f9b34fb", [
+                n(probe.WRITE_UUID, "write"),
+                n(probe.NOTIFY_UUID, "notify"),
+            ]),
+        ]
         with self.assertRaises(probe.SafetyError):
             probe._require_command_layout(bad)
 
@@ -227,6 +256,10 @@ class TargetRequired(unittest.TestCase):
         rc = probe.main(["inspect", "--name", "nope", "--listen", "0.01", "--log-dir", tempfile.mkdtemp()],
                         confirm_fn=lambda p: "")
         self.assertEqual(rc, probe.EXIT_SAFETY)
+
+    def test_address_and_name_mutually_exclusive(self):
+        with self.assertRaises(SystemExit):
+            probe.build_parser().parse_args(["inspect", "--address", "AA:BB:CC:DD:EE:01", "--name", "Test"])
 
 
 class InspectSafe(unittest.TestCase):
@@ -279,6 +312,28 @@ class BondTriggerAbort(unittest.TestCase):
             FakeClient.__init__ = original_init
         self.assertEqual(rc, probe.EXIT_SAFETY)
 
+    def test_leading_garbage_resyncs_and_aborts_on_bond_trigger(self):
+        original_init = FakeClient.__init__
+
+        def init(self, *a, **k):
+            original_init(self, *a, **k)
+            # Leading noise byte \x00 followed by 0x0C key 19 frame
+            body = bytes([0x0C, 0x01, 19]) + (0).to_bytes(2, "big")
+            n = len(body)
+            f = bytearray([0xDF, n >> 8, n & 0xFF, 0]) + body
+            f[3] = frames.checksum(f)
+            self._inbound_after_write = b"\x00" + bytes(f)
+            self._auto_ack = False
+
+        FakeClient.__init__ = init
+        try:
+            rc = probe.main(["safe-write", "--address", "AA:BB:CC:DD:EE:01", "--command", "find",
+                             "--i-approve-writes", "--log-dir", self.logdir],
+                            confirm_fn=lambda p: "find")
+        finally:
+            FakeClient.__init__ = original_init
+        self.assertEqual(rc, probe.EXIT_SAFETY)
+
 
 class PairingAbort(unittest.TestCase):
     def setUp(self):
@@ -293,9 +348,6 @@ class PairingAbort(unittest.TestCase):
 
         FakeClient.connect = connect
         try:
-            # paired_before is read AFTER connect in our code... wait, we read paired_before after connect.
-            # Re-read probe: paired_before = bool(getattr(client, "is_paired", False)) after connect.
-            # So if already paired at connect time, it only notes it. Need flip DURING listen.
             pass
         finally:
             FakeClient.connect = original
@@ -314,6 +366,25 @@ class PairingAbort(unittest.TestCase):
         try:
             rc = probe.main(["inspect", "--address", "AA:BB:CC:DD:EE:01", "--listen", "0.3",
                              "--log-dir", tempfile.mkdtemp()], confirm_fn=lambda p: "")
+        finally:
+            FakeBleak.BleakClient = FakeClient
+        self.assertEqual(rc, probe.EXIT_SAFETY)
+
+    def test_pairing_flip_aborts_safe_write(self):
+        class FlipClient(FakeClient):
+            async def connect(self):
+                self.is_connected = True
+                self.is_paired = False
+
+            async def write_gatt_char(self, uuid, data, response=False):
+                await super().write_gatt_char(uuid, data, response=response)
+                self.is_paired = True  # stack starts pairing upon write
+
+        FakeBleak.BleakClient = FlipClient
+        try:
+            rc = probe.main(["safe-write", "--address", "AA:BB:CC:DD:EE:01", "--command", "find",
+                             "--i-approve-writes", "--log-dir", tempfile.mkdtemp()],
+                            confirm_fn=lambda p: "find")
         finally:
             FakeBleak.BleakClient = FakeClient
         self.assertEqual(rc, probe.EXIT_SAFETY)
@@ -344,6 +415,22 @@ class WriteCapAndApproval(unittest.TestCase):
         text = open(os.path.join(self.logdir, os.listdir(self.logdir)[0])).read()
         self.assertIn("ACK ok", text)
         self.assertIn("command=find", text)
+
+    def test_write_cap_pre_check_refuses_atomically(self):
+        original_amain = probe.mode_safe_write
+
+        async def wrapped(address, command, log, budget, approve, confirm_fn, name_filter=None):
+            budget.writes = probe.MAX_WRITES  # budget exhausted before write
+            return await original_amain(address, command, log, budget, approve, confirm_fn, name_filter)
+
+        probe.mode_safe_write = wrapped
+        try:
+            rc = probe.main(["safe-write", "--address", "AA:BB:CC:DD:EE:01", "--command", "find",
+                             "--i-approve-writes", "--log-dir", self.logdir], confirm_fn=lambda p: "find")
+        finally:
+            probe.mode_safe_write = original_amain
+        self.assertEqual(rc, probe.EXIT_SAFETY)
+        self.assertTrue(not FakeClient.instances or FakeClient.instances[-1].writes == [])
 
     def test_write_cap(self):
         b = probe.Budget()
