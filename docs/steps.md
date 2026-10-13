@@ -336,3 +336,11 @@ Required by AGENTS.md.
 - **Decision:** move safety from prompts into checks: lint rejects captures/probe logs and personal data; opt-in pre-commit hook; probe permission preflight. **Rationale:** each of today's incidents (leaks, hung scan, tempting "fixes") came from an agent following prose; mechanical checks hold even when the brief is skipped.
 - **Decision:** one-page `tasks/AGENT-BRIEF.md` instead of long pasted prompts. **Rationale:** a weaker agent gets state, prohibitions and commands in one place.
 - **Not done (needs owner OK):** codec `ver` parameter (Phase 3 code); history rewrite of leaked commits.
+
+## 2026-10-13 HCI pairing events check (C900-Q19 second pass, Asia/Saigon)
+- **Step:** Decoded all HCI commands, events, and L2CAP CIDs from `captures/btsnoop_hci.log.last` to verify link-layer pairing following the time-sync ack and `cmd 0x0E key 1` announcements.
+  - **Decision:** Wire pairing status settled [H]: Time sync ACK (t=2.732s) triggers `HCI_Remote_Name_Request` (t=2.764s) targeting the derived Classic BT address (`ble_mac last byte ^ 0x55`, confirming I-30 path #3).
+  - **Decision:** Zero Classic connection or keys on the wire [H]: All 3 `HCI_Remote_Name_Request` commands timed out after 12.8s (status 0x04, `Page Timeout`). No `HCI_Create_Connection`, `Authentication_Complete`, or link keys occurred.
+  - **Decision:** Zero LE SMP or link encryption [H]: Zero packets on L2CAP CID 0x0006; zero `HCI_LE_Start_Encryption` or `Encryption_Change` events. LE link remained in cleartext.
+  - **Rationale:** AGENT-BRIEF task; report in `targets/c900/tasks/results/C900-Q19.md` Section 7. Event names and relative times only; no addresses.
+

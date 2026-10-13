@@ -204,3 +204,13 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Problem: personal-data scan was a separate manual step. Fix: lint runs it over targets/docs/.claude; pre-commit hook installer. Solved.
 - Problem: probe hung in a shell without macOS Bluetooth permission (pre-flight incident). Fix: `bt_preflight`, tests. Solved; untested on a real Mac.
 - Added `tasks/AGENT-BRIEF.md` (state, never-list, results procedure, decision table).
+
+## 2026-10-13 HCI pairing events check (C900-Q19 second pass)
+- Evidence: `captures/btsnoop_hci.log.last`, `targets/c900/tasks/results/C900-Q19.md` Section 7.
+- Findings:
+  - Wire pairing settled [H]: Time sync ACK (t=2.732s) triggers `HCI_Remote_Name_Request` (t=2.764s) targeting the derived Classic BT address (`ble_mac last byte ^ 0x55`, confirming I-30 path #3).
+  - Name resolution timed out [H]: All 3 `HCI_Remote_Name_Request` commands timed out after 12.8s (status 0x04, `Page Timeout`).
+  - No Classic connection or keys on the wire [H]: Zero `HCI_Create_Connection`, `Authentication_Complete`, `Simple_Pairing_Complete`, or link key events.
+  - Zero LE SMP/encryption [H]: Zero packets on L2CAP CID 0x0006; zero `HCI_LE_Start_Encryption` or `Encryption_Change` events. Transport remained unencrypted.
+- Status: Solved.
+
