@@ -108,6 +108,6 @@ Settled [H]: Q01, Q02, feature map, idle behaviour. Open: real ver byte, FF10/FF
 
 Do not run session 2 before step 4. Do not add bind (cmd 3) to the probe.
 
-Update 2026-10-13: step 3 done (owner capture, C900-Q19 incl. section 7); step 4 done (`frames.build(..., ver=)`, `C900_VER = 0x10`, SimWatch ack x = frame length, probe sends the 0x2A27-derived ver). Steps 1-2 (static) are now optional: the wire settled the ver byte; S-21 (FF10/FF12) still open. Next live step: session 2, `find` first, after written approval.
+Update 2026-10-13: step 3 done (owner capture, C900-Q19 incl. section 7); step 4 done (`frames.build(..., ver=)`, `C900_VER = 0x10`, SimWatch ack x = frame length, probe sends the 0x2A27-derived ver); step 5 partially done: `find` executed cleanly (results/LIVE-SESSION-2-2026-10-13.md, accepted [H], ack x=10, alert verified [H owner]); `time` and `message` remain pending separate owner approvals. Steps 1-2 (static) are optional: the wire settled the ver byte; S-21 (FF10/FF12) still open.
 
 S-22 (static, optional): smali of the Hiwear Plus scan-code screen; which QR fields are used (MAC only, or a key). See results/OWNER-QR-2026-10-13.md.

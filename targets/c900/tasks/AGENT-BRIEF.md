@@ -20,7 +20,7 @@ Work and push only on `feat/c900-hiwear-plus`. Never `main`. No PR unless the ow
 | Unknown writable services | 0xFF10, 0xFF12: denied | FACTS 1.1 |
 | Ack bytes 6-7 | length of the acked frame [H] | I-18 |
 | Session 1 (read-only) | done 2026-10-13 | results/LIVE-SESSION-1-2026-10-13.md |
-| Session 2 (writes) | codec ready; **needs the owner's written approval** naming the commands | LIVE-SESSION-1 section 9, NEXT-STEPS section 7 |
+| Session 2 (writes) | `find` done 2026-10-13 (accepted [H], ack x=10); `time`/`message` unapproved | results/LIVE-SESSION-2-2026-10-13.md |
 
 ## 3. Never
 - Run `tools/c900_probe.py` or any Bluetooth command yourself. The owner runs radio steps in their own interactive Terminal (the probe now refuses in a shell without Bluetooth permission).
