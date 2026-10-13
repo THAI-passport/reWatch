@@ -372,3 +372,8 @@ Required by AGENTS.md.
 
 ## 2026-10-13 S-21 / S-22 (Asia/Saigon)
 - **Question that needed the code:** S-21 (are FF10/FF12 used by the app?) and S-22 (does the QR carry a key?). Both [U] and relevant to client safety. **Decision:** read the pinned LFS copy with androguard instead of a full jadx rebuild (jadx unreachable). **Result:** FF10/FF12 unused; QR = MAC only.
+
+## 2026-10-13 Owner "do all": S-21/S-22, session 3 sheet, Phase 3a (Asia/Saigon)
+- **Decision:** S-21/S-22 via androguard on the pinned copy (done, pushed). Session 3 (message, time) approved by the owner's "do all"; written as a run sheet because only the owner can run radio steps.
+- **Decision:** Phase 3 platform Android Kotlin per CLIENT-DESIGN; start with a pure Kotlin core so it can be built and tested here; the Python codec stays the reference through a shared vector file. **Rationale:** cloud cannot reach Google Maven; the core holds all protocol and safety logic anyway.
+- **Decision:** bind (cmd 3) not in the allowlist. **Rationale:** may displace the Hiwear Plus binding; needs an explicit owner choice (CLIENT-DESIGN section 10 item 2).

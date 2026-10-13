@@ -1,6 +1,6 @@
 # C900 open companion: client architecture (DRAFT, design only)
 
-**STATUS: DRAFT, pending owner sign-off.** Written 2026-10-13 in DEEP-PASS-1. Design only: no implementation is approved. Phase 3 (client) and Phase 4 (OTA, faces, contacts) stay deferred per PLAN.md; NEXT-STEPS section 6 lists what must be true before Phase 3 starts. Facts are cited by section; values live in PROTOCOL.md, FACTS.md and INVARIANTS.md and are not restated here.
+**STATUS: APPROVED 2026-10-13 (Android Kotlin). Phase 3a core implemented in `client/c900-android/core`; app shell pending (needs Google Maven).** Written 2026-10-13 in DEEP-PASS-1. Design only: no implementation is approved. Phase 3 (client) and Phase 4 (OTA, faces, contacts) stay deferred per PLAN.md; NEXT-STEPS section 6 lists what must be true before Phase 3 starts. Facts are cited by section; values live in PROTOCOL.md, FACTS.md and INVARIANTS.md and are not restated here.
 
 ## 1. Goal and non-goals
 Goal: an ad-free, open-source, local-only companion for the C900 that does what an owner uses daily: keep time, push phone notifications, find the watch, show battery, and pull health records into local storage, with settings the watch exposes.

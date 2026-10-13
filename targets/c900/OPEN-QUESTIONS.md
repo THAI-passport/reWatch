@@ -288,3 +288,8 @@ Plan and comparison: [NEXT-STEPS.md](NEXT-STEPS.md). Gates now include `capture`
 - [x] Q09 APPROVED for Phase 1 (static inventory only, no server calls); Q12 PARKED (OTA/DFU risk, not needed now)
 - [x] Deferred D01–D07 and Q11 stay deferred; Q12 parked
 - [x] Sign-off: 2026-10-13 (Asia/Saigon), owner sign-off delegated to the requesting agent by the owner. Rationale: the approved items are static, document-only and needed for listen-only and first-contact planning; Q12 touches the firmware path with no near-term use; Q13 needs a fact only the owner has.
+
+## Owner approvals 2026-10-13 (evening): "do all of them"
+- [x] Static S-21 and S-22: done (results/S-21-S-22.md).
+- [x] Live session 3 approved: `message` then `time`, one probe run each, no retries, owner runs them (tasks/LIVE-SESSION-3.md). Not yet run.
+- [x] Phase 3 approved; platform Android Kotlin (CLIENT-DESIGN recommendation). Scope delivered first: 3a protocol core (pure Kotlin/JVM) with tests. Android app shell needs a machine that reaches Google Maven (FIXES Open). Bind (cmd 3) stays out until a separate decision: it may displace the Hiwear Plus binding.

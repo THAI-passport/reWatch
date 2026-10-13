@@ -235,3 +235,7 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 ## 2026-10-13 S-21 / S-22 static pass
 - Problem: jadx/apktool install failed (GitHub release host 403 from the cloud). Fix: androguard from PyPI on the LFS copy (hash checked). Solved for string and method reading.
 - Result: FF10/FF12 family not referenced by the app [C negative]; QR = BLE MAC only, `LE` prefix or `?para=` URL, 17 chars [C, BleScanActivity.onActivityResult]. results/S-21-S-22.md.
+
+## 2026-10-13 Phase 3a core
+- Built `client/c900-android/core` (Kotlin/JVM) and shared vectors `tests/fixtures/c900_vectors.json` from the Python codec.
+- Problem: Google Maven unreachable (no Android Gradle plugin); Maven Central returned 429 for a while. Fix: core is pure Kotlin/JVM; build retried with backoff. App shell open.
