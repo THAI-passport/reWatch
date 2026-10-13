@@ -29,6 +29,13 @@ class PrivacyScan(unittest.TestCase):
                    "/home/user/reWatch", "7905F431-B5CE-4E99-A40F-4B1E122D00D0"):
             self.assertEqual(kinds(ok), [], ok)
 
+    def test_strict_skips_runs_inside_frame_header(self):
+        self.assertEqual(kinds("`DF 00 05 EE 09 01 00 00 00`", strict=True), [])
+        self.assertEqual(kinds("FD 00 05 .. 0c 01 08 00 01 01", strict=True), [])
+        # a run that starts in the payload is still a possible MAC
+        self.assertEqual(kinds("DF 00 0F 11 0E 10 01 00 06 C1 22 33 44 55 66", strict=True), ["mac-hex-run"])
+        self.assertEqual(kinds("XDF 00 05 EE 09 01 00 00 00", strict=True), ["mac-hex-run"])
+
     def test_strict_flags_spaced_bytes(self):
         self.assertEqual(kinds("41 42 d0 13 d7 cc"), [])
         self.assertEqual(kinds("41 42 d0 13 d7 cc", strict=True), ["mac-hex-run"])

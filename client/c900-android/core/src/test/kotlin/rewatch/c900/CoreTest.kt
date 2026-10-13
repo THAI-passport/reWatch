@@ -196,3 +196,33 @@ class CoreTest {
         assertNotEquals(Frames.Inbound.Cmd(5, 0x10, 2, byteArrayOf(1)), Frames.Inbound.Cmd(5, 0x10, 2, byteArrayOf(2)))
     }
 }
+
+/** HealthSync: built ahead of a full-sync capture; proves consistency with PROTOCOL 7/11 only. */
+class HealthSyncTest {
+    private fun cmd(key: Int, p: ByteArray = ByteArray(0)) = Frames.Inbound.Cmd(5, 0x10, key, p)
+
+    @Test fun markersAndCounts() {
+        var now = 0L
+        val h = HealthSync({ now }, idleTimeoutMs = 1000)
+        assertFalse(h.onCommand(Frames.Inbound.Cmd(0x0C, 0x10, 1, ByteArray(0))))
+        assertTrue(h.onCommand(cmd(7))); assertEquals(HealthSync.State.SYNCING, h.state)
+        h.onCommand(cmd(2)); h.onCommand(cmd(2)); h.onCommand(cmd(4))
+        // 1234 steps, 987 m, 45678 cal (own arithmetic, not from a capture)
+        h.onCommand(cmd(12, byteArrayOf(0, 0, 4, 0xD2.toByte(), 0, 0, 3, 0xDB.toByte(), 0, 0, 0xB2.toByte(), 0x6E)))
+        h.onCommand(cmd(8)); assertEquals(HealthSync.State.DONE, h.state)
+        assertEquals(mapOf(2 to 2, 4 to 1, 12 to 1), h.counts.toMap())
+        val t = h.dayTotal!!
+        assertEquals(HealthSync.DayTotal(1234, 987, 45678), t)
+        assertEquals(0.987, t.km, 1e-9); assertEquals(45.678, t.kcal, 1e-9)
+    }
+
+    @Test fun idleTimeoutAndShortPayload() {
+        var now = 0L
+        val h = HealthSync({ now }, idleTimeoutMs = 1000)
+        h.onCommand(cmd(7)); h.onCommand(cmd(12, ByteArray(5)))
+        assertNull(h.dayTotal)
+        now = 999; h.tick(); assertEquals(HealthSync.State.SYNCING, h.state)
+        now = 1000; h.tick(); assertEquals(HealthSync.State.TIMED_OUT, h.state)
+        h.onCommand(cmd(8)); assertEquals(HealthSync.State.TIMED_OUT, h.state)   // late end marker ignored
+    }
+}

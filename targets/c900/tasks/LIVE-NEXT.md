@@ -26,3 +26,7 @@ The watch sends cmd 0x0E key 1 after a message push, and the core turns that int
 
 ## When done
 Commit `c900 G4: <what>` on the same branch, push, and report: test result, unit result with tag, owner's decision.
+
+## Update after the follow-up static pass (same day)
+- Units are now [C] from the app's display code (FACTS "Robustness pack"). Task 2 is still wanted: it turns them into [H]. If the owner numbers disagree with raw / 1000, record both and flag it in LOG.md; do not edit the [C] row.
+- Task 1 now also covers the new `HealthSyncTest` and the privacy-scan change: run `python3 -m unittest discover -s tests` too (expected OK).
