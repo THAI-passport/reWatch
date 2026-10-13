@@ -387,3 +387,8 @@ Required by AGENTS.md.
   - **Decision:** Transmitted 13-byte packed time frame in single piece (`TX piece 1/1 len=13`) [H].
   - **Decision:** Immediate watch ACK received: `cmd=0x02 key=0x01 status=1 x=0x000d x_is_frame_len=True` [H]. Confirmed invariant I-18 live (ack field x = frame length = 13); zero macOS pairing dialogs triggered; clean exit code 0.
   - **Rationale:** Strict adherence to safety checks; report updated in `targets/c900/tasks/results/LIVE-SESSION-3-2026-10-13.md`.
+
+## 2026-10-13 Robustness pack (Asia/Saigon)
+- **Decision:** one framework README with lane ownership, a branch per task (`c900/rxx`), result-file-only edits, and an integrator checklist. **Rationale:** lets weaker agents run concurrently without merge conflicts or edits to shared truth files.
+- **Decision:** `tools/dexgrep.py` so static tasks work where jadx cannot be installed (as in this cloud session).
+- **Decision:** R05 removed from the pack.
