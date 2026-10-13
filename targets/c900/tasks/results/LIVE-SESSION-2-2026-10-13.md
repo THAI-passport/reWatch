@@ -92,3 +92,6 @@ Physical device observation:
    Confirmed on the wire. The frame sent was 10 bytes (`DF 00 05 <sum>` cmd=0x02 ver=0x10 key=0x0B plen=0x0001 payload=0x01). The watch replied with `x = 0x000A` (10 decimal), confirming `x_is_frame_len = True`.
 3. **Bind prerequisite (I-35):**
    Narrowed. While the vendor app always executes bind (`cmd 0x03 key 0`) during initial synchronization, the C900 hardware firmware accepts and acts upon `find` (`cmd 0x02 key 0x0B`) over an unbound connection.
+
+## Review note (Claude, 2026-10-13)
+Precise scope of the bind finding: the watch was still bound to the phone's Hiwear Plus; this BLE session sent no bind (cmd 3) of its own and the watch executed `find`. So "no per-connection bind needed for cmd 2 key 11 while the watch is bound elsewhere" [H]. Not yet shown: behaviour on a watch with no binding at all, and any other command (time, message, settings). "Bind is not a hardware gate for alert commands" generalises from one command; read it as find only.
