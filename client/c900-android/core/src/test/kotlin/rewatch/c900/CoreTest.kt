@@ -154,7 +154,11 @@ class CoreTest {
         assertEquals(Session.State.READY, s.state)
         assertEquals(0x10, s.ver); assertEquals(61, s.battery)
         assertTrue(s.bit(15, 0x40))     // pairing support set on this watch
-        val bond = s.onCommand(Frames.Inbound.Cmd(0x0E, 1, 1, ByteArray(6)), 15)
+        val mac = byteArrayOf(0x11, 0x22, 0x33, 0x44, 0x55, 0x66)        // synthetic
+        val silent = s.onCommand(Frames.Inbound.Cmd(0x0E, 1, 1, mac), 15)
+        assertEquals(1, silent.size); assertIs<Session.Action.Ack>(silent[0])   // owner decision: no prompt
+        assertContentEquals(mac, s.classicMac)
+        val bond = s.onCommand(Frames.Inbound.Cmd(0x0C, 1, 19, ByteArray(0)), 9)
         assertTrue(bond.any { it is Session.Action.AskUserBond })   // never an automatic bond
         assertIs<Session.Action.Ack>(bond[0])
     }
