@@ -349,3 +349,6 @@ Required by AGENTS.md.
 - **Step:** Owner approved the codec change. **Decision:** `ver` is a build() parameter with the old default, so all earlier vectors are unchanged; the probe sends the 0x2A27-derived value only if it is reviewed (0x01 default, 0x10 C900 [H]). **Rationale:** matches the app byte for byte without letting an unexpected device value through.
 - **Decision:** SimWatch acks with x = acked frame length. **Rationale:** I-18 [H]; still a simulator (consistency only).
 - **Decision:** reviewed Q19 section 7; recorded excerpt length typos. Session 2 needs the owner's written approval; `find` first.
+
+## 2026-10-13 Owner QR observation (Asia/Saigon)
+- **Decision:** record as app UX [H owner]; protocol does not need it (probe and capture evidence). **Rationale:** separate "how the app picks a device" from "what the watch requires". Open S-22 (smali of scan-code screen) to rule out a key in the QR.
