@@ -35,7 +35,7 @@ Sources: `tasks/HW-RECON.md`, skill `re-hardware-recon`, `recon-v2.md` §3, PROT
 Owner follows `docs/guides/HCI-CAPTURE-ANDROID.md`. Not part of this sheet's runs; if a log exists, parse it first (`python tools/btcap.py btsnoop_hci.log`) and compare with the expectations below before HW-2.
 
 ## Preferred tool (owner Mac)
-Use `tools/c900_probe.py` per `tasks/PROBE-GUIDE.md` and `docs/guides/PROBE-SECURITY.md`.
+Use `tools/c900_probe.py` per `tasks/PROBE-GUIDE.md` and `docs/guides/PROBE-SECURITY.md`. For a Mac run, `tasks/LIVE-SESSION-1.md` (DRAFT, DEEP-PASS-1) supersedes the HW-2/HW-3 steps and budget below.
 - HW-2 ≈ `python tools/c900_probe.py scan` then `inspect --address ...`
 - HW-3 listen ≈ inspect's `--listen` (already pinned to `...0003`)
 - Do **not** unbind the watch; turn the phone's Bluetooth off instead.

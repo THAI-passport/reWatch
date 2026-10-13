@@ -78,6 +78,12 @@ Build a software device from the spec to test the client, but a simulator writte
 - Treat every jadx field reference used as a number (`SomeLib.CONST`) as a possible substitution: read the literal in smali. C900-Q16 found `JCameraView.MEDIA_QUALITY_FUNNY` standing in for 400000 in a step parser.
 - Tools that touch a live device need a deny list for OTA/DFU UUIDs that cannot be turned off by a flag; test it with a fake GATT table (C900-Q17).
 - Capability bitmaps decide which payload variant the app sends (notify switch length, message type table, face code size). Map the feature parser early; it explains most "optional" bytes.
+- Live-device probes on macOS (bleak 3.x, CoreBluetooth): there is no bond-state API, so `is_paired` checks are dead code (bleak 3.0.2 has no such attribute) and macOS auto-starts pairing when a read hits an encrypted characteristic. Make "OS pairing dialog: Cancel, Ctrl-C" an owner abort trigger and log that detection is unavailable; never claim the tool detects pairing there. Test with a fake that lacks the attribute.
+- Address writes and subscriptions by the characteristic object from the expected service, not by UUID string: bleak resolves strings across the whole table, so a duplicate UUID (or one under an OTA service) becomes the target.
+- Scan logs collect third parties: nearby phone and headset names, and manufacturer data that may hold the target's own MAC. Keep full scan output on screen only; the log gets candidate names and masked manufacturer bytes.
+- When the app derives a frame byte from a device read (C900: version byte from 0x2A27), a probe that hardcodes it must read the value first and refuse to write on a mismatch.
+- bleak needs Python 3.10+; the macOS Command Line Tools Python is 3.9. Say so in the owner guide before the install step.
+- Fake-client tests must resolve the same UUID forms the tool uses (full base UUIDs); a fake that only matched short forms hid untested read paths for a whole review round.
 
 ## 10. After each pass (checklist)
 1. PROTOCOL.md: byte-level findings with tags and the source class and method.

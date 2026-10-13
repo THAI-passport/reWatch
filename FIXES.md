@@ -24,6 +24,10 @@ Things that need fixing in reWatch itself (tools, templates, skills), and things
 - Wrong: no way to rebuild a target whose download host is blocked or unsigned without the user uploading the file each time; committing binaries was flatly forbidden.
 - Changed: owner-approved exception under `resources/<slug>/` via Git LFS + `REPO_COPY` / `REPO_COPY_SHA256` in SOURCES; lint enforces declaration; rebuild extracts the single inner member after hash check.
 
+### 2026-10-13 - c900 probe DEEP-PASS-1
+- Wrong: pairing detection relied on `BleakClient.is_paired`, which bleak 3.0.2 does not have (always False); writes/subscribe used UUID strings across the whole GATT table; the version byte was sent as 1 without checking 0x2A27; the scan log stored third-party names and full manufacturer data; 0x2A25 logged in clear; stale acks accepted; no inbound flood cap; `--log-dir` could point into tracked paths; C1/bidi characters passed sanitize; the test fake never exercised Device Information reads.
+- Changed: `pair_state`, `command_chars`, `protocol_major` refuse, scan/inspect redaction, `add_secret`, armed ack, `FrameReader` caps, `check_log_dir` and exclusive log create, bounded CLI times, 20 ms piece gap; 17 tests in `DeepPass1Fixes` (targets/c900/tasks/results/DEEP-PASS-1.md).
+
 ### 2026-10-13 — c900 probe hardening
 - Wrong: `_require_command_layout` had an impossible `and` check on OTA lookalike write chars and didn't verify parent service; `is_ota_uuid` missed custom 5610 UUIDs; `mode_safe_write` missed pairing check during wait; `on_notify` locked up on leading non-header byte; `redact_line` failed without exact keyword "payload"; write cap pre-check had a `pass` statement allowing partial frame sends.
 - Changed: tightened OTA UUID matching, strictly validated service context, added active pairing polling, resynchronized stream framing in `on_notify`, enforced atomic write cap, hardened personal data redaction, made CLI `--address`/`--name` mutually exclusive, and added 6 unit test suites in `tests/test_c900_probe.py`.
