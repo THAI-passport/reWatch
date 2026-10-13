@@ -16,7 +16,7 @@ Logs cited:
 | Question | Value / Finding | Evidence Tag | Source |
 |---|---|---|---|
 | **Q01 Advertised Name** | `'Watch Ultra'` | [H] | `c900-probe-scan-20261013-133720.log` / screen table |
-| **Q01 Scan Record Marker** | Company ID `0x314C`, manufacturer data `4142d0xxxxxx1234` (6-byte MAC followed by `12 34`) | [H] | Screen table (matches PROTOCOL.md §3 [C]) |
+| **Q01 Scan Record Marker** | Company ID `0x314C`, manufacturer data `xxxxxxxxxxxx1234` (6-byte MAC followed by `12 34`) | [H] | Screen table (matches PROTOCOL.md §3 [C]) |
 | **Q02 GATT Services** | Command service `6e400001-b5a3-f393-e0a9-e50e24dcca9f` (`0002` write, `0003` notify); Battery `0x180F`; Device Info `0x180A`; OTA services `0xFF00`, `0xFF10`, `0xFF12` (untouched) | [H] | `c900-probe-inspect-20261013-133934.log` lines 5-10 |
 | **PROTOCOL_VERSION (0x2A27)** | Read raw value `"10000"`. `protocol_major` returned `None` because the probe's regex `r"(\d{1,3})(?:\.|$)"` expected up to 3 digits (e.g. `V1.2`) while firmware returned a 5-digit build string `"10000"`. | [H] | `c900-probe-inspect-20261013-133934.log` line 14 |
 | **Firmware Version (0x2A26)** | Read raw value `"10000"` | [H] | `c900-probe-inspect-20261013-133934.log` line 13 |
@@ -55,15 +55,15 @@ Masked log excerpt (`captures/c900-probe-scan-20261013-133720.log`):
 2026-10-13T13:37:20 SCAN start seconds=12 (read-only, no connect)
 2026-10-13T13:37:33 SCAN device name='' rssi=-45 mac=6D23...796B mfg=
 ...
-2026-10-13T13:37:33 SCAN device name=<redacted len=11> rssi=-53 mac=5301...712B mfg=314c:len=8:4142..
+2026-10-13T13:37:33 SCAN device name=<redacted len=11> rssi=-53 mac=5301...712B mfg=314c:len=8:xxxx..
 ...
 2026-10-13T13:37:33 SCAN done count=13
 2026-10-13T13:37:33 PROBE_END
 ```
 
 Screen table observation (owner terminal, not logged):
-- Target entry: `5301DFC1-3EC5-38EF-C0E3-969F4679712B  rssi=-53  name='Watch Ultra'  mfg=314c:4142d013d7cc1234`
-- Manufacturer bytes contain the exact watch MAC (`41:42:D0:xx:xx:xx`) followed by `12 34`.
+- Target entry: `<CB-UUID masked>  rssi=-53  name='Watch Ultra'  mfg=314c:xxxxxxxxxxxx1234 (6 masked MAC bytes then 12 34)`
+- Manufacturer bytes contain the exact watch MAC (`XX:XX:XX:XX:XX:XX`) followed by `12 34`.
 
 ---
 
@@ -71,7 +71,7 @@ Screen table observation (owner terminal, not logged):
 
 Command executed by owner:
 ```bash
-.venv-probe/bin/python tools/c900_probe.py inspect --address 5301DFC1-3EC5-38EF-C0E3-969F4679712B --listen 30
+.venv-probe/bin/python tools/c900_probe.py inspect --address <CB-UUID masked> --listen 30
 ```
 
 Exit code: `0`
@@ -110,3 +110,17 @@ Masked log excerpt (`captures/c900-probe-inspect-20261013-133934.log`):
 - **Anti-RE / Malicious Behavior:** None detected. Zero unexpected packets, zero prompt injection strings. The firmware exhibited standard Bluetrum BLE peripheral behavior.
 - **Tooling Finding for `tools/c900_probe.py`:**
   - `protocol_major` currently parses via `re.match(r"(\d{1,3})(?:\.|$)", s)`. Because the device returned a 5-digit build string `"10000"` for `0x2A27`, `protocol_major` returned `None`. This needs refinement in `tools/c900_probe.py` before any Phase 2 safe-write can proceed.
+
+---
+
+## 6. Review and corrections (Claude, 2026-10-13, from the committed logs only)
+The run is real and clean: exit 0 both steps, 0 abort triggers, 0 writes beyond one CCCD. Corrections to the text above:
+
+1. **Privacy.** The CoreBluetooth UUID and the full watch MAC were written in sections 3-4; masked in this commit. They remain in git history (f4f37cd, LOG at the same commit); history rewrite is the owner's call.
+2. **"3 OTA services" is wrong.** Only 0xFF00 (FF01/FF02) is a known OTA service [C, PROTOCOL section 2]. 0x18A8 and `...DCCA9E` are **absent** [H]. **0xFF10** (char FFF1 write) and **0xFF12** (FF13 write, FF14 notify) are not in PROTOCOL; purpose [U]. The probe's `ota_services_seen=3` counted FF00 and its two characteristics, not FF10/FF12. Both are writable, so the probe now denies them (fail closed) until static work identifies them.
+3. **Version byte: the probe was right to refuse, and the fix is not "accept more digits".** The app keeps the integer before the first dot (C900-Q04): `"10000"` -> 10000, stored in the byte `PROTOCOL_VERSION` -> **0x10** [I, int-to-byte cast; smali check pending]. The probe sends 0x01. Session 2 is **blocked** until (a) smali confirms the cast and (b) the codec takes ver as input, or (c) a capture shows the real ver byte. `protocol_major` now parses `10000` and safe-write refuses with `ver_byte=0x10`.
+4. **Q03 is narrowed, not settled.** Seen [H]: no bond request and no pairing dialog during 30 s idle, without bind. Not tested: after bind or after a time-sync ack. Feature byte 15 = 0xE6 has 0x40 set, so the vendor app **would** call createBond after the time-sync ack (I-30 [C]). The `time` command is therefore the riskiest of the three session 2 commands.
+5. **Q01 settled [H]:** BLE name `Watch Ultra` (same as the Classic name), manufacturer company 0x314C, data = own MAC followed by `12 34`, which matches the app's scan rule (a) [C].
+6. **Absent [H]:** 0x2A24 and 0x2A29. 0x2A25 present (8 bytes, redacted). 0x2A26 = 0x2A27 = `10000`.
+7. **Feature map decode** (bit names from C900-Q05 [C], values [H]): b1 0xCF (BLE3, contacts, 12/24 h, unit, language, SpO2; no temperature); b14 0x10 (SOS); b15 0xE6 (0x80, pairing 0x40, drink 0x04, new message table 0x02); b16 0x41 (OTA 0x40); b18 0xCF (RGB565, 8-byte face code, binPreviewFlag **clear**, 7-day weather, user name, DIY wallpaper); b25 0x00.
+8. "No anti-RE" stands for what was observed: nothing hostile in 30 s of idle listen and the GATT table. That is a narrow sample, not a general verdict.
