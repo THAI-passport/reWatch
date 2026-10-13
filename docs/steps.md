@@ -318,3 +318,11 @@ Required by AGENTS.md.
 - **Step:** Read results and log excerpts as untrusted data. **Decision:** keep all [H] values; mask identifiers; correct OTA count, Q03 scope, version handling. **Rationale:** app rule (C900-Q04) turns "10000" into byte 0x10; loosening the regex alone would have made the probe send a frame the app never sends.
 - **Decision:** deny FF10/FF12 and their characteristics in the probe. **Rationale:** writable services of unknown purpose on a device with an OTA path; fail closed.
 - **Decision:** session 2 blocked; next = static checks (S-20, S-21) and the owner capture. Plan: NEXT-STEPS section 7.
+
+## 2026-10-13 Android HCI snoop capture decode (C900-Q19)
+- **Step:** Pulled bug report from Android phone via ADB, extracted `btsnoop_hci.log.last`, and decoded with `tools/c900_decode.py` into `captures/decoded.txt` (220 ATT PDUs, 137 data PDUs; 0 bad sums).
+  - **Decision:** Wire version byte settled [H]: App sends `ver = 0x10` (16 decimal) across all 63 TX frames; watch sends `ver = 0x01` on its DF frames.
+  - **Decision:** Bonding mechanism settled [H]: Watch sends unsolicited `cmd 0x0E key 0x01` carrying Classic BT MAC (`41:42:D0:xx:xx:xx`), triggering phone `createBond()`. Correlates with feature bit 15 (`0x40`).
+  - **Decision:** Bind sequence settled [H]: App sends 8-byte token under `cmd 0x03 key 0`; watch replies with `cmd 0x0C key 8` (bind accepted) and ACK `x=17 status=1`.
+  - **Decision:** Watch ACK formula settled [H]: `FD 00 05 <sum> <cmd> <key> <seq_hi> <seq_lo> <status>` where `status=1` and `x = plen + 9`.
+  - **Rationale:** NEXT-STEPS §4 capture decision tree; report in `targets/c900/tasks/results/C900-Q19.md`. Raw capture and phone diagnostics stay git-ignored.

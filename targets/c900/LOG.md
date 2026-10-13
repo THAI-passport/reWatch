@@ -181,3 +181,13 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Problem: results committed the CoreBluetooth UUID and full watch MAC. Fix: masked; history (f4f37cd) open, owner decides.
 - Problem: FF10/FF12 reported as OTA; they are unknown writable vendor services. Fix: probe deny list extended, tests. Open: identify statically (smali grep).
 - Problem: proposed "fix" of protocol_major would have let the probe send ver=1 where the app sends 0x10 [I]. Fix: parse full integer, compare the truncated byte, refuse; test with "10000". Open: smali check of the cast.
+
+## 2026-10-13 Android HCI snoop capture decode (C900-Q19)
+- Evidence: `captures/btsnoop_hci.log.last`, `captures/decoded.txt`, `targets/c900/tasks/results/C900-Q19.md`.
+- Findings:
+  - Wire version byte settled [H]: App transmits `ver = 0x10` (16) on all 63 frames, matching Claude's inference of `10000 & 0xFF == 0x10`. Watch transmits `ver = 0x01` on its DF frames.
+  - Bonding trigger settled [H]: Watch sends unsolicited `cmd 0x0E key 0x01` announcing Classic BT MAC (`41:42:D0:xx:xx:xx`), triggering app `createBond()`. Feature bit 15 (`0x40`) confirmed active.
+  - Bind handshake settled [H]: App sends `cmd 0x03 key 0` token; watch replies with `cmd 0x0C key 8` (bind accepted) + ACK `x=17 status=1`.
+  - Watch ACK formula settled [H]: `FD 00 05 <sum> <cmd> <key> <seq_hi> <seq_lo> <status>` where `status=1` and `x = plen + 9`.
+  - Privacy preserved: all personal message text, usernames, and addresses masked/redacted.
+- Status: Solved.
