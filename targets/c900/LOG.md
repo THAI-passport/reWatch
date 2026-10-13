@@ -218,3 +218,6 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 ## 2026-10-13 Codec ver parameter (owner approved)
 - Change: `frames.build(cmd, key, payload, ver=DEFAULT_VER)`, `C900_VER = 0x10` [H], `ver_from_hw_revision`, `ack(cmd, key, x, status)`, SimWatch acks with x = frame length; probe derives ver from 0x2A27 and accepts only `REVIEWED_VERS` {0x01, 0x10}. Tests: capture vector (time sync 2026-10-13 16:23:11, ver 0x10), unreviewed ver refuses, "10000" -> 0x10 sent.
 - Problem: Q19 excerpts had wrong length bytes (hand-copied). Evidence: ack x and decoder. Fix: noted in Q19 section 8; tests use I-11.
+
+## 2026-10-13 Owner QR observation
+- Owner: QR scan in Hiwear Plus connects immediately after unbind. Recorded in results/OWNER-QR-2026-10-13.md. Not a protocol requirement (session 1 connected without it); QR contents [U]; S-22 static check opened. Photos not committed (name, address).
