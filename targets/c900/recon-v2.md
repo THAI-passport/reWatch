@@ -49,6 +49,7 @@ Tags: [C] app code (smali-checked where marked), [V] local re-derivation, [I] in
 | D-stop-b | createBond conflict with FACTS | Q05 partial; record conflict, pick no winner | OPEN-QUESTIONS stop condition (b) |
 | D-bond | Reviewer: 3 named smali hits vs one negative jadx search; Q14 mapped the triggers | Retire "no createBond"; app bonds only on 0x0C/19, 0x0E/1, or cmd 2 key 1 ack + b15 0x40 [C]; device side [U] | A negative search is falsified by a reproducible positive hit (REVIEW-PHASE1) |
 | D-nolive | Owner 2026-10-13: no live test until necessary | Phase 2 parked; HW-0 written as a doc only; static Phase 1b first | Owner instruction; software first |
+| D-review1c | Phase 1c tools checked (REVIEW-PHASE1C) | Decoder privacy list extended (caller, user name, profile, location); feed the capture file, not btcap JSON, so reads are decoded | Owner privacy; JSON path drops ATT reads |
 | D-next | Remaining unknowns are mostly device-side | Next: Q16 + Q17 + Q18 static, then owner capture (Q13/Q19); HW-0 last. See NEXT-STEPS.md (DRAFT) | Software first; capture is the owner's own traffic, no new contact by us |
 | D-version | Byte 4 follows 0x2A27 | HW-2 must read 0x2A27 before any write; codec must take the version as input in Phase 3 | A hard-coded 01 could be wrong on some firmware |
 | D-interval | OTA interval unused | Do not copy any interval into a future design; pacing = write-complete | Copying 300/500 would be cargo cult |

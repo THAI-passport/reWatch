@@ -1,12 +1,12 @@
 # C900 / Hiwear Plus: next steps (DRAFT)
 
-**Status: DRAFT, pending owner sign-off.** Written 2026-10-13 (Asia/Saigon) in REVIEW-PHASE1B. Nothing here is approved to run. Owner rule in force: no live test until necessary.
+**Status: DRAFT, pending owner sign-off.** Revised 2026-10-13 after Phase 1c (REVIEW-PHASE1C). Written 2026-10-13 (Asia/Saigon) in REVIEW-PHASE1B. Nothing here is approved to run. Owner rule in force: no live test until necessary.
 
 Every step below assumes [INVARIANTS.md](INVARIANTS.md).
 
 ## 1. Where we are
 Static work has mapped framing, command tables, the inbound map, bond triggers and the OTA path [C] (recon-v2.md). What is left falls in three groups:
-- **Static, still open:** cmd 5 health field layouts (C900-Q16); cmd 9 bytes 9-13 [U].
+- **Static, still open:** none that code reading can settle; cmd 9 bytes 9-13 and distance/calorie units need data [U].
 - **Only the watch knows:** advertised name and scan record (Q01), services present (Q02), whether it asks to bond (Q03), `PROTOCOL_VERSION` from 0x2A27, feature bytes from 0x2A28 (b1 0x80, b15 0x40, b18 0x20, b25 0x80), the watch's own ack bytes 6-7, which keys it acks, and whether the jadx index arithmetic for cmd 9 tags 4/7/9/11 holds.
 - **Tooling gaps:** `notify_log.py` would subscribe to OTA characteristics; nothing decodes DF/FD frames out of a capture.
 
@@ -24,11 +24,27 @@ Static work has mapped framing, command tables, the inbound map, bond triggers a
 | Success | `C900-Q19.md` with `[H]` rows promoted; Q01-Q03 closed or narrowed | Run-sheet result file, all steps ticked or aborted with reason | `C900-Q16.md` with every key tabled or `[U]` with reason | Tests green; decoder prints summary on the synthetic fixture |
 | Stop | Capture shows a forbidden transfer (face/OTA/contacts) -> note only, do not decode payload; pairing part missing -> ask owner | Any abort trigger in HW-0 §2; budget hit | Shared stop conditions | Any change beyond the named tools |
 
-## 3. Recommended order and why
-1. **Path 4 (Q17, Q18)** and **Path 3 (Q16)** now, in one or two AI sessions. All static, no contact. Q17 removes a known hazard before any live work; Q18 means a capture is decoded the day it arrives; Q16 fills the only static gap that a capture would otherwise show as unlabelled bytes. Run Q17 and Q18 first (no LFS), Q16 after (one bootstrap).
-2. **Path 1 (owner capture)** when the owner is willing. It is software by AGENTS.md (a capture the owner has), it answers the most questions per minute, it includes write-side facts (ack bytes) that a zero-write HW-0 can never give, and it involves no contact by our tools.
-3. **Path 2 (HW-0)** last and only for what the capture leaves open, after the owner says live work is necessary, with per-session approval.
-Rationale: software first, hardware last; cheapest high-value evidence first; remove hazards before they matter.
+## 3. Recommended order and why (revised 2026-10-13 after Phase 1c)
+Paths 3 and 4 are **done** (C900-Q16, Q17, Q18; reviewed in REVIEW-PHASE1C). Static work is effectively exhausted: what is left ([U] distance/calorie units, cmd 9 bytes 9-13, extra sport fields) needs real data, not more code reading.
+1. **Path 1 now: owner capture (Q13 -> Q19).** Only the owner can start it. Before recording, the owner checks the list below. After the file arrives the AI runs, in order:
+   1. `python tools/c900_decode.py captures/btsnoop_hci.log > captures/decoded.txt` (feed the capture file, not btcap JSON: the JSON path has no ATT reads, so 0x2A27/0x2A28/0x2A19 would be missing).
+   2. If no frames appear on the default UUIDs: `python tools/btcap.py captures/btsnoop_hci.log` to map handles, then rerun the decoder with `--write-handle` / `--notify-handle`.
+   3. Walk the decision tree (section 4); write `tasks/results/C900-Q19.md` with masked excerpts only. Never commit `captures/`.
+2. **Path 2 (HW-0) last**, only for what the capture leaves open, after the owner says live work is necessary.
+3. If the owner decides not to capture: stop and wait. HW-0 is not a substitute without the owner's explicit "live work is necessary".
+
+### Before you record (owner checklist)
+- [ ] Watch already bound to Hiwear Plus (do not unbind to re-bind)
+- [ ] Snoop log set to **Enabled**, not Filtered; Bluetooth toggled off and on after
+- [ ] Placeholder profile values and location off, if you prefer privacy
+- [ ] Plan: reconnect, time sync, one test message, find watch, battery; note phone times
+- [ ] No faces, updates, contacts, unbind or reset; decline any update prompt
+- [ ] Send only `btsnoop_hci.log` (and any `.last` files), privately
+
+### Decoder limits (REVIEW-PHASE1C)
+- A message whose first piece is missing cannot be resynced; it shows as stray chunks or a bad sum, never as a wrong decode.
+- Labels are names from PROTOCOL; an unlabelled cmd/key is a finding, not a decoder bug.
+- Decoded values become `[H]` only once written to the result file with the capture as source.
 
 ## 4. Decision tree for the capture (Q19)
 1. **Find the watch connection.** No LE connection to a device that discovers `6E400001-...DCCA9F`: capture is wrong or filtered -> ask the owner for model/Android version and whether "Enabled" (not Filtered) was set; stop.
@@ -47,8 +63,8 @@ After the tree: if Q01-Q03 are all settled, HW-0 shrinks to an optional confirma
 ## 5. Budget summary
 | Step | LFS | AI sessions | Owner time | Watch contact by us |
 |---|---|---|---|---|
-| Q17 + Q18 | 0 | 1 | 0 | none |
-| Q16 | ~105 MB | 1 | 0 | none |
+| Q17 + Q18 (done) | 0 | 1 | 0 | none |
+| Q16 (done) | ~105 MB | 1 | 0 | none |
 | Q13 + Q19 | 0 | 1 short | ~20 min | none |
 | HW-0 (if needed) | 0 | 0-1 | ~30 min | 3 connects, 6 reads, 1 CCCD, 0 writes |
 
