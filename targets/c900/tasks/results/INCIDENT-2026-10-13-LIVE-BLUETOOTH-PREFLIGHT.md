@@ -103,7 +103,7 @@ For any subsequent agent (Claude or future passes) picking up this task:
 
 3. **Exact Terminal Commands for the Owner:**
    ```bash
-   cd /Users/puredent/Desktop/reWatch
+   cd /Users/<owner>/Desktop/reWatch
    source .venv-probe/bin/activate
    # Verify tests pass
    python3 -m unittest tests.test_c900_probe

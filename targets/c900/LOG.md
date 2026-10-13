@@ -186,8 +186,15 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Evidence: `captures/btsnoop_hci.log.last`, `captures/decoded.txt`, `targets/c900/tasks/results/C900-Q19.md`.
 - Findings:
   - Wire version byte settled [H]: App transmits `ver = 0x10` (16) on all 63 frames, matching Claude's inference of `10000 & 0xFF == 0x10`. Watch transmits `ver = 0x01` on its DF frames.
-  - Bonding trigger settled [H]: Watch sends unsolicited `cmd 0x0E key 0x01` announcing Classic BT MAC (`41:42:D0:xx:xx:xx`), triggering app `createBond()`. Feature bit 15 (`0x40`) confirmed active.
+  - Bonding trigger settled [H]: Watch sends unsolicited `cmd 0x0E key 0x01` announcing Classic BT MAC (`XX:XX:XX:XX:XX:XX`), triggering app `createBond()`. Feature bit 15 (`0x40`) confirmed active.
   - Bind handshake settled [H]: App sends `cmd 0x03 key 0` token; watch replies with `cmd 0x0C key 8` (bind accepted) + ACK `x=17 status=1`.
   - Watch ACK formula settled [H]: `FD 00 05 <sum> <cmd> <key> <seq_hi> <seq_lo> <status>` where `status=1` and `x = plen + 9`.
   - Privacy preserved: all personal message text, usernames, and addresses masked/redacted.
 - Status: Solved.
+
+## 2026-10-13 Review of C900-Q19 and privacy scrub tooling
+- Problem: Q19 kept the watch OUI in three files. Cause: belief that a masked tail is enough. Fix: full mask; new `tools/privacy_scan.py` (flags kept OUIs) and skill `re-privacy-scrub`. History at 91bb5c0 open (owner).
+- Problem: Q19 called the time payload a Unix timestamp. Evidence: I-21 decode gives the capture day; codec reproduces bytes. Fix: corrected; I-21 now [C]+[H].
+- Problem: ack x called a sequence. Fix: it is the acked frame length; I-18 updated to [H].
+- Found by the scan: `re-watch-targets` skill had the Nordic UART UUID as `...B5A9...` (typo, standard is B5A3); fixed. Legacy t900-c900 client and source copy keep the typo (superseded, allow-listed).
+- Found by the scan: owner home path in legacy handoff and incident file; masked.

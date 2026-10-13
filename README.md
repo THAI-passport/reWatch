@@ -39,6 +39,7 @@ The agent reads `AGENTS.md`, loads the `re-workflow` skill, and runs gates G0 to
 | `tools/c900_probe.py` | Owner-run C900 first-contact probe (scan / inspect / allowlisted safe-write); see `targets/c900/tasks/PROBE-GUIDE.md` |
 | `tools/c900_decode.py` | C900 DF/FD frame decoder over a capture or btcap JSON: reassembly, sum check, cmd/key labels, feature bits, bond-trigger/blocked-cmd/OTA flags. Decode only |
 | `tools/crcfind.py` | Identify a CRC from sample frames |
+| `tools/privacy_scan.py` | Scan files for personal data (MACs incl. kept OUI, CoreBluetooth UUIDs, IMEI, phone, e-mail, home paths) before commit; `--strict` adds spaced hex bytes; placeholders in `.privacy-allow`; see skill `re-privacy-scrub` |
 | `tools/notify_log.py` | Passive BLE notification logger (touch/event discovery); OTA/DFU deny list always on, `--only UUID` to pin one characteristic |
 | `tools/make_test_media.py` | Synthetic test images, GIF and clips for display devices |
 | `templates/tasks/` | Recon task pack copied into every target by `init` |

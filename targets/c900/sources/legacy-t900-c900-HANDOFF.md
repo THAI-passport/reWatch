@@ -4,11 +4,11 @@
 
 ## What exists
 - Target documentation:
-  - [TARGET.md](file:///Users/puredent/Desktop/reWatch/targets/t900-c900/TARGET.md): Goals, assumptions, and hardware/software ecosystem mapping.
-  - [SOURCES.md](file:///Users/puredent/Desktop/reWatch/targets/t900-c900/SOURCES.md): Package identities (`com.lianhezhuli.hyfit` for HryFine, `com.jusheng.hiwatchpro` for HiWatch Pro), mirror provenance, and clean-room source references.
-  - [FACTS.md](file:///Users/puredent/Desktop/reWatch/targets/t900-c900/FACTS.md): Single source of truth for disputed vendor specs, panel resolutions, and SoC architectures.
-  - [PROTOCOL.md](file:///Users/puredent/Desktop/reWatch/targets/t900-c900/PROTOCOL.md): Byte-exact wire specifications for HryFine NUS (`0xDF`/`0xFD` Sum8) and JieLi RCSP (`0xFE 0xDC 0xBA` ... `0xEF`), dial format, and worked vectors.
-  - [LOG.md](file:///Users/puredent/Desktop/reWatch/targets/t900-c900/LOG.md): Problem and decision ledger across all gates.
+  - [TARGET.md](file:///Users/<owner>/Desktop/reWatch/targets/t900-c900/TARGET.md): Goals, assumptions, and hardware/software ecosystem mapping.
+  - [SOURCES.md](file:///Users/<owner>/Desktop/reWatch/targets/t900-c900/SOURCES.md): Package identities (`com.lianhezhuli.hyfit` for HryFine, `com.jusheng.hiwatchpro` for HiWatch Pro), mirror provenance, and clean-room source references.
+  - [FACTS.md](file:///Users/<owner>/Desktop/reWatch/targets/t900-c900/FACTS.md): Single source of truth for disputed vendor specs, panel resolutions, and SoC architectures.
+  - [PROTOCOL.md](file:///Users/<owner>/Desktop/reWatch/targets/t900-c900/PROTOCOL.md): Byte-exact wire specifications for HryFine NUS (`0xDF`/`0xFD` Sum8) and JieLi RCSP (`0xFE 0xDC 0xBA` ... `0xEF`), dial format, and worked vectors.
+  - [LOG.md](file:///Users/<owner>/Desktop/reWatch/targets/t900-c900/LOG.md): Problem and decision ledger across all gates.
 - Layered Client (`client/t900-c900/`):
   - `t900_c900.codecs`: Pure frame packers and parsers for HryFine NUS and JieLi RCSP.
   - `t900_c900.dial`: RGB565 watch face binary compiler and parser.
@@ -22,7 +22,7 @@
   - `test_no_vendor_calls.py` ensures 100% offline local-only operation without analytics or vendor cloud servers.
 
 ## Evidence summary
-Statement tags in [PROTOCOL.md](file:///Users/puredent/Desktop/reWatch/targets/t900-c900/PROTOCOL.md):
+Statement tags in [PROTOCOL.md](file:///Users/<owner>/Desktop/reWatch/targets/t900-c900/PROTOCOL.md):
 - `[C]` (Confirmed in artifact / clean-room SDK baseline): 12
 - `[V]` (Verified by test vectors / emulation / script): 7
 - `[H]` (Confirmed on real hardware): 1

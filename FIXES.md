@@ -3,6 +3,7 @@
 Things that need fixing in reWatch itself (tools, templates, skills), and things already fixed. Add to Open when you find something; move to Fixed with what was wrong and what changed. Same commit as the change.
 
 ## Open
+- Wire `tools/privacy_scan.py` into `rw.py lint` for `targets/`, `docs/` and `.claude/` (tests and fixtures excluded) once the owner agrees; today it is a separate step in skill `re-privacy-scrub`.
 - `tools/c900_probe.py` blocks inside CoreBluetooth when the shell has no macOS Bluetooth (TCC) permission instead of exiting with a clear error; add a pre-check of `CBManager.authorization()` (darwin only) and a short scanner start timeout, with a test (seen 2026-10-13, LIVE-PREFLIGHT-REVIEW).
 - Skills and tools are untested end to end on a real target; run the benchmark in README.md and record gaps here.
 - `tools/setup_tools.py` pins jadx and apktool versions and verifies SHA-256 only when `JADX_SHA256`/`APKTOOL_SHA256` are set (it prints the computed hashes); the JDK is the latest 17. Pin real hashes once a machine with github access has downloaded them.
@@ -12,6 +13,7 @@ Things that need fixing in reWatch itself (tools, templates, skills), and things
 - iOS, desktop and firmware notes in the skills are thin.
 
 ## Fixed
+- No mechanical check for personal data in result files (three leaks on 2026-10-13: Mac address, CB UUID and watch MAC, watch OUI): added `tools/privacy_scan.py`, `.privacy-allow`, tests, skill `re-privacy-scrub`; fixed the Nordic UART UUID typo in `re-watch-targets`.
 - `tools/notify_log.py` subscribed to every notifiable characteristic, OTA/DFU included: added a default deny list (0xFF00, 0x18A8 and their characteristics, `...dcca9e`), `--deny`, `--only` (denied UUID there exits 2 before anything is enabled), and a printed plan before listening; tests in `tests/test_notify_log.py` (C900-Q17).
 - Pinning was only a hash check: added the pin rule to AGENTS.md, `COPY_LOCATION` and URL2 guidance in the SOURCES template, pin warnings and clearer mismatch and accept messages in the rebuild tool, with tests.
 - Hash mismatch after a vendor update now names the real version; URL2 to URL4 fallbacks; rebuild-only-when-necessary and record-after-every-pass rules in AGENTS.md and the skills; QUICKSTART in the task-pack template; test that scripts mentioned in docs exist.

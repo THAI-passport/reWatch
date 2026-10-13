@@ -18,7 +18,7 @@ Everything here is background knowledge, not evidence about your target. Claims 
 | Stack | How it shows up in an app |
 |---|---|
 | Jieli (JL) | `libjl_*` natives, `com.jieli.*` packages, service 0xAE00; see `re-jieli` |
-| Nordic nRF | Nordic DFU library (`no.nordicsemi.android.dfu`), DFU service 0xFE59 (secure) or the legacy 128-bit DFU service, Nordic UART service 6E400001-B5A9-F393-E0A9-E50E24DCCA9E |
+| Nordic nRF | Nordic DFU library (`no.nordicsemi.android.dfu`), DFU service 0xFE59 (secure) or the legacy 128-bit DFU service, Nordic UART service 6E400001-B5A3-F393-E0A9-E50E24DCCA9E |
 | Realtek | `com.realsil` or `com.realtek` packages, a Realtek OTA library; service ids vary [U] |
 | Telink | `com.telink` packages, a Telink OTA service with a 128-bit base [U] |
 | Huami / Zepp | 16-bit services 0xFEE0 and 0xFEE1, an auth step using AES with a per-device key obtained at pairing; protocol details vary by generation [U] |
