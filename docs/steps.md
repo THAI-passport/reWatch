@@ -391,4 +391,5 @@ Required by AGENTS.md.
 ## 2026-10-13 Robustness pack (Asia/Saigon)
 - **Decision:** one framework README with lane ownership, a branch per task (`c900/rxx`), result-file-only edits, and an integrator checklist. **Rationale:** lets weaker agents run concurrently without merge conflicts or edits to shared truth files.
 - **Decision:** `tools/dexgrep.py` so static tasks work where jadx cannot be installed (as in this cloud session).
-- **Decision:** R05 removed from the pack.
+- **Decision:** R05 restored to the pack with clean specification of cmd 0x05 activity/telemetry sync and remaining field maps (keys 13, 15).
+
