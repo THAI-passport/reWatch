@@ -44,7 +44,10 @@ WRITE_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9f"   # I-13 command write
 NOTIFY_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9f"  # I-13 command notify
 CMD_SERVICE_SUFFIX = "dcca9f"                          # I-13
 OTA_SERVICE_SUFFIX = "dcca9e"                          # I-13 OTA lookalike
-OTA_SHORT = frozenset({"ff00", "ff01", "ff02", "ff03", "18a8", "2aa8", "2aa9", "5610"})
+OTA_SHORT = frozenset({"ff00", "ff01", "ff02", "ff03", "18a8", "2aa8", "2aa9", "5610",
+                       # Unknown vendor services seen on the real watch (LIVE-SESSION-1 2026-10-13 [H]);
+                       # purpose [U], writable, so never touched (fail closed).
+                       "ff10", "fff1", "ff12", "ff13", "ff14"})
 DI_UUIDS = ("2a24", "2a25", "2a26", "2a27", "2a28", "2a29", "2a19")  # Device Info + battery + features
 # Allowlist of (cmd, key) for safe-write. Anything else is refused even if not in BLOCKED_CMDS.
 ALLOWLIST = {
@@ -371,8 +374,15 @@ def protocol_major(raw):
     s = bytes(raw or b"").decode("ascii", "replace").strip()
     if s[:1] in ("V", "v"):
         s = s[1:]
-    m = re.match(r"(\d{1,3})(?:\.|$)", s)
+    m = re.match(r"(\d{1,9})(?:\.|$)", s)
     return int(m.group(1)) if m else None
+
+
+def version_byte(major):
+    """The byte the app would put in the ver field: PROTOCOL_VERSION is a byte, so an int major is
+    truncated to its low 8 bits [I, int-to-byte cast; smali check pending]. Real C900 0x2A27 = "10000"
+    gives 0x10, not 1 (LIVE-SESSION-1 2026-10-13)."""
+    return None if major is None else major & 0xFF
 
 
 def command_chars(services):
@@ -554,7 +564,9 @@ async def mode_inspect(address, listen_s, log, budget, name_filter=None):
                 # Standard meaning is Serial Number; the app calls it "platform". Treat as personal.
                 log.emit("READ 2a25 value=<redacted len=%d>" % len(raw))
             elif short == "2a27":
-                log.emit("READ 2a27 value=%s protocol_major=%s" % (sanitize(raw, 48), protocol_major(raw)))
+                log.emit("READ 2a27 value=%s protocol_major=%s ver_byte=%s" % (
+                    sanitize(raw, 48), protocol_major(raw),
+                    None if version_byte(protocol_major(raw)) is None else "0x%02x" % version_byte(protocol_major(raw))))
             else:
                 log.emit("READ %s value=%s" % (short, sanitize(raw, 48)))
         # Listen ONLY on command notify. Refuse if that UUID is somehow OTA.
@@ -661,10 +673,12 @@ async def mode_safe_write(address, command, log, budget, approve, confirm_fn, na
         except Exception as e:  # noqa: BLE001
             raise SafetyError("cannot read 0x2A27 to check protocol version: %s" % sanitize(str(e), 60))
         major = protocol_major(hw)
-        log.emit("READ 2a27 value=%s protocol_major=%s" % (sanitize(hw, 48), major))
-        if major != EXPECTED_PROTOCOL_VERSION:
-            raise SafetyError("protocol version %s != %d; frame would differ from the app's; nothing sent"
-                              % (major, EXPECTED_PROTOCOL_VERSION))
+        vb = version_byte(major)
+        log.emit("READ 2a27 value=%s protocol_major=%s ver_byte=%s" % (sanitize(hw, 48), major,
+                                                                    None if vb is None else "0x%02x" % vb))
+        if vb != EXPECTED_PROTOCOL_VERSION:
+            raise SafetyError("app ver byte %s != %d; frame would differ from the app's; nothing sent"
+                              % (vb, EXPECTED_PROTOCOL_VERSION))
         # Subscribe so we can see the ack. CCCD write only on command notify.
         await client.start_notify(notify_char, on_notify)
         # Chunk into 20-byte ATT pieces (I-16).

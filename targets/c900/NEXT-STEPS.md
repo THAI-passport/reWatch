@@ -94,3 +94,16 @@ Order of preference: capture first (no watch contact by us), then session 1 only
 - `notify_log.py` fixed (Q17); blocklist still `{0x01,0x04,0x06,0x07,0x0D,0x13}` with a test.
 - Owner approval of a Phase 3 scope written in PLAN.md.
 Phase 3 (client) and Phase 4 (OTA, watch faces, contacts push, Cus5610) stay **deferred**.
+
+## 7. After LIVE-SESSION-1 (2026-10-13, DRAFT, pending owner sign-off)
+Settled [H]: Q01, Q02, feature map, idle behaviour. Open: real ver byte, FF10/FF12 purpose, bond behaviour after bind/time ack, ack bytes.
+
+| Order | Step | Who | Needs | Settles |
+|---|---|---|---|---|
+| 1 | **S-20 static:** smali of `NotifyWriteUtils.onRead` 0x2A27 parse and `PROTOCOL_VERSION` store (int-to-byte?), plus every place that reads 2A27/2A26 strings | AI | one rebuild (justified: [I] blocks session 2) | ver byte 0x10 vs other [C] |
+| 2 | **S-21 static:** smali grep for `ff10`, `fff1`, `ff12`, `ff13`, `ff14` (and 16-bit forms) to identify the two unknown services | AI | same rebuild | FF10/FF12 purpose [C] or "not in app" |
+| 3 | **Owner capture** (NEXT-STEPS sections 3-4): the single best next live-ish step; shows the real ver byte, bind sequence, ack bytes, whether the watch bonds after time sync | owner | Android phone, ~20 min | ver [H], acks [H], Q03 after bind [H] |
+| 4 | Codec: `frames.build` takes ver as a parameter (default unchanged) with tests; probe passes `version_byte(major)` | AI | S-20 result or capture | unblocks session 2 |
+| 5 | Session 2 (`find` only first; `time` last because b15 0x40 makes it the app's bond trigger) | owner | new approval | ack bytes [H] |
+
+Do not run session 2 before step 4. Do not add bind (cmd 3) to the probe.

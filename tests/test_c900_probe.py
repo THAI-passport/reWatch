@@ -666,6 +666,28 @@ class DeepPass1Fixes(unittest.TestCase):
         self.assertEqual(probe.protocol_major(b"1.0.7"), 1)
         self.assertIsNone(probe.protocol_major(b"HW-A"))
         self.assertIsNone(probe.protocol_major(None))
+        self.assertEqual(probe.protocol_major(b"10000"), 10000)   # real C900 value [H]
+
+    def test_real_c900_version_string_refuses_write(self):
+        """Live session 1: 0x2A27 = "10000" -> app ver byte 0x10, so the probe's ver=1 frame must not go out."""
+        self.assertEqual(probe.version_byte(probe.protocol_major(b"10000")), 0x10)
+
+        class C(FakeClient):
+            async def read_gatt_char(self, uuid):
+                if _u(uuid).startswith("00002a27"):
+                    return b"10000"
+                return await super().read_gatt_char(uuid)
+
+        rc = self._run(C, ["safe-write", "--address", "AA:BB:CC:DD:EE:01", "--command", "find", "--i-approve-writes"])
+        self.assertEqual(rc, probe.EXIT_SAFETY)
+        self.assertEqual(FakeClient.instances[-1].write_responses, [])
+        self.assertIn("ver_byte=0x10", self._log())
+
+    def test_unknown_vendor_services_from_real_watch_denied(self):
+        for short in ("ff10", "fff1", "ff12", "ff13", "ff14"):
+            self.assertTrue(probe.is_ota_uuid("0000%s-0000-1000-8000-00805f9b34fb" % short), short)
+        self.assertFalse(probe.is_ota_uuid(probe.WRITE_UUID))
+        self.assertFalse(probe.is_ota_uuid(probe.NOTIFY_UUID))
 
     def test_ack_before_write_is_not_taken_as_answer(self):
         class Stale(FakeClient):

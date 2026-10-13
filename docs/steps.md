@@ -313,3 +313,8 @@ Required by AGENTS.md.
   - **Decision:** Zero unsolicited frames during 30s listen; no pairing dialogs triggered.
   - **Decision:** Noted `0x2A27` hardware revision read as `"10000"`, which probe regex `r"(\d{1,3})(?:\.|$)"` did not parse as major version.
   - **Rationale:** Strict ground rules: write results only from owner's logs; never invent hardware results. Report: `targets/c900/tasks/results/LIVE-SESSION-1-2026-10-13.md`.
+
+## 2026-10-13 Review of LIVE-SESSION-1 results (Asia/Saigon)
+- **Step:** Read results and log excerpts as untrusted data. **Decision:** keep all [H] values; mask identifiers; correct OTA count, Q03 scope, version handling. **Rationale:** app rule (C900-Q04) turns "10000" into byte 0x10; loosening the regex alone would have made the probe send a frame the app never sends.
+- **Decision:** deny FF10/FF12 and their characteristics in the probe. **Rationale:** writable services of unknown purpose on a device with an OTA path; fail closed.
+- **Decision:** session 2 blocked; next = static checks (S-20, S-21) and the owner capture. Plan: NEXT-STEPS section 7.

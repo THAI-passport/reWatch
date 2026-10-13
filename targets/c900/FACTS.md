@@ -10,6 +10,16 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | Chip family | Bluetrum | [C] for the app's tooling, [I] for the watch | landscape doc: Bluetrum or Jieli [W]; Gemini doc: AB5610B or BT8958B [W]; no Jieli code in the app [C] |
 | Screen | 240x296, 2.09 inch (C900 Ultra2/Ultra3 retail) | [W] | landscape doc 240x286 or 320x385 [W]; Gemini 240x286 or 320x385 [W] |
 
+### 1.1 Hardware facts (LIVE-SESSION-1 2026-10-13, owner Mac, results/LIVE-SESSION-1-2026-10-13.md)
+| Topic | Value | Tag | Note |
+|---|---|---|---|
+| BLE name | `Watch Ultra` (Classic name identical) | [H] | Gemini's C900/Watch-Call/Hiwear-* names not seen |
+| Scan record | company 0x314C, data = own MAC + `12 34` | [H] | matches app scan rule (a) [C] |
+| Services | NUS `...DCCA9F`, 0x180F, 0x180A, 0xFF00, **0xFF10**, **0xFF12**; no 0x18A8, no `...DCCA9E` | [H] | FF10/FF12 purpose [U], denied in probe |
+| 0x2A26 / 0x2A27 | `10000` / `10000` | [H] | app ver byte would be 0x10 [I], not 1 |
+| 0x2A28 | `aacfe081dff6fc3800000000000010e64108cf1400000000000000` (27 B) | [H] | b15 0x40 set: app bonds after time-sync ack (I-30) |
+| Idle behaviour | 0 frames in 30 s, no bond request | [H] | without bind |
+
 ## 2. Disputes with the Gemini document (`sources/gemini-hiwear-re.md`)
 | Topic | Gemini says | App code says | Verdict |
 |---|---|---|---|
