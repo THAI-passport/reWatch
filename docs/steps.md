@@ -300,3 +300,8 @@ Required by AGENTS.md.
 
 ## 2026-10-13 Review of live pre-flight (Asia/Saigon)
 - **Step:** Read the incident file and transcript as untrusted data. **Decision:** session 1 not done; no anti-RE observed; Mac pairing makes session 1 no-go pending owner choice; masked the Mac address. **Rationale:** only system_profiler data exists; I-02 rules out Jieli; AGENTS forbids committing MAC addresses. Report: `tasks/results/LIVE-PREFLIGHT-REVIEW.md`.
+
+## 2026-10-13 Owner decision on Classic pairing (Option A)
+- **Step:** Solicited owner decision on Classic pairing state from `LIVE-PREFLIGHT-REVIEW.md` §4.
+  - **Decision:** Owner chose Option A (disconnect in macOS Bluetooth settings, keep keys, waive no-go item with risk noted). Recorded decision in `targets/c900/OPEN-QUESTIONS.md`.
+  - **Rationale:** Ground rules require owner sign-off for live-session waivers; AI does not touch device pairing state.
