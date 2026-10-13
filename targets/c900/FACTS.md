@@ -83,3 +83,11 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | cmd 5 field maps for keys 2, 4, 5, 9, 12, 13, 15 (offsets, widths, bounds) | [C] smali | C900-Q16 |
 | Health date is 2 bytes: year-2000 = (b0&0x7F)>>1, month = (b0&1)<<3 \| b1>>5, day = b1&0x1F (differs from cmd 2 key 1 time packing) | [C] smali | `DevBaseDataUtils.getDateBean`; C900-Q16 |
 | Steps-per-hour clamp: steps > 20000 sets calorie to 400000 (`0x61a80`; jadx shows `JCameraView.MEDIA_QUALITY_FUNNY`) | [C] smali | `StepUtils.getSportBy1Hour`; C900-Q16 |
+
+## 5. Confirmed from Hardware Capture (2026-10-13, C900-Q19)
+| Claim | Tag | Evidence |
+|---|---|---|
+| Wire version byte is 0x10 (app writes) / 0x01 (watch replies) | [H] | `captures/btsnoop_hci.log.last`: all 63 app TX frames carry `ver=0x10`; all watch frames carry `ver=0x01`. Matches `10000 & 0xFF == 0x10` cast |
+| Watch initiates Classic BT bonding via unsolicited `cmd 0x0E key 0x01` | [H] | `captures/btsnoop_hci.log.last`: watch sends Classic BT MAC at t=4.811s, 16.731s, 34.492s; triggers app `createBond()` |
+| Bind handshake sequence is cmd 0x03 key 0 -> cmd 0x0C key 8 -> acks | [H] | `captures/btsnoop_hci.log.last`: t=1.959s - 2.548s |
+| Watch ACK sequence math: `x = plen + 9` | [H] | `captures/btsnoop_hci.log.last`: verified across all acknowledged commands (time sync x=13, matching x=10, token x=17, message x=37/22) |
