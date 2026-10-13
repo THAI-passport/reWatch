@@ -290,3 +290,10 @@ Required by AGENTS.md.
 - **Step:** Wrote `CLIENT-DESIGN.md`; recommended Android Kotlin with a pure protocol core and Python as reference. **Rationale:** notification forwarding and bond control need native Android; iOS cannot forward notifications.
 - **Step:** INVARIANTS I-10 got a numbering note only (fact unchanged; evidence = PROTOCOL sections 4 and 7.1 [C]). No other invariant changed: nothing new reached a higher tag.
 - **Step:** SOP 9.1 and `re-hardware-recon` principle 8 record the reusable lessons. Summary: `tasks/results/DEEP-PASS-1.md`.
+
+## 2026-10-13 Live session 1 pre-flight, Bluetooth profile discovery, and TCC incident report
+- **Step:** Audited live connection after owner reported `'Watch Ultra'` connected on Bluetooth.
+  - **Decision:** Queried `system_profiler SPBluetoothDataType` without touching the radio. Found the watch is connected via Classic Bluetooth (BR/EDR) audio (`Services: 0x800039 <HFP AVRCP A2DP HID ACL>`), not the BLE GATT companion command interface (`6E400001-...`).
+  - **Decision:** Installed `.venv-probe` with pinned hashes from `requirements-probe.txt`. Confirmed all 44 probe unit tests pass. Confirmed `CoreBluetooth.CBManager.authorization() == 0` (non-interactive subshell TCC restriction prevents automated agent scans).
+  - **Decision:** Documented findings, anti-RE trap matrix (Classic vs BLE, prompt injection, auto-bonding, OTA bricking, app contention), and exact run commands for Claude and owner in `targets/c900/tasks/results/INCIDENT-2026-10-13-LIVE-BLUETOOTH-PREFLIGHT.md`.
+  - **Rationale:** AGENTS.md contact-with-real-systems and writing-for-weaker-agents rules; live interaction remains [human] via interactive macOS Terminal.
