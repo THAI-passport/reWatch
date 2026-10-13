@@ -84,6 +84,7 @@ Build a software device from the spec to test the client, but a simulator writte
 - When the app derives a frame byte from a device read (C900: version byte from 0x2A27), a probe that hardcodes it must read the value first and refuse to write on a mismatch.
 - bleak needs Python 3.10+; the macOS Command Line Tools Python is 3.9. Say so in the owner guide before the install step.
 - Fake-client tests must resolve the same UUID forms the tool uses (full base UUIDs); a fake that only matched short forms hid untested read paths for a whole review round.
+- When jadx/apktool cannot be installed (blocked release host), `pip install androguard` and read dex directly: dump the string table for negative UUID searches, and print one method's bytecode (`DEX(...).get_classes()`, `m.get_code().get_bc().get_instructions()`) to follow a parser. Enough for "is X referenced" and short methods; use jadx for anything larger.
 
 ## 10. After each pass (checklist)
 1. PROTOCOL.md: byte-level findings with tags and the source class and method.

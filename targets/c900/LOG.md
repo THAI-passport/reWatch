@@ -231,3 +231,7 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
   - Physical reaction confirmed [H owner]: Watch screen displayed "the bracelet has been found!" with vibration.
   - Invariant I-35 narrowed [H]: Watch executes `find` alert command without requiring a prior bind token (cmd 3 key 0).
 - Status: Solved.
+
+## 2026-10-13 S-21 / S-22 static pass
+- Problem: jadx/apktool install failed (GitHub release host 403 from the cloud). Fix: androguard from PyPI on the LFS copy (hash checked). Solved for string and method reading.
+- Result: FF10/FF12 family not referenced by the app [C negative]; QR = BLE MAC only, `LE` prefix or `?para=` URL, 17 chars [C, BleScanActivity.onActivityResult]. results/S-21-S-22.md.

@@ -369,3 +369,6 @@ Required by AGENTS.md.
 ## 2026-10-13 Post-Session 2 doc sync (AGENT-BRIEF, NEXT-STEPS, Asia/Saigon)
 - **Step:** Synchronized task state in `targets/c900/tasks/AGENT-BRIEF.md` and `targets/c900/NEXT-STEPS.md` to reflect Session 2 `find` completion [H] and remaining unapproved commands (`time`, `message`).
   - **Rationale:** AGENTS.md requirement: brief and plan docs must reflect true workspace state so any subsequent agent has exact context without having to deduce it.
+
+## 2026-10-13 S-21 / S-22 (Asia/Saigon)
+- **Question that needed the code:** S-21 (are FF10/FF12 used by the app?) and S-22 (does the QR carry a key?). Both [U] and relevant to client safety. **Decision:** read the pinned LFS copy with androguard instead of a full jadx rebuild (jadx unreachable). **Result:** FF10/FF12 unused; QR = MAC only.
