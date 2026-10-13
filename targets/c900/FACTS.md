@@ -88,7 +88,8 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | Claim | Tag | Evidence |
 |---|---|---|
 | Wire version byte is 0x10 (app writes) / 0x01 (watch replies) | [H] | `captures/btsnoop_hci.log.last`: all 63 app TX frames carry `ver=0x10`; all watch frames carry `ver=0x01`. Matches `10000 & 0xFF == 0x10` cast |
-| Watch sends unsolicited `cmd 0x0E key 0x01` (classic MAC); the app bonds on it [C]; bond on the wire not yet checked | [H] frame | `captures/btsnoop_hci.log.last`: watch sends Classic BT MAC at t=4.811s, 16.731s, 34.492s; triggers app `createBond()` |
+| Watch sends unsolicited `cmd 0x0E key 0x01` (classic MAC) 3 times; triggers app `createBond()` | [H] frame | `captures/btsnoop_hci.log.last`: watch sends Classic BT MAC at t=4.811s, 16.731s, 34.492s; C900-Q19 §7 |
+| Wire pairing status: 3 `HCI_Remote_Name_Request` commands timed out (status 0x04); zero Classic connections/auth and zero LE SMP/encryption events | [H] | `captures/btsnoop_hci.log.last`: C900-Q19 §7 |
 | Bind handshake sequence is cmd 0x03 key 0 -> cmd 0x0C key 8 -> acks | [H] | `captures/btsnoop_hci.log.last`: t=1.959s - 2.548s |
 | Watch ack x = total length of the acked frame (`plen + 9`), not a sequence | [H] | `captures/btsnoop_hci.log.last`: verified across all acknowledged commands (time sync x=13, matching x=10, token x=17, message x=37/22) |
 | Time sync payload is the I-21 packed format (`6a9b05cb` = 2026-10-13 16:23:11), not a Unix timestamp | [H] | C900-Q19 section 6; reproduced by `frames.time_payload` |
