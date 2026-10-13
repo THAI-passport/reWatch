@@ -139,3 +139,8 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Problem: `redact_line` leaked personal data if literal "payload" keyword was absent. Fix: redact caller, location, message push without requiring keyword. Solved.
 - Problem: write cap pre-check had `pass` allowing mid-frame abort. Fix: atomic pre-check before piece 1. Solved.
 - Tests: 6 new unit tests in `tests/test_c900_probe.py` (23 total, all passing). Solved.
+
+## 2026-10-13 Independent verify of Gemini probe hardening (c724066)
+- Evidence: `git diff 8793cc6..c724066` (6 files only: probe, tests, REVIEW, FIXES, LOG, steps).
+- Checked: `"5610" in u` does **not** match command UUIDs `...dcca9f` / DI / battery (regression test added). Resync drops leading noise then parses real DF/FD (including split acks); does not skip frames under 1024 B. Redaction only fires on message-push/caller/location keywords; protocol RX/ACK/TX/features lines unchanged. Write cap is atomic (`writes + len(pieces) > MAX` refuses before piece 1). `--address`/`--name` mutually exclusive. No new imports/deps. REVIEW doc treated as untrusted: no instruction injection (subprocess only in non-findings).
+- Fix applied here: removed unused `_UUID_FULL` regex Gemini left behind; added regression tests (command UUIDs vs 5610, resync preserves frames, redaction keeps protocol fields, multi-piece write-cap math); documented 5610 rule on I-54.
