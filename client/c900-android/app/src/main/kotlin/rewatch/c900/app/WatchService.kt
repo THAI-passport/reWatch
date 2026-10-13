@@ -13,10 +13,58 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.SystemClock
 import rewatch.c900.CommandQueue
 import rewatch.c900.Frames
 import rewatch.c900.HealthSync
 import rewatch.c900.Session
+
+/**
+ * Controller for reconnect state and scheduling.
+ * A terminal failure (e.g. unsupported watch) stops all reconnection attempts until
+ * [connectDevice] is explicitly invoked again.
+ */
+class ReconnectController(
+    private val postDelayed: (Long, Runnable) -> Unit,
+    private val removeCallbacks: (Runnable) -> Unit
+) {
+    var isFailedTerminal = false
+        private set
+    var isReconnectScheduled = false
+        private set
+    var hasTargetDevice = false
+        private set
+
+    private val reconnectRunnable = Runnable {
+        isReconnectScheduled = false
+        onReconnect()
+    }
+
+    var onReconnect: () -> Unit = {}
+
+    fun onTerminalFail() {
+        isFailedTerminal = true
+        cancelReconnect()
+    }
+
+    fun onDeviceConnecting(hasDevice: Boolean) {
+        hasTargetDevice = hasDevice
+        isFailedTerminal = false
+        cancelReconnect()
+    }
+
+    fun scheduleReconnect(delayMs: Long) {
+        if (isFailedTerminal || !hasTargetDevice) return
+        cancelReconnect()
+        isReconnectScheduled = true
+        postDelayed(delayMs, reconnectRunnable)
+    }
+
+    fun cancelReconnect() {
+        isReconnectScheduled = false
+        removeCallbacks(reconnectRunnable)
+    }
+}
 
 /**
  * Foreground service (connectedDevice) managing C900 BLE connection, Session state machine,
@@ -45,20 +93,28 @@ class WatchService : Service() {
     private var targetDevice: BluetoothDevice? = null
     private var isDestroyed = false
 
+    val reconnectController = ReconnectController(
+        postDelayed = { delayMs, r -> handler.postDelayed(r, delayMs) },
+        removeCallbacks = { r -> handler.removeCallbacks(r) }
+    ).apply {
+        onReconnect = {
+            if (!isDestroyed) {
+                targetDevice?.let { dev ->
+                    session.connecting()
+                    gattLink.connect(dev)
+                }
+            }
+        }
+    }
+
+    val isFailedTerminal get() = reconnectController.isFailedTerminal
+
     private val tickRunnable = object : Runnable {
         override fun run() {
             if (isDestroyed) return
             commandQueue.tick()
             healthSync.tick()
             handler.postDelayed(this, 1000L)
-        }
-    }
-
-    private val reconnectRunnable = Runnable {
-        if (isDestroyed) return@Runnable
-        targetDevice?.let { dev ->
-            session.connecting()
-            gattLink.connect(dev)
         }
     }
 
@@ -71,6 +127,8 @@ class WatchService : Service() {
             val wasConnecting = session.state == Session.State.CONNECTING
             session.disconnected()
             commandQueue.abortAll("disconnected")
+
+            if (reconnectController.isFailedTerminal) return
 
             // Reconnect timing (PROTOCOL 11): 3000 ms if connect failed, 10000 ms on disconnect
             val delayMs = if (status != 0 || wasConnecting) RECONNECT_CONNECT_FAIL_MS else RECONNECT_DISCONNECT_MS
@@ -106,9 +164,17 @@ class WatchService : Service() {
         }
 
         override fun onError(reason: String) {
+            gattLink.disconnect()
             session.disconnected()
             commandQueue.abortAll(reason)
             scheduleReconnect(RECONNECT_CONNECT_FAIL_MS)
+        }
+
+        override fun onTerminalFail(reason: String) {
+            reconnectController.onTerminalFail()
+            session.disconnected()
+            commandQueue.abortAll("terminal failure: $reason")
+            showTerminalFailNotification(reason)
         }
     }
 
@@ -117,11 +183,11 @@ class WatchService : Service() {
         activeInstance = this
 
         session = Session()
-        healthSync = HealthSync(nowMs = { System.currentTimeMillis() })
+        healthSync = HealthSync(nowMs = { SystemClock.elapsedRealtime() })
         gattLink = GattLink(this, handler, gattListener)
         commandQueue = CommandQueue(
             write = { piece -> gattLink.writePiece(piece) },
-            nowMs = { System.currentTimeMillis() }
+            nowMs = { SystemClock.elapsedRealtime() }
         )
 
         createNotificationChannels()
@@ -140,14 +206,14 @@ class WatchService : Service() {
         if (activeInstance === this) {
             activeInstance = null
         }
+        reconnectController.cancelReconnect()
         handler.removeCallbacksAndMessages(null)
         gattLink.disconnect()
         super.onDestroy()
     }
-
     fun connectDevice(device: BluetoothDevice) {
         targetDevice = device
-        handler.removeCallbacks(reconnectRunnable)
+        reconnectController.onDeviceConnecting(true)
         session.connecting()
         gattLink.connect(device)
     }
@@ -173,9 +239,8 @@ class WatchService : Service() {
     }
 
     private fun scheduleReconnect(delayMs: Long) {
-        handler.removeCallbacks(reconnectRunnable)
-        if (targetDevice != null && !isDestroyed) {
-            handler.postDelayed(reconnectRunnable, delayMs)
+        if (!isDestroyed) {
+            reconnectController.scheduleReconnect(delayMs)
         }
     }
 
@@ -229,6 +294,17 @@ class WatchService : Service() {
         nm.notify(NOTIFICATION_ID_PROMPT, prompt)
     }
 
+    private fun showTerminalFailNotification(reason: String) {
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+        val prompt = Notification.Builder(this, CHANNEL_PROMPT)
+            .setContentTitle("Watch not supported")
+            .setContentText("The connected watch is not supported: $reason")
+            .setSmallIcon(android.R.drawable.stat_notify_error)
+            .setAutoCancel(true)
+            .build()
+        nm.notify(NOTIFICATION_ID_TERMINAL, prompt)
+    }
+
     companion object {
         const val RECONNECT_DISCONNECT_MS = 10_000L     // PROTOCOL 11
         const val RECONNECT_CONNECT_FAIL_MS = 3_000L    // PROTOCOL 11
@@ -238,6 +314,7 @@ class WatchService : Service() {
 
         const val NOTIFICATION_ID_SERVICE = 1001
         const val NOTIFICATION_ID_PROMPT = 1002
+        const val NOTIFICATION_ID_TERMINAL = 1003
 
         var activeInstance: WatchService? = null
             private set

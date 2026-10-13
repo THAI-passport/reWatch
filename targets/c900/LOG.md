@@ -306,3 +306,34 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
   - Real OS behaviour of `NotificationListenerService` permission grant flow by user.
   - Live reconnection backoff in sleep/doze mode on physical Android device.
   - Actual watch display rendering of pushed notifications via `:app` shell.
+
+## 2026-10-14 G4 Android app shell review fixes (Antigravity, local)
+- Review findings applied to branch `c900/app-shell`:
+  1. High — Notification filtering and deduplication:
+     - Evidence: `NotificationMapper` defaulted unmapped apps to 13 (`TYPE_OTHER`); `NotifyListener` forwarded all posts without filtering ongoing events, group summaries, own package, or repeats.
+     - Cause: Unfiltered notification streams push progress bars (music, downloads) multiple times/sec, exhausting the 200-write session budget within minutes and causing flash wear (ground rule 7).
+     - Fix: `NotificationMapper` sets `const val PUSH_UNMAPPED = false` by default (`MsgPushHelper.getShowOtherNotify` [C]). `NotifyListener` filters `FLAG_ONGOING_EVENT`, `FLAG_GROUP_SUMMARY`, and own package. Added `NotificationDeduplicator` dropping identical (package, title, body) within 2000 ms window (placeholder [I], vendor dedupes identical text, R04).
+  2. High — Unsupported watch reconnection loop:
+     - Evidence: `onError` scheduled reconnect in 3000 ms unconditionally, looping indefinitely when `Session` rejected an unsupported watch (`Session.Action.Fail`).
+     - Cause: `Action.Fail` was dispatched to retryable `onError` path.
+     - Fix: Added `onTerminalFail` to `GattLink.Listener`. `WatchService` sets `isFailedTerminal = true`, stops reconnection timers, cancels pending queue items, posts "Watch not supported" user notification, and blocks reconnection until `connectDevice()` is explicitly invoked again.
+  3. Medium — Multi-threaded core state access:
+     - Evidence: Android BLE callbacks delivered on Binder thread, mutating `Session`, `CommandQueue`, `HealthSync` concurrently with main-thread tick and notification dispatch.
+     - Cause: Missing thread marshaling in `GattLink`.
+     - Fix: `GattLink` posts every `BluetoothGattCallback` callback body to `handler` (main looper), ensuring all core state mutations occur on the main looper. Documented in class comments.
+  4. Low — Wall clock timers:
+     - Evidence: `CommandQueue`, `HealthSync`, and `PacingScheduler` used `System.currentTimeMillis()`.
+     - Cause: Wall clock vulnerable to time shifts/NTP adjustments.
+     - Fix: Switched to `SystemClock.elapsedRealtime()` for monotonic uptime timing.
+  5. Low — Unused declared permissions:
+     - Evidence: `RECEIVE_BOOT_COMPLETED` and `WAKE_LOCK` declared in `AndroidManifest.xml` without implementation or R10 approval.
+     - Fix: Removed unused permissions. Retained legacy `BLUETOOTH` and `BLUETOOTH_ADMIN` with `maxSdkVersion="30"` as required for `minSdk 26` (Android 8.0-11 compatibility prior to API 31 runtime permissions).
+  6. Low — GATT resource leak on error disconnect:
+     - Evidence: `BluetoothGatt` remained unclosed on disconnect with non-zero status.
+     - Fix: `GattLink.onConnectionStateChange` immediately calls `gatt.disconnect()` and `gatt.close()` on any error status or `STATE_DISCONNECTED`.
+- Test counts:
+  - Kotlin: 26 `:core` tests + 20 `:app` tests = 46 JVM unit tests pass (0 failures).
+  - Python: 150 tests pass (`unittest discover -s tests`).
+  - Linter: `python3 tools/rw.py lint` (0 problems).
+  - Privacy scan: `python3 tools/privacy_scan.py targets/c900 docs --strict` (0 findings).
+

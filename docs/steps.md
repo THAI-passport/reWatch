@@ -456,3 +456,36 @@ Required by AGENTS.md.
   **Rationale:** Feature byte 15 bit 0x02 is set on C900 Watch Ultra (`BleDataUtils.isNewMsgPushSetting`); smali `MsgPushHelper.onAppMsgReceive` caps queue to 5 (`size > 4 -> remove(0)`); privacy hard rule forbids logging private notification content.
   **Evidence:** [C] smali `MsgPushHelper.getNewType` and `onAppMsgReceive`; [V] `NotificationMapperTest`, `DisconnectedMessageQueueTest`.
   **Revisit if:** Feature map byte 15 bit 0x02 is clear on another device family.
+
+## 2026-10-14 G4 Android app shell review fixes (Asia/Saigon)
+- **Step:** Implemented notification filtering and deduplication in `NotificationMapper` and `NotifyListener`.
+  **Decision:** Default `PUSH_UNMAPPED = false` (`TYPE_IGNORE`), filter `FLAG_ONGOING_EVENT`, `FLAG_GROUP_SUMMARY`, and own package name, and deduplicate identical (package, title, body) within 2000 ms window via `NotificationDeduplicator`; rejected: forwarding unmapped apps as type 13 or forwarding ongoing notifications.
+  **Rationale:** Unfiltered ongoing notifications (music progress, file downloads) fire multiple updates per second, each generating 2-3 ATT chunks that exhaust the 200-write session budget within minutes and accelerate flash wear (violating ground rule 7); vendor app only pushes "other" when explicitly toggled on (`MsgPushHelper.getShowOtherNotify` [C]) and dedupes identical text (R04).
+  **Evidence:** [C] `MsgPushHelper.getShowOtherNotify` smali; [V] `NotificationFilterTest`, `NotificationMapperTest`.
+  **Revisit if:** User settings allow opting into unmapped notifications or customized deduplication interval.
+- **Step:** Handled terminal failures (`Session.Action.Fail`) in `GattLink` and `WatchService`.
+  **Decision:** Added `onTerminalFail` callback on `GattLink.Listener`; `WatchService` sets `isFailedTerminal = true`, aborts command queue, displays "Watch not supported" user notification, and blocks all reconnect attempts until `connectDevice()` is called again; rejected: routing `Action.Fail` to `onError` with 3 s reconnect delay.
+  **Rationale:** A failure action from `Session` indicates missing command service or unreviewed protocol version; reconnecting every 3 s against unknown or unsupported firmware risks unexpected device writes and battery drain.
+  **Evidence:** [C] `Session.discovered` and `readResult` failure actions; [V] `ReconnectControllerTest.testTerminalFailBlocksReconnect`.
+  **Revisit if:** Auto-reconnect with exponential backoff for known recoverable session errors is designed.
+- **Step:** Marshaled `BluetoothGattCallback` invocations to service looper in `GattLink`.
+  **Decision:** Post every `BluetoothGattCallback` callback body to `handler` (`Looper.getMainLooper()`); rejected: direct synchronous callback execution on Binder thread.
+  **Rationale:** Android invokes Bluetooth callbacks on arbitrary Binder threads, while `WatchService` interacts with `Session`, `CommandQueue`, and `HealthSync` from main looper (1 s periodic tick, reconnect timer, notification sender); posting to handler guarantees thread confinement and eliminates state corruption.
+  **Evidence:** [C] Android `BluetoothGattCallback` thread specification; [V] `PacingSchedulerTest`.
+  **Revisit if:** Background coroutines or explicit mutex locking is introduced in core.
+- **Step:** Switched timers to monotonic clock `SystemClock.elapsedRealtime()`.
+  **Decision:** Passed `{ SystemClock.elapsedRealtime() }` to `CommandQueue`, `HealthSync`, and `PacingScheduler`; rejected: `System.currentTimeMillis()`.
+  **Rationale:** Monotonic elapsed realtime prevents time skew from NTP adjustments, manual clock changes, or daylight savings that could prematurely trigger or starve ack timeouts (100 s), sync idle timeout (30 s), and piece pacing (20 ms).
+  **Evidence:** [C] Android `SystemClock.elapsedRealtime` API specification; [V] `PacingSchedulerTest`.
+  **Revisit if:** Target platform is decoupled from Android OS stubs.
+- **Step:** Cleaned up permissions in `AndroidManifest.xml` and documented legacy Bluetooth rationale.
+  **Decision:** Removed `RECEIVE_BOOT_COMPLETED` and `WAKE_LOCK`. Retained `android.permission.BLUETOOTH` and `android.permission.BLUETOOTH_ADMIN` with `android:maxSdkVersion="30"`; rejected: retaining unused permissions.
+  **Rationale:** Neither boot completion nor wake locks were approved in R10 or used by the app shell. The legacy `BLUETOOTH` and `BLUETOOTH_ADMIN` permissions with `maxSdkVersion="30"` are necessary because the project targets `minSdk 26` (Android 8.0-11 require legacy Bluetooth permissions prior to Android 12 API 31 `BLUETOOTH_SCAN`/`BLUETOOTH_CONNECT`).
+  **Evidence:** [C] Android API documentation for Bluetooth permissions across API levels 26-31.
+  **Revisit if:** `minSdk` is raised to 31+.
+- **Step:** Ensured immediate release of `BluetoothGatt` on disconnect or error status.
+  **Decision:** Call `gatt.disconnect()`, `gatt.close()`, and null `bluetoothGatt` in `onConnectionStateChange` on any error status or `STATE_DISCONNECTED`, and call `disconnect()` on `onError`; rejected: postponing `close()` until next connect call.
+  **Rationale:** Android has a strict limit on open GATT clients across processes (typically 32); failure to close on error disconnect leaks GATT resources and eventually causes status 133 / connection exhaustion.
+  **Evidence:** [C] Android `BluetoothGatt.close()` documentation.
+  **Revisit if:** Reconnect reuse of existing GATT instance is demonstrated on vendor stack.
+
