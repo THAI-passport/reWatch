@@ -13,7 +13,7 @@ Purpose: settle what the Kotlin core (`client/c900-android/core`) still guesses,
 8. Stop rule: when a step's budget is used (time box in the task file) or a stop condition fires, write what you have, mark the rest `[U]` with what was tried, and finish. A partial, honest result is a success; a guessed one is a failure.
 9. Before pushing: `python3 tools/privacy_scan.py targets/c900/tasks/robust --strict` (review any hit by hand), `python3 -m unittest discover -s tests`, `python3 tools/rw.py lint`. Run `python3 tools/install_hooks.py` once per clone. Never `--no-verify`.
 
-## 2. Setup for static tasks (R01-R04, R10)
+## 2. Setup for static tasks (R01-R05, R10)
 ```bash
 git lfs pull -I resources/c900/hiwear-plus-2.0.1.xapk.zip
 python3 -m venv .venv-static && .venv-static/bin/pip install -r requirements-static.txt
@@ -33,7 +33,7 @@ Useful commands: `strings REGEX`, `classes REGEX`, `methods CLASS_REGEX`, `dump 
 | R02 | Write frequency and cost per command | static | APK | `results/R02.md` |
 | R03 | Transport: connect, reconnect, MTU, timers, bond retries | static | APK | `results/R03.md` |
 | R04 | Notification push rules (types, text, calls) | static | APK | `results/R04.md` |
-| R05 | (dropped 2026-10-13; not part of this pack) | - | - | - |
+| R05 | Health and fitness sync (state machine, field maps) | static | APK | `results/R05.md` |
 | R06 | Capture sequence fixture (no payloads) | capture | owner's `captures/btsnoop_hci.log.last` (owner machine only) | `results/R06.md`, `tests/fixtures/c900_q19_sequence.json` |
 | R07 | Kotlin core fuzz/property tests | code (tests only) | JDK 21, Gradle 8 | `results/R07.md`, `client/c900-android/core/src/test/kotlin/rewatch/c900/FuzzTest.kt` |
 | R08 | Adversarial review of the Kotlin core | review | none | `results/R08.md` |

@@ -12,4 +12,4 @@ You are working in the reWatch repository on task RXX of the C900 robustness pac
 If a stop condition fires, write what you have, mark the rest [U] with what you tried, and finish.
 ```
 
-Concurrency: R01, R02, R03, R04, R07, R08, R09, R10 can all run at once. R06 runs only on the owner's machine (needs the local capture). Each pushes its own branch, so they never conflict.
+Concurrency: R01, R02, R03, R04, R05, R07, R08, R09, R10 can all run at once. R06 runs only on the owner's machine (needs the local capture). Each pushes its own branch, so they never conflict.
