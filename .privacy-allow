@@ -3,3 +3,7 @@
 (?i)^AB:CD:EF:
 ^12345610-1111-2222
 (?i)^6E40000[123]-B5A9-F393
+# Frame payloads in targets/c900/sources/legacy-t900-c900-PROTOCOL.md (third-party worked examples: date, ASCII "Alert Test", Jieli FE DC BA frame), reviewed 2026-10-13.
+^EA 0A 0C 09 1E 00$
+^74 04 54 65 73 74$
+^C0 02 00 01 01 EF$

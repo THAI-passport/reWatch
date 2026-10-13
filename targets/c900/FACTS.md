@@ -115,7 +115,8 @@ Single place for values that sources disagree on. Other documents link here. Tag
 |---|---|---|
 | Reconnect delay 3000 ms after connect failure, 10000 ms after disconnect (2000 ms after OTA success) | [C] smali | `BaseReconnectBlueActivity` `const-wide/16` 3000 / 10000 / 2000, rechecked at integration |
 | Disconnected notification queue keeps 5 | [C] smali | `MsgPushHelper.onAppMsgReceive` `size() > 4`, rechecked |
-| Key 2 / key 12 distance unit meters, calorie unit cal | [U] | R05 claimed [C] citing `FormatUtils` and `DevBaseDataUtils.getHrDataList`; neither exists in the APK. `StepUtils.getSportBy1Hour` stores raw ints with no scaling. Needs a read of the UI formatter that actually consumes `DayMinuteStepEntity.distance` |
+| Key 12 distance unit meters, calorie unit cal (shown / 1000 as km, kcal) | [C] smali | `HomeFragment.lambda$updateStepDataAndProgress$15` divides `DayStepEntity` distance and calorie by 1000.0f (x 0.621 for miles); `StepUtils.getTotalStepData` stores the raw u32. R05 reached the same answer with citations that do not exist. Key 2 hourly values assumed same units [I]. Owner screenshot vs capture can make it [H] (LIVE-NEXT task 2) |
+| Message type "other" with the new table | [C] smali | 13 (`MsgPushHelper.getNewType`); R04 said 255. Type -1 = not pushed |
 | Bind not needed per connection | [H] scope | Shown for find, message and time while the watch was still bound to the phone app; not shown on an unbound watch (LIVE-SESSION-2 section 97) |
 | Pairing on macOS runs | [H] scope | Zero macOS pairing dialogs. "Zero link keys" is not observable from CoreBluetooth; the Android capture (C900-Q19) shows no SMP/LE encryption |
 | Message ack x=37 | [H] capture | Seen in C900-Q19 only; the macOS message run stopped on 0x0E/1 before an ack (LIVE-SESSION-3) |

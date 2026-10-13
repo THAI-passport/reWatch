@@ -262,3 +262,10 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Coordinator handoff summary did not match the result files (it listed a 1 s debounce, 100 ms dial pacing, 27 inbound commands 0x01..0x22, "pure reactive peripheral"); the result files were used, not the summary.
 - Core fixes from R08 applied with tests: F-01 reads in any order, F-02 foreign ack dropped instead of failing the in-flight command, F-03 short UUIDs, F-04 inbound capped at 256, F-05 pacing contract documented on `CommandQueue`; R07's note: `Frames.Inbound.Cmd` equality is structural.
 - Kotlin changes were not compiled or run in the cloud session: Maven Central returned 429 three times. Run `gradle :core:test` on the owner machine before merging.
+
+## 2026-10-13 Follow-up static pass (Claude, cloud)
+- Units settled [C]: `HomeFragment.lambda$updateStepDataAndProgress$15` divides day-total distance and calorie by 1000.0f (float bits 0x447A0000) and multiplies km by 0.621 for miles; `StepUtils.getTotalStepData` stores raw u32 values; `HexUtil.byte2IntLR` is big-endian. So meters and calories. R05's citations for the same answer were invalid (classes not in the APK).
+- R04 corrected: `getNewType` gives 13 for "other" (R04 said 255) and -1 for unmapped or switched-off apps, which `onAppMsgReceive` does not push. C900-Q04 §5 already had the right table.
+- Core: added `HealthSync` (inbound-only cmd 5 marker tracker plus key 12 decoder), built ahead of a full-sync capture; idle timeout 30 s is a placeholder [I]. Tests added; not run here (Maven 429), see LIVE-NEXT task 1.
+- privacy_scan: strict mode reported DF/FD frame headers as MACs. Now skips a 6-byte run that starts inside the 9-byte frame header (it cannot hold a whole MAC); runs starting in the payload are still flagged. Three third-party example payloads in `sources/legacy-t900-c900-PROTOCOL.md` allowlisted by exact value. `targets/c900` strict scan: 0 findings.
+- PROTOCOL §10 unknowns updated with the settled rows.
