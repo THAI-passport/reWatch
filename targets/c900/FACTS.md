@@ -27,6 +27,12 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | 0x2A27 derived ver | `ver_byte=0x10` from `0x2A27` ("10000") verified on live radio write; accepted by watch | [H] | exit code 0 |
 | Watch ACK line | `cmd=0x02 key=0x0b status=1 x=0x000a x_is_frame_len=True` | [H] | x=10 matches frame length 10 bytes; confirms I-18 live |
 
+### 1.3 Hardware facts (LIVE-SESSION-3 2026-10-13, safe-write message, results/LIVE-SESSION-3-2026-10-13.md)
+| Topic | Value | Tag | Note |
+|---|---|---|---|
+| Message transmission | 24-byte message frame sent in 2 ATT pieces (20 B, 4 B) | [H] | exit code 3 (safety stop) |
+| Inbound bond trigger on message | Watch emitted `cmd 0x0E key 1` (Classic BT MAC) after message TX; caught by probe `BOND_TRIGGERS` -> clean disconnect | [H] | matches C900-Q19 capture; zero pairing occurred |
+
 ## 2. Disputes with the Gemini document (`sources/gemini-hiwear-re.md`)
 | Topic | Gemini says | App code says | Verdict |
 |---|---|---|---|

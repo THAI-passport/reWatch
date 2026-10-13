@@ -377,3 +377,10 @@ Required by AGENTS.md.
 - **Decision:** S-21/S-22 via androguard on the pinned copy (done, pushed). Session 3 (message, time) approved by the owner's "do all"; written as a run sheet because only the owner can run radio steps.
 - **Decision:** Phase 3 platform Android Kotlin per CLIENT-DESIGN; start with a pure Kotlin core so it can be built and tested here; the Python codec stays the reference through a shared vector file. **Rationale:** cloud cannot reach Google Maven; the core holds all protocol and safety logic anyway.
 - **Decision:** bind (cmd 3) not in the allowlist. **Rationale:** may displace the Hiwear Plus binding; needs an explicit owner choice (CLIENT-DESIGN section 10 item 2).
+
+## 2026-10-13 Live Session 3 execution (safe-write message, Asia/Saigon)
+- **Step:** Owner ran `safe-write --command message` in interactive Terminal.
+  - **Decision:** Transmitted 24-byte message frame in two pieces (`TX piece 1/2 len=20`, `TX piece 2/2 len=4`) per ATT pacing rules [H].
+  - **Decision:** Watch emitted `cmd 0x0E key 1` (Classic Bluetooth MAC announcement) immediately following transmission [H].
+  - **Decision:** Probe `BOND_TRIGGERS` rule triggered safety stop (`SAFETY_STOP bond-trigger inbound cmd=0x0e key=1`, `DISCONNECT ok`, exit code 3) [H]. Zero pairing attempts or link keys occurred; protected system pairing posture.
+  - **Rationale:** Strict adherence to safety checks; report written in `targets/c900/tasks/results/LIVE-SESSION-3-2026-10-13.md`.
