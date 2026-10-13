@@ -29,7 +29,7 @@ Run NEXT-STEPS section 4 (capture decision tree) first, then come back here and 
 - [ ] Terminal app has Bluetooth permission (System Settings, Privacy and Security, Bluetooth).
 - [ ] Watch charged above 50 %, still bound to Hiwear Plus (do **not** unbind), showing its normal face.
 - [ ] Phone Bluetooth **off** (or Hiwear Plus force-stopped). No other app or Mac connects to the watch.
-- [ ] The Mac has never been paired with the watch (System Settings, Bluetooth, the watch is not in "My Devices"). If it is, stop: write that down and ask; do not remove it.
+- [ ] (2026-10-13: currently FAILS, the Mac is paired over Classic as `Watch Ultra`; see results/LIVE-PREFLIGHT-REVIEW.md section 4 for the owner's options.) The Mac has never been paired with the watch (System Settings, Bluetooth, the watch is not in "My Devices"). If it is, stop: write that down and ask; do not remove it.
 - [ ] 30 minutes free; the owner stays at the Mac for the whole session.
 
 No-go if any box is unticked.

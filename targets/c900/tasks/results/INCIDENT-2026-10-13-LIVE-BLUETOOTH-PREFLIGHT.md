@@ -30,13 +30,13 @@ Command executed: `system_profiler SPBluetoothDataType`
 ```text
 Bluetooth:
     Bluetooth Controller:
-        Address: 88:66:5A:14:00:74
+        Address: XX:XX:XX:XX:XX:XX  [Mac controller address masked in DEEP-PASS-1 follow-up]
         State: On
         Chipset: BCM_4364B3
         Supported services: 0x392039 < HFP AVRCP A2DP HID Braille LEA AACP GATT SerialPort >
     Connected:
         Watch Ultra:
-            Address: 41:42:D0:xx:xx:xx  [full octets masked per privacy rule]
+            Address: XX:XX:XX:XX:XX:XX  [full octets masked per privacy rule]
             Vendor ID: 0x0642
             Product ID: 0x0220
             Firmware Version: 0.0.1

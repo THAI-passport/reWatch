@@ -160,3 +160,9 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Finding: owner connected watch via macOS System Settings (`Connected: Watch Ultra`, services `0x800039 <HFP AVRCP A2DP HID ACL>`). This is Classic Bluetooth (BR/EDR) audio, not the BLE GATT command interface (`6E400001-...`). Bluetrum/JieLi clone watches feature dual-profile architecture; GATT telemetry requires BLE connection.
 - Problem: automated BLE scan from background IDE agent hangs on CoreBluetooth dispatch. Cause: macOS TCC sandbox (`CBManager.authorization() == 0`). Non-interactive subshells cannot display interactive TCC Bluetooth prompts.
 - Resolution: verified all 44 unit tests pass in `.venv-probe` with pinned hashes; documented findings and anti-RE trap evaluation in `INCIDENT-2026-10-13-LIVE-BLUETOOTH-PREFLIGHT.md`. Live probe commands remain marked `[human]` for owner execution in interactive macOS Terminal. Solved (docs / preflight).
+
+## 2026-10-13 Pre-flight review (follow-up to the incident file)
+- Problem: incident file committed the Mac controller's full Bluetooth address and the watch Classic OUI. Fix: masked in the file; still in history at 3d1b298 (owner decides on rewrite). Solved (file), open (history).
+- Problem: the Mac is paired/connected to the watch over Classic, which fails LIVE-SESSION-1 go/no-go. Open: owner decision (LIVE-PREFLIGHT-REVIEW section 4).
+- Problem: probe hangs instead of failing when the shell lacks macOS Bluetooth permission. Open: FIXES.
+- Problem: incident text repeated a Jieli claim contrary to I-02 and overstated sanitize. Fix: corrections in LIVE-PREFLIGHT-REVIEW section 3.
