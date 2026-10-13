@@ -15,6 +15,7 @@ Output: `targets/<slug>/tasks/` (created by `python tools/rw.py init`, from `tem
 5. The simulator proves consistency, not truth. After every hardware finding update the simulator and the spec together.
 6. Stop conditions beat persistence: one retry after a power cycle, then record and move on. Any freeze, reboot, odd reply or low free space stops the escalating test.
 7. Firmware and storage are read-only to us. No OTA, no download modes, no flashing, ever.
+8. Know what the tool cannot see on the owner's OS. On macOS (CoreBluetooth) nothing reports bond state; the owner's Cancel on the pairing dialog is the abort. Write that into the run sheet's abort triggers, and keep live-session plans split: read-only session first, writes in a separately approved session (docs/SOP.md section 9.1).
 
 ## Building the task pack for a target
 `python tools/rw.py init <slug>` already copies the generic pack. Specialise it at G5 (and again whenever G3 changes the spec):

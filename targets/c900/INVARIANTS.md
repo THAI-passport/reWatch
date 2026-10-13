@@ -13,7 +13,7 @@ Rule for agents: before you finish a pass, grep your diff for each "Wrong versio
 ## Frame and link
 | ID | True | Wrong version | Tag | Proof |
 |---|---|---|---|---|
-| I-10 | Byte 4 is `PROTOCOL_VERSION` (default 1, overwritten from 0x2A27 major) | byte 4 is a fixed `01` | [C smali] | C900-Q04; `IssuedUtil.getSendByte` |
+| I-10 | Byte 4 is `PROTOCOL_VERSION` (default 1, overwritten from 0x2A27 major). Numbering note (DEEP-PASS-1): "byte 4" here counts the `ver` field as the 5th byte; in 0-based frame indexing (`DF`=0, cmd=4, key=6, as in PROTOCOL sections 4 and 7.1) `ver` is index **5** | byte 4 is a fixed `01`; or read 0-based index 4 as the version (that is cmd) | [C smali] | C900-Q04; `IssuedUtil.getSendByte` |
 | I-11 | len = payload + 5; total = len + 4 | len = payload + 6 (Gemini) | [C]/[V] | PROTOCOL §4; vector `df0005ee0901000000` |
 | I-12 | Sum = all bytes mod 256 with byte 3 taken as 0 | sum excludes header / is a CRC | [C]/[V] | PROTOCOL §4 |
 | I-13 | Command service ends `...DCCA9F`; the OTA one ends `...DCCA9E` | they are the same service | [C] | PROTOCOL §2 |

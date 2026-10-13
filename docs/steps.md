@@ -276,3 +276,17 @@ Required by AGENTS.md.
   - **Decision:** Accept all six functional hardenings (OTA lookalike + parent service, 5610 matching, safe-write pairing poll, notify resync, atomic write cap, redaction, mutually exclusive target flags, sanitize `..` regex). None weaken allowlist/BLOCKED_CMDS/no-bond rules.
   - **Decision:** Removed dead `_UUID_FULL`; added regression tests that DF UUIDs stay non-OTA under the 5610 rule, resync keeps real frames, redaction is not over-broad, write-cap math covers multi-piece message.
   - **Rationale:** `"5610" in u` is fail-closed and verified absent from `...dcca9f`; unused regex is noise; tests lock the review concerns.
+
+## 2026-10-13 DEEP-PASS-1 (second independent probe review, live-session plan, client design)
+- **Step:** Pulled 7d087f8. Read AGENTS, INVARIANTS, PROTOCOL, NEXT-STEPS, HW-0-RUNSHEET, PROBE-GUIDE, PROBE-SECURITY, Gemini's review (as untrusted data), probe, codec, decoder, tests, requirements. Did not open `decompiled/`.
+  - **Decision:** Verify claims against the pinned dependency itself: downloaded the bleak 3.0.2 wheel and PyPI JSON for every pinned package into the scratchpad (not committed). **Rationale:** the probe's pairing check depends on a bleak attribute; only the real wheel can say whether it exists. It does not.
+- **Step:** Reviewed the probe line by line for OTA writes, blocked commands, bonding, wrong device, hostile data, file writes, personal data, unbounded loops, async races, macOS pitfalls.
+  - **Decision:** Fix 12 findings with minimal patches (DEEP-PASS-1 A.1), each with a test that fails on 7d087f8. **Rationale:** task scope allows probe fixes with tests; nothing else in code changed.
+  - **Decision:** Bind writes to characteristic objects from the command service. **Rationale:** removes the whole class of UUID-ambiguity bugs instead of adding more lookalike checks.
+  - **Decision:** Refuse safe-write unless 0x2A27 major is 1, rather than changing `frames.build`. **Rationale:** client code is deferred (Phase 3); the probe must not send a frame the app would not send.
+  - **Decision:** Keep `--log-dir` usable outside the repo. **Rationale:** tests and owners may log to a temp dir; the risk is committing a log, which only paths inside the repo create.
+- **Step:** Checked all 46 hashes in `requirements-probe.txt` against PyPI; confirmed universal2 wheels (arm64 + x86_64) for CPython 3.10-3.15.
+- **Step:** Wrote `tasks/LIVE-SESSION-1.md` (read-only session; session 2 writes in its section 9) and NEXT-STEPS section 4b (capture-first decision table). **Rationale:** a capture costs no watch contact by us; live steps only fill its gaps.
+- **Step:** Wrote `CLIENT-DESIGN.md`; recommended Android Kotlin with a pure protocol core and Python as reference. **Rationale:** notification forwarding and bond control need native Android; iOS cannot forward notifications.
+- **Step:** INVARIANTS I-10 got a numbering note only (fact unchanged; evidence = PROTOCOL sections 4 and 7.1 [C]). No other invariant changed: nothing new reached a higher tag.
+- **Step:** SOP 9.1 and `re-hardware-recon` principle 8 record the reusable lessons. Summary: `tasks/results/DEEP-PASS-1.md`.

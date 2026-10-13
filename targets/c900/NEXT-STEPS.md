@@ -49,7 +49,7 @@ Paths 3 and 4 are **done** (C900-Q16, Q17, Q18; reviewed in REVIEW-PHASE1C). Sta
 ## 4. Decision tree for the capture (Q19)
 1. **Find the watch connection.** No LE connection to a device that discovers `6E400001-...DCCA9F`: capture is wrong or filtered -> ask the owner for model/Android version and whether "Enabled" (not Filtered) was set; stop.
 2. **Services (Q02).** Compare discovery with PROTOCOL §2. Missing NUS -> stop, FACTS conflict, the C900 may use another transport; no HW-0 until reviewed. Extra unknown services -> record, list only.
-3. **Version byte.** Read 0x2A27 value and byte 4 of app writes. Equal to 1 -> `[H]`, codec default holds. Not 1 -> FACTS row; D-version (codec takes version as input) becomes a Phase 3 must.
+3. **Version byte.** Read 0x2A27 value and the `ver` byte of app writes (0-based index 5, right after cmd at index 4; I-10 numbering note). Equal to 1 -> `[H]`, codec default holds. Not 1 -> FACTS row; D-version (codec takes version as input) becomes a Phase 3 must.
 4. **Feature map.** 0x2A28 byte 0 = 0xAA -> decode bits. Not 0xAA -> look for cmd 0x19 reply instead.
 5. **Bonding (Q03).**
    - SMP pairing request in the log, or 0x0C/19, 0x0E/1, or b15 0x40 with a following bond -> watch-side bonding `[H]`; HW-0 must expect a pairing prompt: change the abort rule to "cancel and stop" (already), and plan a separately approved bonded session if needed.
@@ -60,13 +60,31 @@ Paths 3 and 4 are **done** (C900-Q16, Q17, Q18; reviewed in REVIEW-PHASE1C). Sta
 9. **Forbidden content seen** (face, OTA, contacts transfer) -> note it happened and the size only.
 After the tree: if Q01-Q03 are all settled, HW-0 shrinks to an optional confirmation; if not, HW-0 runs only the steps for what is open.
 
+## 4b. Capture vs live session: which comes first, and what each removes (DRAFT, DEEP-PASS-1)
+Live sessions are planned in `tasks/LIVE-SESSION-1.md` (read-only, session 1; writes are session 2 in its section 9). The rule is: never spend a live step on a question a capture already answered.
+
+| Situation | Do | Skip |
+|---|---|---|
+| Capture arrives before any live session | Run section 4 on it, then fill LIVE-SESSION-1 section 0 from the capture | Every session-1 row the capture settled |
+| Capture settles Q01 name, Q02 services, version byte, feature map, and Q03 | Session 1 is **skipped**; consider session 2 only if the capture lacks acks for find/time/message | Session 1 entirely |
+| Capture settles all of the above **and** shows watch acks for cmd 2 keys 1, 11, 18 | Sessions 1 and 2 both skipped; ack bytes become `[H]` from the capture | All live work until Phase 3 needs it |
+| Capture lacks raw advertising (phone connected from cache) | Q01 scan-record question stays open; session 1 step 3 only, or a Mac PacketLogger trace during step 3 (optional, owner installs Apple's Additional Tools; trace format readable by Wireshark [I]) | Session 1 step 4 if services/version/features came from the capture |
+| Capture shows SMP pairing or a bond trigger (0x0C/19, 0x0E/1, b15 0x40 + bond) | Session 1 still allowed (read-only) but the pairing dialog is now expected: abort trigger 1 stays "Cancel and stop"; a bonded session is a separate approval | Nothing extra |
+| Capture shows `ver` != 1 | Session 2 is blocked (the probe refuses to write unless 0x2A27 major is 1); codec must take the version as input first (D-version) | Session 2 |
+| Capture missing NUS (`...DCCA9F`) | Stop; FACTS conflict; no live session until reviewed | Both sessions |
+| Session 1 runs first (no capture) | After it, the capture is still worth asking for: it is the only source of the bind sequence (cmd 3 then 0x0C/8), ack bytes for many keys, and health records, without us writing anything | Capture steps already settled by session 1 (name, services, version, features) need no second look |
+| Owner declines both | Stop and wait (owner rule, I-51) | - |
+
+Order of preference: capture first (no watch contact by us), then session 1 only for gaps, then session 2 only for ack evidence the capture lacks.
+
 ## 5. Budget summary
 | Step | LFS | AI sessions | Owner time | Watch contact by us |
 |---|---|---|---|---|
 | Q17 + Q18 (done) | 0 | 1 | 0 | none |
 | Q16 (done) | ~105 MB | 1 | 0 | none |
 | Q13 + Q19 | 0 | 1 short | ~20 min | none |
-| HW-0 (if needed) | 0 | 0-1 | ~30 min | 3 connects, 6 reads, 1 CCCD, 0 writes |
+| HW-0 / LIVE-SESSION-1 (if needed) | 0 | 0-1 | ~30 min | 2 connects, 7 reads each, 1 CCCD each, 0 writes |
+| LIVE-SESSION-2 (separate approval) | 0 | 0-1 | ~20 min | 3 connects, 1 read each, 1-2 writes each (4 total) |
 
 ## 6. Must be true before Phase 3 (client) starts
 - Q01 and Q02 `[H]` (scan rule and services) and Q03 at least narrowed to `[H]` "bond seen / not seen".

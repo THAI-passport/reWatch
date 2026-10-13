@@ -40,6 +40,10 @@ class FakeSvc:
         self.uuid, self.characteristics = uuid, chars
 
 
+def _u(spec):
+    return str(getattr(spec, "uuid", spec)).lower()
+
+
 class FakeClient:
     """Simulated C900. Configurable for abort / layout / ack scenarios."""
     instances = []
@@ -51,6 +55,7 @@ class FakeClient:
         self.is_paired = False
         self.handlers = {}
         self.writes = []
+        self.write_responses = []
         self.reads = {}
         self.services = self._default_services()
         self.pair_calls = 0
@@ -99,16 +104,20 @@ class FakeClient:
         self.is_paired = True
 
     async def start_notify(self, uuid, cb):
-        u = str(uuid).lower()
+        u = _u(uuid)
         if probe.is_ota_uuid(u):
             raise AssertionError("test guard: start_notify on OTA uuid %s" % u)
         self.handlers[u] = cb
 
     async def stop_notify(self, uuid):
-        self.handlers.pop(str(uuid).lower(), None)
+        self.handlers.pop(_u(uuid), None)
 
     async def read_gatt_char(self, uuid):
-        u = str(uuid).lower()
+        u = _u(uuid)
+        if u in self.reads:
+            return self.reads[u]
+        if len(u) == 36 and u.startswith("0000"):
+            u = u[4:8]  # the probe reads by full base UUID; the old fake only matched short forms
         if u.endswith("2a19"):
             return bytes([77])
         if u.endswith("2a27"):
@@ -121,7 +130,10 @@ class FakeClient:
         return self.reads.get(u, b"")
 
     async def write_gatt_char(self, uuid, data, response=False):
-        u = str(uuid).lower()
+        if not isinstance(uuid, FakeChar):
+            raise AssertionError("test guard: write by bare UUID, not the command characteristic object")
+        self.write_responses.append(response)
+        u = _u(uuid)
         if probe.is_ota_uuid(u):
             raise AssertionError("test guard: write to OTA uuid %s" % u)
         if u != probe.WRITE_UUID:
@@ -536,6 +548,204 @@ class ScanMode(unittest.TestCase):
         rc = probe.main(["scan", "--seconds", "0.01", "--log-dir", tempfile.mkdtemp()], confirm_fn=lambda p: "")
         self.assertEqual(rc, 0)
         self.assertEqual(FakeClient.instances, [])  # no connect
+
+
+class DeepPass1Fixes(unittest.TestCase):
+    """Second independent review (tasks/results/DEEP-PASS-1.md). Each test fails on the pre-fix probe."""
+
+    def setUp(self):
+        install_fake()
+        self.logdir = tempfile.mkdtemp()
+
+    def _log(self):
+        names = sorted(os.listdir(self.logdir))
+        return "".join(open(os.path.join(self.logdir, n)).read() for n in names)
+
+    def _run(self, cls, argv, confirm="find"):
+        FakeBleak.BleakClient = cls
+        try:
+            return probe.main(argv + ["--log-dir", self.logdir], confirm_fn=lambda p: confirm)
+        finally:
+            FakeBleak.BleakClient = FakeClient
+
+    def test_pair_state_none_when_stack_has_no_bond_api(self):
+        class NoAttr:
+            pass
+
+        class Raises:
+            @property
+            def is_paired(self):
+                raise NotImplementedError
+
+        self.assertIsNone(probe.pair_state(NoAttr()))
+        self.assertIsNone(probe.pair_state(Raises()))
+        self.assertFalse(probe.pair_state(NS(is_paired=False)))
+
+    def test_inspect_on_bleak3_like_client_says_detection_unavailable(self):
+        class Bleak3Client(FakeClient):
+            def __init__(self, *a, **k):
+                super().__init__(*a, **k)
+                del self.is_paired  # bleak 3.0.2 BleakClient has no is_paired
+
+            def __getattribute__(self, name):
+                if name == "is_paired":
+                    raise AttributeError(name)
+                return object.__getattribute__(self, name)
+
+        rc = self._run(Bleak3Client, ["inspect", "--address", "AA:BB:CC:DD:EE:01", "--listen", "0.05"])
+        self.assertEqual(rc, 0)
+        self.assertIn("pairing detection unavailable", self._log())
+
+    def test_scan_log_hides_third_party_names_and_mfg_tail(self):
+        rc = probe.main(["scan", "--seconds", "0.01", "--log-dir", self.logdir], confirm_fn=lambda p: "")
+        self.assertEqual(rc, 0)
+        text = self._log()
+        self.assertIn("C900-Test", text)
+        self.assertNotIn("'Other'", text)
+        self.assertIn("<redacted len=5>", text)
+        self.assertNotIn("aabbccddeeff1234", text)   # could hold the watch MAC (PROTOCOL section 3)
+        self.assertIn("0102:len=8:aabb..", text)
+        self.assertNotIn("AA:BB:CC:DD:EE:01", text)
+
+    def test_serial_redacted_and_feature_hex_logged(self):
+        class C(FakeClient):
+            async def read_gatt_char(self, uuid):
+                if _u(uuid).startswith("00002a25"):
+                    return b"SN0123456789"
+                return await super().read_gatt_char(uuid)
+
+        rc = self._run(C, ["inspect", "--address", "AA:BB:CC:DD:EE:01", "--listen", "0.05"])
+        self.assertEqual(rc, 0)
+        text = self._log()
+        self.assertNotIn("SN0123456789", text)
+        self.assertIn("2a25 value=<redacted len=12>", text)
+        self.assertIn("hex=aa00", text)
+        self.assertIn("protocol_major=1", text)
+
+    def test_notify_uuid_under_ota_service_refused(self):
+        svcs = FakeClient("x")._default_services()
+        svcs.append(FakeSvc("0000ff00-0000-1000-8000-00805f9b34fb", [FakeChar(probe.NOTIFY_UUID, ["notify"])]))
+        with self.assertRaises(probe.SafetyError):
+            probe.command_chars(svcs)
+
+    def test_writes_bind_to_command_service_object(self):
+        """A duplicate write UUID in another (non-OTA) service is never the target."""
+        decoy = FakeChar(probe.WRITE_UUID, ["write-without-response"])
+        svcs = [FakeSvc("0000abcd-0000-1000-8000-00805f9b34fb", [decoy])] + FakeClient("x")._default_services()
+        w, n = probe.command_chars(svcs)
+        self.assertIsNot(w, decoy)
+        self.assertEqual(probe.norm_uuid(w.uuid), probe.WRITE_UUID)
+        two = FakeClient("x")._default_services()
+        two[0].characteristics.append(FakeChar(probe.WRITE_UUID, ["write"]))
+        with self.assertRaises(probe.SafetyError):
+            probe.command_chars(two)
+
+    def test_write_is_without_response_like_the_app(self):
+        rc = self._run(FakeClient, ["safe-write", "--address", "AA:BB:CC:DD:EE:01", "--command", "message",
+                                    "--i-approve-writes"], confirm="message")
+        self.assertEqual(rc, 0)
+        self.assertEqual(FakeClient.instances[-1].write_responses, [False, False])  # 2 pieces
+
+    def test_protocol_version_mismatch_refuses_before_any_write(self):
+        for value in (b"V2.0", b"", b"garbage"):
+            class C(FakeClient):
+                async def read_gatt_char(self, uuid, _v=value):
+                    if _u(uuid).startswith("00002a27"):
+                        return _v
+                    return await super().read_gatt_char(uuid)
+
+            rc = self._run(C, ["safe-write", "--address", "AA:BB:CC:DD:EE:01", "--command", "find",
+                               "--i-approve-writes"])
+            self.assertEqual(rc, probe.EXIT_SAFETY, value)
+            self.assertEqual(FakeClient.instances[-1].writes, [], value)
+            self.assertEqual(FakeClient.instances[-1].write_responses, [], value)
+
+    def test_protocol_major_parsing(self):
+        self.assertEqual(probe.protocol_major(b"V1.2"), 1)
+        self.assertEqual(probe.protocol_major(b"v3"), 3)
+        self.assertEqual(probe.protocol_major(b"1.0.7"), 1)
+        self.assertIsNone(probe.protocol_major(b"HW-A"))
+        self.assertIsNone(probe.protocol_major(None))
+
+    def test_ack_before_write_is_not_taken_as_answer(self):
+        class Stale(FakeClient):
+            def __init__(self, *a, **k):
+                super().__init__(*a, **k)
+                self._auto_ack = False
+
+            async def start_notify(self, uuid, cb):
+                await super().start_notify(uuid, cb)
+                cb(None, frames.ack(0x02, 0x0B))  # matching ack before anything was sent
+
+        old = probe.ACK_TIMEOUT_S
+        probe.ACK_TIMEOUT_S = 0.3
+        try:
+            rc = self._run(Stale, ["safe-write", "--address", "AA:BB:CC:DD:EE:01", "--command", "find",
+                                   "--i-approve-writes"])
+        finally:
+            probe.ACK_TIMEOUT_S = old
+        self.assertEqual(rc, probe.EXIT_SAFETY)
+        self.assertNotIn("ACK ok", self._log())
+        self.assertIn("ack timeout", self._log())
+
+    def test_inbound_flood_aborts(self):
+        r = probe.FrameReader()
+        with self.assertRaises(probe.SafetyError):
+            for _ in range(probe.MAX_INBOUND_FRAMES + 1):
+                r.feed(frames.ack(0x02, 0x01))
+        r = probe.FrameReader()
+        with self.assertRaises(probe.SafetyError):
+            for _ in range(probe.MAX_INBOUND_BYTES // 1000 + 2):
+                r.feed(b"\x00" * 1000)
+        self.assertLessEqual(len(r.buf), 1024)
+
+    def test_flood_during_inspect_stops_session(self):
+        class Flood(FakeClient):
+            async def start_notify(self, uuid, cb):
+                await super().start_notify(uuid, cb)
+                for _ in range(probe.MAX_INBOUND_FRAMES + 5):
+                    cb(None, frames.ack(0x02, 0x01))
+
+        rc = self._run(Flood, ["inspect", "--address", "AA:BB:CC:DD:EE:01", "--listen", "1"])
+        self.assertEqual(rc, probe.EXIT_SAFETY)
+        self.assertIn("inbound flood", self._log())
+        self.assertLess(self._log().count("RX ack"), probe.MAX_INBOUND_FRAMES + 1)
+
+    def test_log_dir_inside_repo_must_be_captures(self):
+        with self.assertRaises(probe.SafetyError):
+            probe.check_log_dir(os.path.join(ROOT, "tools"))
+        with self.assertRaises(probe.SafetyError):
+            probe.check_log_dir(os.path.join(ROOT, "captures", "..", "docs"))
+        probe.check_log_dir(os.path.join(ROOT, "captures", "session1"))  # allowed, not created
+        probe.check_log_dir(self.logdir)                                  # outside the repo: allowed
+        rc = probe.main(["scan", "--seconds", "0.01", "--log-dir", os.path.join(ROOT, "docs")],
+                        confirm_fn=lambda p: "")
+        self.assertEqual(rc, probe.EXIT_USAGE)
+
+    def test_log_never_overwrites(self):
+        a = probe.SessionLog("scan", self.logdir)
+        b = probe.SessionLog("scan", self.logdir)
+        self.assertNotEqual(a.path, b.path)
+        a.close(); b.close()
+
+    def test_target_address_masked_in_error_text(self):
+        cb_uuid = "1A2B3C4D-1111-2222-3333-444455556666"   # macOS CoreBluetooth style address
+        log = probe.SessionLog("inspect", self.logdir)
+        log.add_secret(cb_uuid)
+        log.emit("ERROR Device with address %s was not found" % cb_uuid.lower())
+        log.close()
+        self.assertNotIn(cb_uuid.lower(), self._log().lower())
+
+    def test_sanitize_strips_bidi_and_c1(self):
+        out = probe.sanitize("C900\u202eevil\x9b31m")
+        self.assertNotIn("\u202e", out)
+        self.assertNotIn("\x9b", out)
+
+    def test_time_args_bounded(self):
+        for bad in (["scan", "--seconds", "0"], ["scan", "--seconds", "nan"], ["scan", "--seconds", "1e9"],
+                    ["inspect", "--address", "X", "--listen", "151"]):
+            with self.assertRaises(SystemExit):
+                probe.build_parser().parse_args(bad)
 
 
 if __name__ == "__main__":
