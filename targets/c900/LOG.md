@@ -239,3 +239,10 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 ## 2026-10-13 Phase 3a core
 - Built `client/c900-android/core` (Kotlin/JVM) and shared vectors `tests/fixtures/c900_vectors.json` from the Python codec.
 - Problem: Google Maven unreachable (no Android Gradle plugin); Maven Central returned 429 for a while. Fix: core is pure Kotlin/JVM; build retried with backoff. App shell open.
+
+## 2026-10-13 Live Session 3 (safe-write message)
+- Evidence: `captures/c900-probe-safe-write-20261013-183426.log`, `targets/c900/tasks/results/LIVE-SESSION-3-2026-10-13.md`.
+- Behavior: 24-byte message frame transmitted in two pieces (`20` bytes, `4` bytes). Following transmission, the watch sent unsolicited `cmd 0x0E key 1` (Classic Bluetooth MAC broadcast).
+- Probe safety action: `BOND_TRIGGERS` rule triggered immediately on `0x0E / 1`, executing clean disconnect (`DISCONNECT ok`, `EXIT_SAFETY`, code 3).
+- Wire finding: Watch sends `0x0E / 1` inbound during connection/message transfer, matching C900-Q19 capture observation. No unreviewed bonding or link keys established.
+- Status: Solved (safety stop operated as designed).

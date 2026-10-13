@@ -20,10 +20,10 @@ Work and push only on `feat/c900-hiwear-plus`. Never `main`. No PR unless the ow
 | Unknown writable services | 0xFF10, 0xFF12: denied | FACTS 1.1 |
 | Ack bytes 6-7 | length of the acked frame [H] | I-18 |
 | Static S-21/S-22 | FF10/FF12 unused by the app; QR = BLE MAC only | results/S-21-S-22.md |
-| Session 3 (message, time) | approved, not yet run (owner runs it) | tasks/LIVE-SESSION-3.md |
+| Session 3 (message, time) | `message` hit 0x0E/1 bond trigger (aborted safely [H]); `time` not yet run | results/LIVE-SESSION-3-2026-10-13.md |
 | Client | Phase 3a Kotlin core with tests; app shell not started | client/c900-android/README.md |
 | Session 1 (read-only) | done 2026-10-13 | results/LIVE-SESSION-1-2026-10-13.md |
-| Session 2 (writes) | `find` done 2026-10-13 (accepted [H], ack x=10); `time`/`message` unapproved | results/LIVE-SESSION-2-2026-10-13.md |
+| Session 2 (writes) | `find` done 2026-10-13 (accepted [H], ack x=10) | results/LIVE-SESSION-2-2026-10-13.md |
 
 ## 3. Never
 - Run `tools/c900_probe.py` or any Bluetooth command yourself. The owner runs radio steps in their own interactive Terminal (the probe now refuses in a shell without Bluetooth permission).
