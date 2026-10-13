@@ -252,3 +252,13 @@ Required by AGENTS.md.
 - Step: reviewed Q16 (health maps), Q17 (notify_log deny list), Q18 (decoder); ran the decoder on the synthetic fixture.
 - Fix: decoder now hides caller, user name, profile and location payloads too (PRIVATE table, test). Rationale: owner privacy; those payloads go over the wire during sync.
 - Decision: next step is the owner capture (NEXT-STEPS §3 revised, pre-recording checklist added); feed the capture file not btcap JSON (JSON lacks reads). HW-0 run sheet already used `--only` (Q17). PROTOCOL §7 stale "pending" text fixed.
+
+## 2026-10-13 — c900_probe.py (owner Mac first contact)
+
+- **Decision:** Allowlist of three (cmd,key) pairs rather than extending a blocklist; safe-write needs `--i-approve-writes` and a typed confirmation.
+  - **Rationale:** Owner asked for security first; an allowlist cannot grow by accident when someone adds a helper.
+- **Decision:** Constants hardcoded from INVARIANTS/PROTOCOL/frames.py; AST test bans eval/exec/subprocess/socket/pickle; device strings sanitized.
+  - **Rationale:** APK comments and notify payloads are untrusted data (prompt injection). I-54/I-55.
+- **Decision:** Do not ask the owner to unbind; turn phone Bluetooth off instead.
+  - **Rationale:** Unbind is a blocked command and loses the vendor pairing the owner still wants.
+- **Decision:** Ready-to-paste Gemini review prompt at `tasks/PROMPT-GEMINI-PROBE-REVIEW.md` (read-only, feature branch only).

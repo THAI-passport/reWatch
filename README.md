@@ -36,6 +36,7 @@ The agent reads `AGENTS.md`, loads the `re-workflow` skill, and runs gates G0 to
 | `templates/` | TARGET, SOURCES, FACTS, PROTOCOL, LOG, HANDOFF |
 | `tools/rw.py` | `init`, `doctor`, `hash`, `recon`, `lint` (stdlib only) |
 | `tools/btcap.py` | btsnoop/pcap/pcapng to ATT write/notify table by UUID |
+| `tools/c900_probe.py` | Owner-run C900 first-contact probe (scan / inspect / allowlisted safe-write); see `targets/c900/tasks/PROBE-GUIDE.md` |
 | `tools/c900_decode.py` | C900 DF/FD frame decoder over a capture or btcap JSON: reassembly, sum check, cmd/key labels, feature bits, bond-trigger/blocked-cmd/OTA flags. Decode only |
 | `tools/crcfind.py` | Identify a CRC from sample frames |
 | `tools/notify_log.py` | Passive BLE notification logger (touch/event discovery); OTA/DFU deny list always on, `--only UUID` to pin one characteristic |

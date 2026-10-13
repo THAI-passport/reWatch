@@ -34,6 +34,13 @@ Sources: `tasks/HW-RECON.md`, skill `re-hardware-recon`, `recon-v2.md` §3, PROT
 ## HW-1 (optional, owner only): vendor-app snoop
 Owner follows `docs/guides/HCI-CAPTURE-ANDROID.md`. Not part of this sheet's runs; if a log exists, parse it first (`python tools/btcap.py btsnoop_hci.log`) and compare with the expectations below before HW-2.
 
+## Preferred tool (owner Mac)
+Use `tools/c900_probe.py` per `tasks/PROBE-GUIDE.md` and `docs/guides/PROBE-SECURITY.md`.
+- HW-2 ≈ `python tools/c900_probe.py scan` then `inspect --address ...`
+- HW-3 listen ≈ inspect's `--listen` (already pinned to `...0003`)
+- Do **not** unbind the watch; turn the phone's Bluetooth off instead.
+- `safe-write` is outside HW-0's zero-write budget; needs a separate owner approval.
+
 ## HW-2. Passive scan, connect, discover, read (writes 0)
 | # | Action | Expected [tag] | Tick | Paste |
 |---|---|---|---|---|
