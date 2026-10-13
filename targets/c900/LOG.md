@@ -251,3 +251,14 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Added `tasks/robust/` (README framework, template, R01-R04, R06-R10, PROMPT) and `tools/dexgrep.py` + `requirements-static.txt` (androguard reader for machines without jadx).
 - R05 dropped from the pack; not written.
 - Notes from reviewing LIVE-SESSION-3: message ack never received (probe stopped on unsolicited 0x0E/1); several `time` runs although the sheet said no retries; "zero link keys created" cannot be known on macOS. Handed to R09 to word corrections.
+
+## 2026-10-13 Robustness pack integration (Claude, integrator)
+- Merged `c900/r01`..`c900/r10` (each touched only its own lane; no conflicts) onto the work branch.
+- Spot checks with `tools/dexgrep.py`: confirmed 196-byte cut, queue cap 5, `isNewMsgPushSetting`, write retry sleeps 20/100 ms, reconnect delays 3000/10000/2000, cmd 5 key 7/8 log strings.
+- Rejected, R05 units: cites `FormatUtils->getDistance/getCalories` and `DevBaseDataUtils->getHrDataList/getDeviceTempBeanList` and a `SPORT_DATA_TIME_OUT` constant; none exist in the pinned APK. Units stay [U]. Also rejected R05's frame hex column: it uses an `ab ...` header that is not this protocol (frames start DF/FD, PROTOCOL §4).
+- Rejected, R03 retry summary ("3 attempts then disconnect" for every write): coarser than and partly wrong against PROTOCOL §3 (frames of 20 bytes or less get no retry; remainder piece one retry after 20 ms).
+- Not applied, R01 proposal to stop prompting on inbound 0x0E key 1: the watch sends it after a message push (LIVE-SESSION-3), so the prompt will be frequent, but silently dropping it is a design decision for the owner. Open.
+- Not applied, R02 proposed limits (500 ms between messages, 3 s find cooldown): no evidence for the values; the core keeps one-in-flight plus the 200-write budget.
+- Coordinator handoff summary did not match the result files (it listed a 1 s debounce, 100 ms dial pacing, 27 inbound commands 0x01..0x22, "pure reactive peripheral"); the result files were used, not the summary.
+- Core fixes from R08 applied with tests: F-01 reads in any order, F-02 foreign ack dropped instead of failing the in-flight command, F-03 short UUIDs, F-04 inbound capped at 256, F-05 pacing contract documented on `CommandQueue`; R07's note: `Frames.Inbound.Cmd` equality is structural.
+- Kotlin changes were not compiled or run in the cloud session: Maven Central returned 429 three times. Run `gradle :core:test` on the owner machine before merging.

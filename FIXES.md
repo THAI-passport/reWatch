@@ -3,6 +3,7 @@
 Things that need fixing in reWatch itself (tools, templates, skills), and things already fixed. Add to Open when you find something; move to Fixed with what was wrong and what changed. Same commit as the change.
 
 ## Open
+- Maven Central returned 429 in the cloud session on 2026-10-13, so `:core:test` could not run there; rerun on the owner machine.
 - Cloud sessions cannot reach dl.google.com (Android Gradle plugin, SDK), so the C900 Android app shell cannot be built here; only the pure Kotlin/JVM core is built and tested in the cloud. The app shell needs the owner's machine or an allowed host.
 - Skills and tools are untested end to end on a real target; run the benchmark in README.md and record gaps here.
 - `tools/setup_tools.py` pins jadx and apktool versions and verifies SHA-256 only when `JADX_SHA256`/`APKTOOL_SHA256` are set (it prints the computed hashes); the JDK is the latest 17. Pin real hashes once a machine with github access has downloaded them.
@@ -12,6 +13,7 @@ Things that need fixing in reWatch itself (tools, templates, skills), and things
 - iOS, desktop and firmware notes in the skills are thin.
 
 ## Fixed
+- C900 Kotlin core (2026-10-13, R08): session setup failed when info reads finished out of order; a foreign ack failed the in-flight command; short UUIDs crashed `readResult`; `Session.inbound` grew without bound; `Frames.Inbound.Cmd` compared payload by identity. Fixed in `Session.kt`, `CommandQueue.kt`, `Frames.kt` with tests.
 - Before-handoff hardening (2026-10-13): `rw.py lint` now rejects tracked capture files and probe logs (btsnoop, pklg, pcap, bugreport zips, `captures/`, `c900-probe-*.log`; synthetic test fixtures exempt) and runs the personal-data scan over `targets/`, `docs/`, `.claude/`; `tools/install_hooks.py` adds an opt-in pre-commit hook; `tools/c900_probe.py` fails fast (`bt_preflight`) when macOS Bluetooth permission is denied/restricted, or not determined in a non-interactive shell, instead of hanging; `targets/c900/tasks/AGENT-BRIEF.md` is the one-page brief for live agents. Tests added.
 - No mechanical check for personal data in result files (three leaks on 2026-10-13: Mac address, CB UUID and watch MAC, watch OUI): added `tools/privacy_scan.py`, `.privacy-allow`, tests, skill `re-privacy-scrub`; fixed the Nordic UART UUID typo in `re-watch-targets`.
 - `tools/notify_log.py` subscribed to every notifiable characteristic, OTA/DFU included: added a default deny list (0xFF00, 0x18A8 and their characteristics, `...dcca9e`), `--deny`, `--only` (denied UUID there exits 2 before anything is enabled), and a printed plan before listening; tests in `tests/test_notify_log.py` (C900-Q17).

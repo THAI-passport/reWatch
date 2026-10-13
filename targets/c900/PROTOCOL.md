@@ -152,3 +152,12 @@ Exactly 70 Retrofit endpoints in `network/request/Request.java`, all `@QueryMap`
 | Watch ack x value; which cmd 2 keys the C900 acks | HW-4 single writes or a capture |
 | Ack timeout value | done: 100 s [C smali] |
 | OTA send interval 300 vs 500 | done: neither is applied [C smali] |
+
+## 11. Robustness pack results (R01-R10, integrated 2026-10-13)
+Accepted after spot checks against the pinned APK (`tools/dexgrep.py`, inner SHA-256 `931efc77...`). Rejected items and reasons: `LOG.md` 2026-10-13 "Robustness pack integration".
+- Reconnect timers: connect failure -> retry after 3000 ms; unexpected disconnect -> 10000 ms (2000 ms after a 5610 OTA success) [C smali, `BaseReconnectBlueActivity.onConnectFail` / `onDisConnected`, rechecked]. Notify on the command TX characteristic is enabled 1000 ms after service discovery [C, R03, not rechecked]. No `requestConnectionPriority` call [C, R03].
+- Classic bonding driven by inbound 0x0E key 1 (`MainActivity$4`, 3 tries, 35 s) runs beside the LE command channel; no LE command checks the bond state [C, R03; consistent with §3].
+- Notifications: `NPNotificationService` -> `MsgPushHelper.onAppMsgReceive`; disconnected queue keeps the newest 5 (`size() > 4` drops the oldest) [C smali, rechecked]; text cut at 196 bytes [C smali `SettingIssuedUtils.messagePush`, rechecked]; feature byte 15 bit 0x02 (`isNewMsgPushSetting`) selects the newer app-type table, set on this watch (byte 15 = 0xE6, FACTS) [C, R04]. Incoming call (cmd 2 key 17) is pushed only while ringing [C, R04]. Type table: `tasks/robust/results/R04.md`.
+- Time sync is written once per connect sequence (after the cmd 2 key 10 ack) and on a user action; no periodic timer [C, R02]. Language is rewritten only when the code differs [C, R02].
+- Health sync: history start and end markers are cmd 5 keys 7 and 8 (log strings present in the APK) [C, rechecked]; every good inbound DF frame gets the FD ack before dispatch (§4). Distance and calorie units stay [U]: R05's evidence did not check out (LOG.md).
+- Watch-side observations from the live sessions are consolidated in FACTS.md rows marked [H]; R09's wording corrections are applied there and in LOG.md.

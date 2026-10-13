@@ -1,6 +1,9 @@
 package rewatch.c900
 
 /**
+ * `write` is called once per ATT piece, back to back; the platform writer must serialise the GATT
+ * writes and keep [Gatt.PIECE_GAP_MS] between pieces of one frame (R08 F-05).
+ *
  * One command in flight (I-15). The caller provides the clock and the writer; this class only
  * decides. Ack matches by cmd and key; status 1 = ok. No automatic resend (CLIENT-DESIGN 3.3).
  */
@@ -32,9 +35,10 @@ class CommandQueue(
 
     fun onAck(a: Frames.Inbound.Ack) {
         val p = inFlight ?: return            // unsolicited ack: ignored, never matched later
+        // Stale or foreign ack: drop it; the in-flight command keeps waiting until its own ack or the timeout (R08 F-02).
+        if (a.cmd != p.out.cmd || a.key != p.out.key) return
         inFlight = null
         val r = when {
-            a.cmd != p.out.cmd || a.key != p.out.key -> Result.Failed(p.out.cmd, p.out.key, "unexpected ack 0x%02x/%d".format(a.cmd, a.key))
             a.status != 1 -> Result.Failed(p.out.cmd, p.out.key, "status ${a.status}")
             else -> Result.Ok(a.cmd, a.key, a.x)
         }

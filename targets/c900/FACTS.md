@@ -109,3 +109,14 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | Time sync payload is the I-21 packed format (`6a9b05cb` = 2026-10-13 16:23:11), not a Unix timestamp | [H] | C900-Q19 section 6; reproduced by `frames.time_payload` |
 | App never references 0xFF10/0xFF12/FFF1/FF13/FF14 | [C negative] | results/S-21-S-22.md |
 | QR text = BLE MAC only (`LE`+MAC, or `?para=`MAC), 17 chars | [C] | results/S-21-S-22.md |
+
+## Robustness pack (2026-10-13)
+| Claim | Tag | Evidence |
+|---|---|---|
+| Reconnect delay 3000 ms after connect failure, 10000 ms after disconnect (2000 ms after OTA success) | [C] smali | `BaseReconnectBlueActivity` `const-wide/16` 3000 / 10000 / 2000, rechecked at integration |
+| Disconnected notification queue keeps 5 | [C] smali | `MsgPushHelper.onAppMsgReceive` `size() > 4`, rechecked |
+| Key 2 / key 12 distance unit meters, calorie unit cal | [U] | R05 claimed [C] citing `FormatUtils` and `DevBaseDataUtils.getHrDataList`; neither exists in the APK. `StepUtils.getSportBy1Hour` stores raw ints with no scaling. Needs a read of the UI formatter that actually consumes `DayMinuteStepEntity.distance` |
+| Bind not needed per connection | [H] scope | Shown for find, message and time while the watch was still bound to the phone app; not shown on an unbound watch (LIVE-SESSION-2 section 97) |
+| Pairing on macOS runs | [H] scope | Zero macOS pairing dialogs. "Zero link keys" is not observable from CoreBluetooth; the Android capture (C900-Q19) shows no SMP/LE encryption |
+| Message ack x=37 | [H] capture | Seen in C900-Q19 only; the macOS message run stopped on 0x0E/1 before an ack (LIVE-SESSION-3) |
+| Time sync runs | [H] | Several runs (logs 190018 through 190223), each acked x=13; the run sheet asked for one |
