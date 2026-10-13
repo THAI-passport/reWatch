@@ -270,3 +270,9 @@ Required by AGENTS.md.
   - **Decision:** Added 6 new unit test suites in `tests/test_c900_probe.py` (23 probe tests, 108 total repo tests passing).
   - **Rationale:** Strict adherence to INVARIANTS I-13/I-14/I-20/I-30/I-54/I-55 and the non-negotiable device safety ground rules.
 
+## 2026-10-13 — Independent verify of Gemini probe hardening (c724066)
+
+- **Step:** Pulled `c724066`, read full diff vs `8793cc6`, treated Gemini output as untrusted.
+  - **Decision:** Accept all six functional hardenings (OTA lookalike + parent service, 5610 matching, safe-write pairing poll, notify resync, atomic write cap, redaction, mutually exclusive target flags, sanitize `..` regex). None weaken allowlist/BLOCKED_CMDS/no-bond rules.
+  - **Decision:** Removed dead `_UUID_FULL`; added regression tests that DF UUIDs stay non-OTA under the 5610 rule, resync keeps real frames, redaction is not over-broad, write-cap math covers multi-piece message.
+  - **Rationale:** `"5610" in u` is fail-closed and verified absent from `...dcca9f`; unused regex is noise; tests lock the review concerns.

@@ -78,8 +78,6 @@ _CTRL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 _MAC_FULL = re.compile(r"(?i)\b([0-9a-f]{2}:){5}[0-9a-f]{2}\b")
 
 
-_UUID_FULL = re.compile(r"(?i)\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b")
-
 
 def sanitize(value, cap=STRING_CAP):
     """Make a device-supplied string printable, length-capped, never a path/format/command."""
@@ -128,6 +126,8 @@ def is_ota_uuid(uuid):
     u = str(uuid or "").strip().lower()
     if u.endswith(OTA_SERVICE_SUFFIX):
         return True
+    # Bluetrum "5610" DFU branding may appear in custom 128-bit UUIDs (Cus5610*). Fail closed.
+    # Substring match is intentional; verified absent from command UUIDs ending ...dcca9f (I-13).
     if "5610" in u:
         return True
     short = u[4:8] if len(u) == 36 and u.startswith("0000") else (u if len(u) in (4, 8) else "")

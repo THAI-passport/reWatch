@@ -212,6 +212,15 @@ class OtaRefusal(unittest.TestCase):
         self.assertFalse(probe.is_ota_uuid(probe.WRITE_UUID))
         self.assertFalse(probe.is_ota_uuid(probe.NOTIFY_UUID))
 
+    def test_command_uuids_not_ota_despite_5610_rule(self):
+        """Regression: '5610' substring rule must not classify the DF service as OTA."""
+        for u in (probe.WRITE_UUID, probe.NOTIFY_UUID,
+                  "6e400001-b5a3-f393-e0a9-e50e24dcca9f",
+                  "00002a19-0000-1000-8000-00805f9b34fb",
+                  "0000180a-0000-1000-8000-00805f9b34fb"):
+            self.assertNotIn("5610", u)
+            self.assertFalse(probe.is_ota_uuid(u), u)
+
     def test_layout_requires_command_service(self):
         bad = [FakeSvc("0000180f-0000-1000-8000-00805f9b34fb",
                        [FakeChar("00002a19-0000-1000-8000-00805f9b34fb", ["read"])])]
@@ -438,6 +447,55 @@ class WriteCapAndApproval(unittest.TestCase):
             b.charge_write()
         with self.assertRaises(probe.SafetyError):
             b.charge_write()
+
+
+class ResyncAndRedaction(unittest.TestCase):
+    def test_resync_preserves_real_frames(self):
+        """Leading noise then a split ack must parse the ack (not skip a real frame)."""
+        buf = bytearray()
+
+        def feed(data):
+            buf.extend(data)
+            out = []
+            while buf:
+                while buf and buf[0] not in (0xDF, 0xFD):
+                    del buf[0]
+                if len(buf) < 3:
+                    break
+                total = ((buf[1] << 8) | buf[2]) + 4
+                if total < 9 or total > 1024:
+                    del buf[0]
+                    continue
+                if len(buf) < total:
+                    break
+                out.append(probe.parse_inbound(bytes(buf[:total])))
+                del buf[:total]
+            return out
+
+        ack = frames.ack(0x02, 0x0B)
+        self.assertEqual(feed(b"\x00\xff" + ack[:4]), [])
+        got = feed(ack[4:])
+        self.assertEqual(len(got), 1)
+        self.assertEqual(got[0]["kind"], "ack")
+        self.assertEqual((got[0]["cmd"], got[0]["key"], got[0]["status"]), (0x02, 0x0B, 1))
+        # second real frame after more noise
+        ack2 = frames.ack(0x02, 0x01)
+        got2 = feed(b"\x11\x22" + ack2)
+        self.assertEqual(got2[0]["key"], 0x01)
+
+    def test_redaction_keeps_protocol_fields(self):
+        for line in ("RX cmd=0x0c key=2 plen=0",
+                     "READ features marker=0xaa len=26 bits=(isBLE3: False)",
+                     "ACK ok cmd=0x02 key=0x0b status=1",
+                     "TX piece 1/1 len=10"):
+            self.assertEqual(probe.redact_line(line), line)
+
+    def test_write_cap_math_multi_piece(self):
+        _, _, frame = probe.build_allowlisted("message")
+        pieces = [frame[i:i + 20] for i in range(0, len(frame), 20)]
+        self.assertGreaterEqual(len(pieces), 2)
+        used = probe.MAX_WRITES - len(pieces) + 1
+        self.assertTrue(used + len(pieces) > probe.MAX_WRITES)
 
 
 class ForbiddenImports(unittest.TestCase):
