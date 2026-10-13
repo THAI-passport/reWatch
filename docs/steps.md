@@ -251,4 +251,4 @@ Required by AGENTS.md.
 ## 2026-10-13 REVIEW-PHASE1C
 - Step: reviewed Q16 (health maps), Q17 (notify_log deny list), Q18 (decoder); ran the decoder on the synthetic fixture.
 - Fix: decoder now hides caller, user name, profile and location payloads too (PRIVATE table, test). Rationale: owner privacy; those payloads go over the wire during sync.
-- Decision: next step is the owner capture (NEXT-STEPS §3 revised, pre-recording checklist added); feed the capture file not btcap JSON (JSON lacks reads). HW-0 run sheet may use `notify_log.py --only`. PROTOCOL §7 stale "pending" text fixed.
+- Decision: next step is the owner capture (NEXT-STEPS §3 revised, pre-recording checklist added); feed the capture file not btcap JSON (JSON lacks reads). HW-0 run sheet already used `--only` (Q17). PROTOCOL §7 stale "pending" text fixed.
