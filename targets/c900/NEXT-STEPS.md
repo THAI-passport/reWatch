@@ -107,3 +107,5 @@ Settled [H]: Q01, Q02, feature map, idle behaviour. Open: real ver byte, FF10/FF
 | 5 | Session 2 (`find` only first; `time` last because b15 0x40 makes it the app's bond trigger) | owner | new approval | ack bytes [H] |
 
 Do not run session 2 before step 4. Do not add bind (cmd 3) to the probe.
+
+Update 2026-10-13: step 3 done (owner capture, C900-Q19 incl. section 7); step 4 done (`frames.build(..., ver=)`, `C900_VER = 0x10`, SimWatch ack x = frame length, probe sends the 0x2A27-derived ver). Steps 1-2 (static) are now optional: the wire settled the ver byte; S-21 (FF10/FF12) still open. Next live step: session 2, `find` first, after written approval.

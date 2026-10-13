@@ -16,11 +16,11 @@ Work and push only on `feat/c900-hiwear-plus`. Never `main`. No PR unless the ow
 |---|---|---|
 | Watch | BLE + Classic name `Watch Ultra`, Bluetrum (not Jieli) | FACTS 1.1, I-02 |
 | Version byte the app sends | 0x10 [H] | C900-Q19, I-10 |
-| Probe `ver` | 0x01, so **safe-write refuses** (correct) | DEEP-PASS-1, LIVE-SESSION-1 results section 6 |
+| Probe `ver` | read from 0x2A27 and sent as the app does (0x10 on this watch); values other than 0x01/0x10 refuse | `frames.build(ver=)`, `REVIEWED_VERS` |
 | Unknown writable services | 0xFF10, 0xFF12: denied | FACTS 1.1 |
 | Ack bytes 6-7 | length of the acked frame [H] | I-18 |
 | Session 1 (read-only) | done 2026-10-13 | results/LIVE-SESSION-1-2026-10-13.md |
-| Session 2 (writes) | **blocked** until the codec takes `ver` as input and the owner approves | NEXT-STEPS section 7 |
+| Session 2 (writes) | codec ready; **needs the owner's written approval** naming the commands | LIVE-SESSION-1 section 9, NEXT-STEPS section 7 |
 
 ## 3. Never
 - Run `tools/c900_probe.py` or any Bluetooth command yourself. The owner runs radio steps in their own interactive Terminal (the probe now refuses in a shell without Bluetooth permission).

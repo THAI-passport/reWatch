@@ -8,7 +8,9 @@ BLOCKED_CMDS (OTA, unbind, reset, factory test, factory restore).
 
 APP_HEADER = 0xDF      # [C]
 ACK_HEADER = 0xFD      # [C]
-FIXED_BYTE = 0x01      # [C] byte 5 of an app frame
+FIXED_BYTE = 0x01      # [C] default ver byte (0-based index 5); the app overwrites it from the 0x2A27 major (I-10)
+DEFAULT_VER = FIXED_BYTE
+C900_VER = 0x10        # [H] C900 / Watch Ultra: 0x2A27 "10000" -> app sends 0x10 (C900-Q19, all 63 app frames)
 LEN_OFFSET = 4         # [C] total length = Len + 4; Len counts cmd..payload (payload + 5)
 CHECKSUM_INDEX = 3     # [C]
 
@@ -54,12 +56,26 @@ def checksum(frame):
     return (sum(frame) - frame[CHECKSUM_INDEX]) & 0xFF
 
 
-def build(cmd, sub, payload=b""):
+def ver_from_hw_revision(raw):
+    """ver byte the app derives from a 0x2A27 value: strip a leading V/v, integer before the first dot,
+    truncated to a byte [C rule, C900-Q04; truncation seen on the wire, C900-Q19]. None if unreadable."""
+    s = bytes(raw or b"").decode("ascii", "replace").strip()
+    if s[:1] in ("V", "v"):
+        s = s[1:]
+    digits = s.split(".", 1)[0]
+    if not digits.isdigit() or len(digits) > 9:
+        return None
+    return int(digits) & 0xFF
+
+
+def build(cmd, sub, payload=b"", ver=DEFAULT_VER):
+    if not (0 <= int(ver) <= 0xFF):
+        raise ValueError("ver must be one byte")
     if cmd in BLOCKED_CMDS:
         raise BlockedCommand("command 0x%02X is on the dangerous-command blocklist" % cmd)
     if len(payload) > 0xFFFF:
         raise ValueError("payload too long")
-    body = bytes([cmd, FIXED_BYTE, sub]) + len(payload).to_bytes(2, "big") + bytes(payload)
+    body = bytes([cmd, int(ver), sub]) + len(payload).to_bytes(2, "big") + bytes(payload)
     total = 4 + len(body)
     n = total - LEN_OFFSET
     f = bytearray([APP_HEADER, n >> 8, n & 0xFF, 0]) + body
@@ -81,9 +97,13 @@ def parse(frame):
     return frame[0], frame[4], frame[6], bytes(frame[9:9 + plen])
 
 
-def ack(cmd, key=0):
-    """Watch acknowledgement as the app parses it [C]: FD 00 05 chk cmd key x x status."""
-    f = bytearray([ACK_HEADER, 0x00, 0x05, 0, cmd, key, 0x00, 0x01, 0x01])
+def ack(cmd, key=0, x=1, status=1):
+    """Acknowledgement FD 00 05 chk cmd key x_hi x_lo status [C layout]. The watch sets x to the total
+    length of the frame it acknowledges and status 1 (I-18 [H], C900-Q19); the app's own ACK uses x=0,
+    its NAK x=3 status 0 [C]."""
+    if not (0 <= x <= 0xFFFF):
+        raise ValueError("x must fit in 2 bytes")
+    f = bytearray([ACK_HEADER, 0x00, 0x05, 0, cmd, key, x >> 8, x & 0xFF, status])
     f[CHECKSUM_INDEX] = checksum(f)
     return bytes(f)
 
@@ -91,10 +111,13 @@ def ack(cmd, key=0):
 class SimWatch:
     """Software watch for tests. Proves consistency with this codec only, never the real device."""
 
-    def __init__(self):
+    def __init__(self, ver=DEFAULT_VER):
         self.received = []
+        self.ver = ver
+        self.vers = []
 
     def write(self, data):
         hdr, cmd, sub, payload = parse(data)
         self.received.append((cmd, sub, payload))
-        return ack(cmd)
+        self.vers.append(data[5])
+        return ack(cmd, sub, x=len(data))  # watch behaviour seen in C900-Q19 [H]

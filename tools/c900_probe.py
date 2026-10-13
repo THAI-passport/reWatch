@@ -71,7 +71,10 @@ LISTEN_MAX_S = 150                     # stays under GLOBAL_TIMEOUT_S
 PIECE_GAP_S = 0.02                     # app spaces 20-byte pieces 20 ms apart (PROTOCOL section 3)
 MAX_INBOUND_FRAMES = 200               # a flood is an unexpected device response: stop
 MAX_INBOUND_BYTES = 64 * 1024
-EXPECTED_PROTOCOL_VERSION = 1          # frames.build sends byte 5 = 0x01; the app sends the 0x2A27 major (I-10)
+EXPECTED_PROTOCOL_VERSION = 1          # kept for older callers; see REVIEWED_VERS
+# ver bytes the probe may send: the app default and the C900 value seen on the wire (I-10, C900-Q19 [H]).
+# Any other 0x2A27 result refuses: a new value needs review, not a silent pass.
+REVIEWED_VERS = frozenset({_frames.DEFAULT_VER, _frames.C900_VER})
 # Scan log keeps a device name only if it contains one of these (case-insensitive). Other nearby
 # devices are third parties; their names stay on screen and out of the log file.
 SCAN_NAME_HINTS = ("c900", "hiwear")
@@ -260,7 +263,7 @@ class Budget:
 # ---------------------------------------------------------------------------
 # Frame helpers (build only through allowlist)
 # ---------------------------------------------------------------------------
-def build_allowlisted(name, now=None):
+def build_allowlisted(name, now=None, ver=_frames.DEFAULT_VER):
     """Return (cmd, key, frame_bytes) for an allowlisted command name. Raises SafetyError otherwise."""
     name = str(name).lower().strip()
     if name == "time":
@@ -278,7 +281,9 @@ def build_allowlisted(name, now=None):
         raise SafetyError("internal: (%#x,%#x) missing from ALLOWLIST" % (cmd, key))
     if cmd in _frames.BLOCKED_CMDS:
         raise SafetyError("internal: cmd %#x is in BLOCKED_CMDS" % cmd)
-    return cmd, key, _frames.build(cmd, key, payload)
+    if ver not in REVIEWED_VERS:
+        raise SafetyError("ver byte 0x%02x not reviewed" % ver)
+    return cmd, key, _frames.build(cmd, key, payload, ver=ver)
 
 
 def parse_inbound(data):
@@ -694,8 +699,8 @@ async def mode_safe_write(address, command, log, budget, approve, confirm_fn, na
         write_char, notify_char = command_chars(client.services)
         if is_ota_uuid(WRITE_UUID) or not WRITE_UUID.endswith(CMD_SERVICE_SUFFIX):
             raise SafetyError("internal: WRITE_UUID is not the command characteristic")
-        # Byte 5 of our frame is 0x01; the app puts the 0x2A27 major there (I-10). Never send a frame
-        # the app would not send: refuse unless the watch reports major 1.
+        # The app puts the 0x2A27 major (truncated to a byte) in ver (I-10). Send exactly that, and only
+        # if it is a reviewed value.
         try:
             hw = bytes(await client.read_gatt_char(norm_uuid("2a27")))
         except Exception as e:  # noqa: BLE001
@@ -704,9 +709,11 @@ async def mode_safe_write(address, command, log, budget, approve, confirm_fn, na
         vb = version_byte(major)
         log.emit("READ 2a27 value=%s protocol_major=%s ver_byte=%s" % (sanitize(hw, 48), major,
                                                                     None if vb is None else "0x%02x" % vb))
-        if vb != EXPECTED_PROTOCOL_VERSION:
-            raise SafetyError("app ver byte %s != %d; frame would differ from the app's; nothing sent"
-                              % (vb, EXPECTED_PROTOCOL_VERSION))
+        if vb not in REVIEWED_VERS:
+            raise SafetyError("ver byte %s from 0x2A27 is not a reviewed value %s; nothing sent"
+                              % (vb, sorted(REVIEWED_VERS)))
+        # Same bytes the app would send: rebuild with the watch's ver (time is re-read now).
+        cmd, key, frame = build_allowlisted(command, ver=vb)
         # Subscribe so we can see the ack. CCCD write only on command notify.
         await client.start_notify(notify_char, on_notify)
         # Chunk into 20-byte ATT pieces (I-16).
@@ -742,7 +749,8 @@ async def mode_safe_write(address, command, log, budget, approve, confirm_fn, na
                     raise SafetyError("unexpected ack cmd=0x%02x key=%d" % (a["cmd"], a["key"]))
                 if a["status"] != 1:
                     raise SafetyError("ack status=%d (not ok); stopping" % a["status"])
-                log.emit("ACK ok cmd=0x%02x key=0x%02x status=1 x=0x%04x" % (cmd, key, a.get("x", 0)))
+                log.emit("ACK ok cmd=0x%02x key=0x%02x status=1 x=0x%04x x_is_frame_len=%s" % (
+                    cmd, key, a.get("x", 0), a.get("x") == len(frame)))
                 return a
             await asyncio.sleep(0.1)
         raise SafetyError("ack timeout after %ds" % ACK_TIMEOUT_S)

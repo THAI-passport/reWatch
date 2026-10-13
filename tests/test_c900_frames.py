@@ -29,6 +29,35 @@ class C900Frames(unittest.TestCase):
         with self.assertRaises(ValueError):
             frames.parse(bytes(f))
 
+    def test_ver_parameter(self):
+        self.assertEqual(frames.build(0x09, 0x00), frames.build(0x09, 0x00, ver=frames.DEFAULT_VER))
+        f = frames.build(0x02, 0x0B, b"\x01", ver=frames.C900_VER)
+        self.assertEqual(f[5], 0x10)
+        self.assertEqual(frames.parse(f), (0xDF, 0x02, 0x0B, b"\x01"))
+        with self.assertRaises(ValueError):
+            frames.build(0x02, 0x0B, b"", ver=256)
+        with self.assertRaises(frames.BlockedCommand):
+            frames.build(0x04, 0x00, ver=0x10)
+
+    def test_c900_capture_vector(self):
+        """Time sync as seen in C900-Q19: ver 0x10, payload 6a9b05cb = 2026-10-13 16:23:11 [H]."""
+        f = frames.build(0x02, 0x01, frames.time_payload(2026, 10, 13, 16, 23, 11), ver=frames.C900_VER)
+        self.assertEqual(f[:3], bytes.fromhex("df0009"))  # I-11; Q19 excerpt "00 08" was a hand-copy typo (ack x = 13 implies len 9)
+        self.assertEqual(f[4:], bytes.fromhex("02100100046a9b05cb"))
+
+    def test_ver_from_hw_revision(self):
+        self.assertEqual(frames.ver_from_hw_revision(b"10000"), 0x10)
+        self.assertEqual(frames.ver_from_hw_revision(b"V1.2"), 0x01)
+        self.assertIsNone(frames.ver_from_hw_revision(b""))
+        self.assertIsNone(frames.ver_from_hw_revision(b"HW-A"))
+
+    def test_simwatch_ack_is_frame_length(self):
+        sim = frames.SimWatch(ver=frames.C900_VER)
+        f = frames.build(0x02, 0x01, b"\x00" * 4, ver=frames.C900_VER)
+        a = sim.write(f)
+        self.assertEqual((a[4], a[5], (a[6] << 8) | a[7], a[8]), (0x02, 0x01, 13, 1))  # 4 + 9 [H]
+        self.assertEqual(sim.vers, [0x10])
+
 
 if __name__ == "__main__":
     unittest.main()
