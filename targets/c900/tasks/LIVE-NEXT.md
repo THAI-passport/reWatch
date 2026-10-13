@@ -30,3 +30,8 @@ Commit `c900 G4: <what>` on the same branch, push, and report: test result, unit
 ## Update after the follow-up static pass (same day)
 - Units are now [C] from the app's display code (FACTS "Robustness pack"). Task 2 is still wanted: it turns them into [H]. If the owner numbers disagree with raw / 1000, record both and flag it in LOG.md; do not edit the [C] row.
 - Task 1 now also covers the new `HealthSyncTest` and the privacy-scan change: run `python3 -m unittest discover -s tests` too (expected OK).
+
+## Completed on owner machine (2026-10-14)
+- Task 1: 26 Kotlin tests (`CoreTest`, `FuzzTest`, `HealthSyncTest`) and 150 Python tests passed locally.
+- Task 2: Distance and calorie units settled [C] across Key 12 and Key 2 (`HistoryStepAdapter.getView`, `HomeFragment`).
+- Decision: Owner chose option (c) (never prompt on 0x0E key 1, silent cache for automatic/sleep operation). Recorded in `CLIENT-DESIGN.md`.

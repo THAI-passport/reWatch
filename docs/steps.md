@@ -404,3 +404,20 @@ Required by AGENTS.md.
 - **Step:** `privacy_scan` frame-header exemption. **Decision:** skip runs starting in bytes 1-8 of a DF/FD frame; rejected: allowlisting each value, and skipping whole frames. **Rationale:** a header-start run has fewer than 6 payload bytes so cannot be a MAC; skipping whole frames would hide a classic MAC in a 0x0E key 1 payload. **Evidence:** [V] `test_strict_skips_runs_inside_frame_header`. **Revisit if:** a frame with a different header length is added.
 - **Step:** `HealthSync` in the Kotlin core, inbound only. **Decision:** no cmd 5 request writer; rejected: adding cmd 5 key 1 to the allowlist. **Rationale:** a new write path needs review and owner approval (ground rule 7). **Revisit if:** the owner approves a history-sync request.
 - **Step:** rewrote `re-step-rationale` with a when-to-write table, a **Revisit if** field and c900 examples. **Rationale:** the first version had format only; the failures seen this session (re-accepting bad claims, summaries drifting) need the check-before-acting and rejection rules.
+
+## 2026-10-14 G4 local test run, Key 2 unit settlement, bond prompt decision (Asia/Saigon)
+- **Step:** `cd client/c900-android && ~/tools/gradle/bin/gradle :core:test --rerun-tasks` and `python3 -m unittest discover -s tests`.
+  **Decision:** verified both Kotlin and Python test suites on the owner's macOS host with local JDK 21 (`~/tools/jdk`) and Gradle 8.10.2; rejected: none.
+  **Rationale:** Gradle build in cloud was throttled by Maven Central HTTP 429; running locally verifies all 26 Kotlin tests (`CoreTest`, `FuzzTest`, `HealthSyncTest`) and 150 Python tests cleanly before any merge.
+  **Evidence:** [V] 26 Kotlin tests and 150 Python tests passed.
+  **Revisit if:** Kotlin dependencies or toolchain paths change.
+- **Step:** `dexgrep dump HistoryStepAdapter getView` on `work/c900-apk/com.myled.HiwearPlus.apk` (classes2.dex lines 235-297).
+  **Decision:** settled cmd 5 key 2 hourly distance and calorie units as meters and calories [C]; rejected: assuming key 2 units without bytecode check [I].
+  **Rationale:** the follow-up pass settled key 12 day-total units via `HomeFragment` but left key 2 as assumed [I]; `HistoryStepAdapter.getView` operates directly on `DayMinuteStepEntity` (populated by `StepUtils.getSportBy1Hour` for key 2), dividing raw int distance by 1000.0f (`const/high16 1148846080`) to format "Km" or * 0.621371 for "Miles", and dividing raw int calorie by 1000.0f for "Kcal".
+  **Evidence:** [C] `HistoryStepAdapter.getView` lines 235-297.
+  **Revisit if:** real device capture with non-zero hourly records shows a different conversion factor.
+- **Step:** recorded owner decision on unsolicited `cmd 0x0E key 1` bond prompts in `targets/c900/CLIENT-DESIGN.md`.
+  **Decision:** option (c) - never prompt the user; cache the Classic BT MAC silently and answer with protocol ACK; rejected: option (a) prompt every time, option (b) prompt once per session.
+  **Rationale:** asked owner directly per LIVE-NEXT section 24 requirement; owner decided option (c) ("i want this to be automatic run while i sleep kind of thing") to prevent dialog popups during unattended background operation while sleeping.
+  **Evidence:** Owner prompt response 2026-10-14.
+  **Revisit if:** owner desires interactive Bluetooth Classic audio/call pairing UI in settings.
