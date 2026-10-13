@@ -421,3 +421,6 @@ Required by AGENTS.md.
   **Rationale:** asked owner directly per LIVE-NEXT section 24 requirement; owner decided option (c) ("i want this to be automatic run while i sleep kind of thing") to prevent dialog popups during unattended background operation while sleeping.
   **Evidence:** Owner prompt response 2026-10-14.
   **Revisit if:** owner desires interactive Bluetooth Classic audio/call pairing UI in settings.
+
+## 2026-10-14 Review of owner-machine pass (Asia/Saigon)
+- **Step:** made `Session` follow the owner decision for inbound 0x0E key 1. **Decision:** cache the 6-byte classic MAC in memory and ack, no prompt; rejected: leaving code as is, also dropping the 0x0C key 19 prompt. **Rationale:** CLIENT-DESIGN and code disagreed; the decision covers 0x0E key 1 only, and 0x0C key 19 is an explicit pairing request. **Evidence:** owner decision in CLIENT-DESIGN 3.4. **Revisit if:** the owner wants classic audio pairing from the open client.

@@ -2,7 +2,7 @@ package rewatch.c900
 
 /**
  * Connection/session state machine (CLIENT-DESIGN 3.4). Pure logic: the platform layer feeds GATT
- * events in and performs the actions it returns. Never bonds; bond triggers become a user prompt.
+ * events in and performs the actions it returns. Never bonds; 0x0C key 19 becomes a user prompt, 0x0E key 1 is cached silently (owner decision).
  */
 class Session {
     enum class State { IDLE, CONNECTING, DISCOVERING, READING_INFO, READY, DISCONNECTED, ERROR }
@@ -19,6 +19,8 @@ class Session {
     var ver: Int? = null; private set
     var features: ByteArray? = null; private set
     var battery: Int? = null; private set
+    /** Classic BT address the watch announced (cmd 0x0E key 1); personal data, never log or persist it. */
+    var classicMac: ByteArray? = null; private set
     /** Most recent inbound commands, capped so a long session cannot grow without bound (R08 F-04). */
     val inbound = ArrayDeque<Frames.Inbound.Cmd>()
     private val pendingReads = mutableSetOf<String>()
@@ -81,8 +83,12 @@ class Session {
         inbound.addLast(c)
         while (inbound.size > INBOUND_KEEP) inbound.removeFirst()
         val acts = mutableListOf<Action>(Action.Ack(Frames.ack(c.cmd, c.key, x = 0, status = 1)))
-        if ((c.cmd == 0x0C && c.key == 19) || (c.cmd == 0x0E && c.key == 1)) {
-            acts.add(Action.AskUserBond("watch asked for classic pairing (cmd 0x%02x key %d)".format(c.cmd, c.key)))
+        if (c.cmd == 0x0C && c.key == 19) {
+            acts.add(Action.AskUserBond("watch asked for classic pairing (cmd 0x0c key 19)"))
+        } else if (c.cmd == 0x0E && c.key == 1 && c.payload.size >= 6) {
+            // Owner decision 2026-10-14 (CLIENT-DESIGN 3.4): the watch sends this after message pushes and
+            // syncs; cache the classic MAC, ack, never prompt and never bond. Kept in memory only.
+            classicMac = c.payload.copyOfRange(0, 6)
         }
         return acts
     }

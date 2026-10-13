@@ -278,3 +278,7 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
   - `HomeFragment.lambda$updateStepDataAndProgress$15`: parses `DayStepEntity.getDistance()` and `DayStepEntity.getCalorie()`, dividing both by `1000.0f` before display.
   - Conclusion: Wire distance integer is meters (m), wire calorie integer is calories (cal). Both scale by 1/1000. Tag: [C].
 - Owner decision on `cmd 0x0E key 1` bond prompts: Owner selected option (c) ("i want this to be automatic run while i sleep kind of thing"): never prompt the user; cache the Classic BT MAC address silently and send protocol ACK, allowing unattended background operation while the owner sleeps without popups. Recorded in `targets/c900/CLIENT-DESIGN.md`.
+
+## 2026-10-14 Review of 8c7918a (Claude, cloud)
+- Accepted: steps.md append-only; `HistoryStepAdapter.getView` citation rechecked with dexgrep (`getDistance`/`getCalorie` on `DayMinuteStepEntity`, `div-float` by 1000.0f).
+- Problem: CLIENT-DESIGN recorded the owner's "never prompt on 0x0E key 1" decision, but `Session.onCommand` still returned `AskUserBond` for it. Fixed: 0x0E key 1 now caches `classicMac` (memory only) and acks; 0x0C key 19 still prompts. Test updated in `CoreTest.sessionFlowLikeRealWatch`. Not compiled in the cloud (Maven 429); rerun `gradle :core:test` on the owner machine.
