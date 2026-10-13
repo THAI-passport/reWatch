@@ -163,6 +163,6 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 
 ## 2026-10-13 Pre-flight review (follow-up to the incident file)
 - Problem: incident file committed the Mac controller's full Bluetooth address and the watch Classic OUI. Fix: masked in the file; still in history at 3d1b298 (owner decides on rewrite). Solved (file), open (history).
-- Problem: the Mac is paired/connected to the watch over Classic, which fails LIVE-SESSION-1 go/no-go. Open: owner decision (LIVE-PREFLIGHT-REVIEW section 4).
+- Problem: the Mac is paired/connected to the watch over Classic, which fails LIVE-SESSION-1 go/no-go. Fix: owner chose Option A (disconnect in macOS Bluetooth settings, keep keys, waive no-go item with risk noted in OPEN-QUESTIONS.md). Solved.
 - Problem: probe hangs instead of failing when the shell lacks macOS Bluetooth permission. Open: FIXES.
 - Problem: incident text repeated a Jieli claim contrary to I-02 and overstated sanitize. Fix: corrections in LIVE-PREFLIGHT-REVIEW section 3.

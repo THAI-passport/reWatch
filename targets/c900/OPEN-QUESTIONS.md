@@ -234,6 +234,13 @@ Plan and comparison: [NEXT-STEPS.md](NEXT-STEPS.md). Gates now include `capture`
 - **Output:** `tasks/results/C900-Q19.md` + FACTS/PROTOCOL patches.
 - **Priority:** P0 · **Deps:** C900-Q13 (owner) · **Cost:** low; no LFS.
 
+### Owner Live Session 1 Pre-flight Decision (2026-10-13)
+- **Live work necessity:** Owner approved: "live work is necessary" for scope = LIVE-SESSION-1 only (2026-10-13 Asia/Saigon).
+- **Classic pairing resolution:** Owner chose **Option A** from `LIVE-PREFLIGHT-REVIEW.md` §4:
+  - Action: Owner disconnects `Watch Ultra` in macOS System Settings -> Bluetooth (leaving pairing keys intact, Classic link idle).
+  - Risk waiver: Waives the strict "never paired" no-go checklist item with risk noted in writing (dual-mode chip LE cross-transport key derivation risk acknowledged).
+  - Probe posture: Read-only first contact (scan + inspect, 0 GATT data writes) via owner's interactive Terminal session using per-Mac CoreBluetooth BLE UUID.
+
 ### Owner Phase 1c checklist (SIGNED 2026-10-13)
 - [x] Approve C900-Q16 (static, one bootstrap)
 - [x] Approve C900-Q17 (tool fix; edits `tools/notify_log.py`)
