@@ -126,8 +126,10 @@ class CoreTest {
         q.submit(c.find(false)) { results.add(it) }
         now = 999; q.tick(); assertTrue(results.isEmpty())
         now = 1000; q.tick(); assertEquals("ack timeout", (results[0] as CommandQueue.Result.Failed).reason)
-        q.onAck(Frames.Inbound.Ack(2, 0x01, 13, 1))
-        assertTrue((results[1] as CommandQueue.Result.Failed).reason.startsWith("unexpected ack"))
+        q.onAck(Frames.Inbound.Ack(2, 0x01, 13, 1))   // stale/foreign ack: dropped, find(false) keeps waiting (R08 F-02)
+        assertEquals(1, results.size)
+        q.onAck(Frames.Inbound.Ack(2, 0x0B, 10, 1))   // its own ack
+        assertIs<CommandQueue.Result.Ok>(results[1])
         q.onAck(Frames.Inbound.Ack(2, 0x0B, 10, 1))   // unsolicited: ignored
         assertEquals(2, results.size)
     }
@@ -163,6 +165,34 @@ class CoreTest {
         val t = Session()
         t.discovered(listOf(Gatt.COMMAND_SERVICE), listOf(Gatt.COMMAND_WRITE, Gatt.COMMAND_NOTIFY))
         t.readResult("00002a27-0000-1000-8000-00805f9b34fb", "20000".toByteArray())
+        t.readResult("00002a26-0000-1000-8000-00805f9b34fb", null)
+        t.readResult("00002a28-0000-1000-8000-00805f9b34fb", null)
         assertIs<Session.Action.Fail>(t.readResult("00002a19-0000-1000-8000-00805f9b34fb", byteArrayOf(50)).single())
+    }
+
+    @Test fun sessionReadsInAnyOrderAndShortUuids() {   // R08 F-01, F-03
+        val s = Session()
+        s.discovered(listOf(Gatt.COMMAND_SERVICE), listOf(Gatt.COMMAND_WRITE, Gatt.COMMAND_NOTIFY))
+        assertTrue(s.readResult("2a19", byteArrayOf(50)).isEmpty())         // battery first: no premature Fail
+        assertTrue(s.readResult("2A28", unhex("aacfe081dff6fc3800000000000010e64108cf1400000000000000")).isEmpty())
+        assertTrue(s.readResult("2a26", null).isEmpty())
+        assertTrue(s.readResult("not-a-uuid", null).isEmpty())
+        assertEquals(listOf<Session.Action>(Session.Action.EnableNotify), s.readResult("00002a27-0000-1000-8000-00805f9b34fb", "10000".toByteArray()))
+        assertEquals(Session.State.READY, s.state)
+        assertTrue(s.readResult("2a19", byteArrayOf(40)).isEmpty())         // late duplicate: ignored
+        assertEquals(50, s.battery)
+    }
+
+    @Test fun sessionInboundIsCapped() {   // R08 F-04
+        val s = Session()
+        repeat(Session.INBOUND_KEEP + 10) { s.onCommand(Frames.Inbound.Cmd(0x05, 0x10, 2, byteArrayOf(it.toByte())), 10) }
+        assertEquals(Session.INBOUND_KEEP, s.inbound.size)
+        assertEquals(10.toByte(), s.inbound.first().payload[0])
+    }
+
+    @Test fun inboundCmdEqualityIsStructural() {   // R07 note
+        assertEquals(Frames.Inbound.Cmd(5, 0x10, 2, byteArrayOf(1, 2)), Frames.Inbound.Cmd(5, 0x10, 2, byteArrayOf(1, 2)))
+        assertEquals(Frames.Inbound.Cmd(5, 0x10, 2, byteArrayOf(1, 2)).hashCode(), Frames.Inbound.Cmd(5, 0x10, 2, byteArrayOf(1, 2)).hashCode())
+        assertNotEquals(Frames.Inbound.Cmd(5, 0x10, 2, byteArrayOf(1)), Frames.Inbound.Cmd(5, 0x10, 2, byteArrayOf(2)))
     }
 }

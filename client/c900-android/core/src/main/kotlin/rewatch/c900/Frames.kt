@@ -49,7 +49,12 @@ object Frames {
     }
 
     sealed class Inbound {
-        data class Cmd(val cmd: Int, val ver: Int, val key: Int, val payload: ByteArray) : Inbound()
+        data class Cmd(val cmd: Int, val ver: Int, val key: Int, val payload: ByteArray) : Inbound() {
+            // Structural equality on the payload (R07): the data-class default compares array identity.
+            override fun equals(other: Any?): Boolean = other is Cmd && cmd == other.cmd && ver == other.ver &&
+                key == other.key && payload.contentEquals(other.payload)
+            override fun hashCode(): Int = ((cmd * 31 + ver) * 31 + key) * 31 + payload.contentHashCode()
+        }
         data class Ack(val cmd: Int, val key: Int, val x: Int, val status: Int) : Inbound()
         data class Bad(val reason: String) : Inbound()
     }

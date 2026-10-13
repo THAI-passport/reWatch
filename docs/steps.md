@@ -393,3 +393,8 @@ Required by AGENTS.md.
 - **Decision:** `tools/dexgrep.py` so static tasks work where jadx cannot be installed (as in this cloud session).
 - **Decision:** R05 restored to the pack with clean specification of cmd 0x05 activity/telemetry sync and remaining field maps (keys 13, 15).
 
+## 2026-10-13 Robustness pack integration (Asia/Saigon)
+- **Step:** fast-forwarded the work branch to `feat/c900-hiwear-plus` and merged `c900/r01`..`r10`. **Rationale:** the handoff's run sheet targets `feat/c900-hiwear-plus`, but this session may push only its own branch; merging there keeps the feature branch untouched until a PR.
+- **Step:** spot-checked worker `[C]` citations with `tools/dexgrep.py` before applying any doc text. **Rationale:** README section 5 integrator checklist; it caught R05's nonexistent classes.
+- **Step:** applied R08 F-01..F-05 as code plus tests in `CoreTest.kt`. **Rationale:** each finding had a concrete failure path in the current core; fixes are small and local.
+- **Step:** added skill `re-step-rationale`. **Rationale:** the coordinator asked for it; kept short because AGENTS.md already requires rationale in steps.md.

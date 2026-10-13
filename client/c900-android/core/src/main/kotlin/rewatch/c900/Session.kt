@@ -19,7 +19,9 @@ class Session {
     var ver: Int? = null; private set
     var features: ByteArray? = null; private set
     var battery: Int? = null; private set
-    val inbound = ArrayList<Frames.Inbound.Cmd>()
+    /** Most recent inbound commands, capped so a long session cannot grow without bound (R08 F-04). */
+    val inbound = ArrayDeque<Frames.Inbound.Cmd>()
+    private val pendingReads = mutableSetOf<String>()
 
     fun connecting() { state = State.CONNECTING }
 
@@ -31,30 +33,44 @@ class Session {
         if (!cmdOk) { state = State.ERROR; return listOf(Action.Fail("command service missing or ambiguous")) }
         state = State.READING_INFO
         // Connect order (I-35): 0x2A27, 0x2A26, features 0x2A28, battery 0x2A19.
-        return listOf("2a27", "2a26", "2a28", "2a19").map { Action.Read("0000$it-0000-1000-8000-00805f9b34fb") }
+        val reads = listOf("2a27", "2a26", "2a28", "2a19")
+        pendingReads.clear(); pendingReads.addAll(reads)
+        return reads.map { Action.Read("0000$it-0000-1000-8000-00805f9b34fb") }
     }
 
+    /**
+     * One info read finished (value null = read failed). Reads may complete in any order; the version
+     * check runs once all four have reported (R08 F-01). Accepts 16-bit ("2a27") or 128-bit UUIDs (F-03).
+     */
     fun readResult(uuid: String, value: ByteArray?): List<Action> {
-        when (uuid.lowercase().substring(4, 8)) {
+        val short = shortUuid(uuid) ?: return emptyList()
+        if (!pendingReads.remove(short)) return emptyList()
+        when (short) {
             "2a27" -> ver = Frames.verFromHwRevision(value)
             "2a28" -> features = value
             "2a19" -> battery = value?.firstOrNull()?.toInt()?.and(0xFF)
-            "2a26" -> {}
         }
-        if (uuid.lowercase().startsWith("00002a19")) {
-            val v = ver
-            if (v == null || v !in Commands.REVIEWED_VERS) {
-                state = State.ERROR
-                return listOf(Action.Fail("ver ${v?.let { "0x%02x".format(it) }} not reviewed"))
-            }
-            if (features?.firstOrNull()?.toInt()?.and(0xFF) != 0xAA) {
-                // Unknown features: stay usable but every feature-gated command is off (I-32).
-                features = null
-            }
-            state = State.READY
-            return listOf(Action.EnableNotify)
+        if (pendingReads.isNotEmpty()) return emptyList()
+        val v = ver
+        if (v == null || v !in Commands.REVIEWED_VERS) {
+            state = State.ERROR
+            return listOf(Action.Fail("ver ${v?.let { "0x%02x".format(it) }} not reviewed"))
         }
-        return emptyList()
+        if (features?.firstOrNull()?.toInt()?.and(0xFF) != 0xAA) {
+            // Unknown features: stay usable but every feature-gated command is off (I-32).
+            features = null
+        }
+        state = State.READY
+        return listOf(Action.EnableNotify)
+    }
+
+    private fun shortUuid(uuid: String): String? {
+        val u = uuid.lowercase()
+        return when {
+            u.length == 4 -> u
+            u.length == 36 && u.startsWith("0000") && u.endsWith("-0000-1000-8000-00805f9b34fb") -> u.substring(4, 8)
+            else -> null
+        }
     }
 
     /** Feature bit, e.g. bit(15, 0x40) = watch-side pairing support. False when unknown. */
@@ -62,7 +78,8 @@ class Session {
 
     /** Inbound DF frame from the watch. Returns the app-style ACK to send, plus a bond prompt when relevant. */
     fun onCommand(c: Frames.Inbound.Cmd, frameLen: Int): List<Action> {
-        inbound.add(c)
+        inbound.addLast(c)
+        while (inbound.size > INBOUND_KEEP) inbound.removeFirst()
         val acts = mutableListOf<Action>(Action.Ack(Frames.ack(c.cmd, c.key, x = 0, status = 1)))
         if ((c.cmd == 0x0C && c.key == 19) || (c.cmd == 0x0E && c.key == 1)) {
             acts.add(Action.AskUserBond("watch asked for classic pairing (cmd 0x%02x key %d)".format(c.cmd, c.key)))
@@ -70,6 +87,10 @@ class Session {
         return acts
     }
 
-    fun disconnected() { state = State.DISCONNECTED }
+    fun disconnected() { state = State.DISCONNECTED; pendingReads.clear() }
     fun commands(): Commands = Commands(ver ?: error("not ready"))
+
+    companion object {
+        const val INBOUND_KEEP = 256
+    }
 }

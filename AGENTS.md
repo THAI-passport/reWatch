@@ -100,7 +100,7 @@ tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.
 Work gate by gate without waiting for approval between gates. Commit and push at each gate. Update `TARGET.md` gate table as you go.
 
 ## Skills to load
-`re-workflow` always. Then as needed: `re-acquire` (get and pin the app), `re-static`, `re-ble-android-patterns` (find transports in decompiled Android code), `re-watch-targets` (what is specific to watches and what to record per model family), `re-jieli` (when `libjl_*` natives or the 0xAE00 service appear), `re-capture-ingestion` (HCI snoop and pcap files), `re-protocol-spec`, `re-native-emulation`, `re-client-sim`, `re-hardware-recon` (only after software is exhausted and the user approves), `re-privacy-scrub` (before writing any result from a capture or live log, and before committing results).
+`re-workflow` always, and `re-step-rationale` for steps.md entries. Then as needed: `re-acquire` (get and pin the app), `re-static`, `re-ble-android-patterns` (find transports in decompiled Android code), `re-watch-targets` (what is specific to watches and what to record per model family), `re-jieli` (when `libjl_*` natives or the 0xAE00 service appear), `re-capture-ingestion` (HCI snoop and pcap files), `re-protocol-spec`, `re-native-emulation`, `re-client-sim`, `re-hardware-recon` (only after software is exhausted and the user approves), `re-privacy-scrub` (before writing any result from a capture or live log, and before committing results).
 
 ## Habits that paid off
 - Start from the UI action (the click that connects or sends), not the first constant you grep.

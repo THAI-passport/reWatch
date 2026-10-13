@@ -101,3 +101,5 @@ Build a software device from the spec to test the client, but a simulator writte
 - Negative claims ("the app never calls X") need a smali search before they get [C]; a jadx-only negative search was wrong on c900 (createBond). One reproducible positive hit retires a negative claim.
 
 - Keep a per-target INVARIANTS.md: each quirk that was wrong once, its tempting wrong version, tag and proof; a small test pins the machine-checkable rows. Agents grep their diff for the wrong versions before finishing a pass.
+
+- Integrating parallel-agent results: re-check citations against the artifact, not just the result file. On c900 one result named classes that do not exist and a frame layout from a different vendor, while its summary looked complete. A coordinator's summary of results is a third copy and drifts further; read the result files.
