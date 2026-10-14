@@ -251,3 +251,34 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Added `tasks/robust/` (README framework, template, R01-R04, R06-R10, PROMPT) and `tools/dexgrep.py` + `requirements-static.txt` (androguard reader for machines without jadx).
 - R05 dropped from the pack; not written.
 - Notes from reviewing LIVE-SESSION-3: message ack never received (probe stopped on unsolicited 0x0E/1); several `time` runs although the sheet said no retries; "zero link keys created" cannot be known on macOS. Handed to R09 to word corrections.
+
+## 2026-10-13 Robustness pack integration (Claude, integrator)
+- Merged `c900/r01`..`c900/r10` (each touched only its own lane; no conflicts) onto the work branch.
+- Spot checks with `tools/dexgrep.py`: confirmed 196-byte cut, queue cap 5, `isNewMsgPushSetting`, write retry sleeps 20/100 ms, reconnect delays 3000/10000/2000, cmd 5 key 7/8 log strings.
+- Rejected, R05 units: cites `FormatUtils->getDistance/getCalories` and `DevBaseDataUtils->getHrDataList/getDeviceTempBeanList` and a `SPORT_DATA_TIME_OUT` constant; none exist in the pinned APK. Units stay [U]. Also rejected R05's frame hex column: it uses an `ab ...` header that is not this protocol (frames start DF/FD, PROTOCOL §4).
+- Rejected, R03 retry summary ("3 attempts then disconnect" for every write): coarser than and partly wrong against PROTOCOL §3 (frames of 20 bytes or less get no retry; remainder piece one retry after 20 ms).
+- Not applied, R01 proposal to stop prompting on inbound 0x0E key 1: the watch sends it after a message push (LIVE-SESSION-3), so the prompt will be frequent, but silently dropping it is a design decision for the owner. Open.
+- Not applied, R02 proposed limits (500 ms between messages, 3 s find cooldown): no evidence for the values; the core keeps one-in-flight plus the 200-write budget.
+- Coordinator handoff summary did not match the result files (it listed a 1 s debounce, 100 ms dial pacing, 27 inbound commands 0x01..0x22, "pure reactive peripheral"); the result files were used, not the summary.
+- Core fixes from R08 applied with tests: F-01 reads in any order, F-02 foreign ack dropped instead of failing the in-flight command, F-03 short UUIDs, F-04 inbound capped at 256, F-05 pacing contract documented on `CommandQueue`; R07's note: `Frames.Inbound.Cmd` equality is structural.
+- Kotlin changes were not compiled or run in the cloud session: Maven Central returned 429 three times. Run `gradle :core:test` on the owner machine before merging.
+
+## 2026-10-13 Follow-up static pass (Claude, cloud)
+- Units settled [C]: `HomeFragment.lambda$updateStepDataAndProgress$15` divides day-total distance and calorie by 1000.0f (float bits 0x447A0000) and multiplies km by 0.621 for miles; `StepUtils.getTotalStepData` stores raw u32 values; `HexUtil.byte2IntLR` is big-endian. So meters and calories. R05's citations for the same answer were invalid (classes not in the APK).
+- R04 corrected: `getNewType` gives 13 for "other" (R04 said 255) and -1 for unmapped or switched-off apps, which `onAppMsgReceive` does not push. C900-Q04 §5 already had the right table.
+- Core: added `HealthSync` (inbound-only cmd 5 marker tracker plus key 12 decoder), built ahead of a full-sync capture; idle timeout 30 s is a placeholder [I]. Tests added; not run here (Maven 429), see LIVE-NEXT task 1.
+- privacy_scan: strict mode reported DF/FD frame headers as MACs. Now skips a 6-byte run that starts inside the 9-byte frame header (it cannot hold a whole MAC); runs starting in the payload are still flagged. Three third-party example payloads in `sources/legacy-t900-c900-PROTOCOL.md` allowlisted by exact value. `targets/c900` strict scan: 0 findings.
+- PROTOCOL §10 unknowns updated with the settled rows.
+
+## 2026-10-14 G4 local verification: Kotlin core tests and distance/calorie units
+- Evidence: `client/c900-android/core/build/test-results/test/TEST-*.xml`, `captures/btsnoop_hci.log.last`, `work/c900-apk/com.myled.HiwearPlus.apk` (classes2.dex smali).
+- Task 1: Kotlin core tests compiled and executed locally with JDK 21 and Gradle 8.10.2 (`gradle :core:test`). 26 tests passed across `CoreTest` (17 tests), `FuzzTest` (7 tests), and `HealthSyncTest` (2 tests), 0 failures, 0 skipped.
+- Task 2: Distance and calorie units settled [C] in APK bytecode across both Key 12 and Key 2. In `captures/btsnoop_hci.log.last`, all cmd 5 key 12 total steps frames carried all zeros (`000000000000000000000000`) and 0 key 2 frames were present due to pre-capture device unbind. APK bytecode inspection of actual UI consumer classes revealed:
+  - `HistoryStepAdapter.getView` (classes2.dex lines 235-297): calls `DayMinuteStepEntity.getDistance()` and divides by `1000.0f` (`const/high16 1148846080`). Formats with `0.00` + string resource `0x7f13054c` (`Km`), or multiplies by `0.621371` for imperial `0x7f130392` (`Miles`). Calls `DayMinuteStepEntity.getCalorie()` and divides by `1000.0f`, formatting with `%.2f` + string resource `0x7f130550` (`Kcal`).
+  - `HomeFragment.lambda$updateStepDataAndProgress$15`: parses `DayStepEntity.getDistance()` and `DayStepEntity.getCalorie()`, dividing both by `1000.0f` before display.
+  - Conclusion: Wire distance integer is meters (m), wire calorie integer is calories (cal). Both scale by 1/1000. Tag: [C].
+- Owner decision on `cmd 0x0E key 1` bond prompts: Owner selected option (c) ("i want this to be automatic run while i sleep kind of thing"): never prompt the user; cache the Classic BT MAC address silently and send protocol ACK, allowing unattended background operation while the owner sleeps without popups. Recorded in `targets/c900/CLIENT-DESIGN.md`.
+
+## 2026-10-14 Review of 8c7918a (Claude, cloud)
+- Accepted: steps.md append-only; `HistoryStepAdapter.getView` citation rechecked with dexgrep (`getDistance`/`getCalorie` on `DayMinuteStepEntity`, `div-float` by 1000.0f).
+- Problem: CLIENT-DESIGN recorded the owner's "never prompt on 0x0E key 1" decision, but `Session.onCommand` still returned `AskUserBond` for it. Fixed: 0x0E key 1 now caches `classicMac` (memory only) and acks; 0x0C key 19 still prompts. Test updated in `CoreTest.sessionFlowLikeRealWatch`. Not compiled in the cloud (Maven 429); rerun `gradle :core:test` on the owner machine.

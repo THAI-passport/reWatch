@@ -39,7 +39,25 @@ _KNOWN = re.compile(r"(?i)^(?:6e40%s{4}-b5a3-f393-e0a9-e50e24dcca9[ef]"
                     r"|7905f431-b5ce-4e99-a40f-4b1e122d00d0|89d3502b-0f36-433a-8ef4-c502ad55f8dc)$" % HEX)
 # Obvious placeholders used in docs and tests.
 _PLACEHOLDER = re.compile(r"(?i)^(?:aa:bb:cc:dd:ee:..|00:11:22:33:44:55|12:34:56:78:9a:bc|(?:00[:-]){5}00|(?:ff[:-]){5}ff)$")
+# DF/FD frame header (header, len x2, sum, cmd, ver, key, plen x2) is 9 bytes; payload starts at byte 9.
+_FRAME_HDR = {"DF", "FD"}
+_FRAME_HDR_LEN = 9
+_BYTE_TOKEN = re.compile(r"^(?:%s{2}|\.\.)$" % HEX)
 TEXT_EXT = {".md", ".txt", ".py", ".json", ".log", ".csv", ".yml", ".yaml", ".toml", ".sh", ".cfg", ".ini", ""}
+
+
+def _starts_in_frame_header(line, start):
+    """True when the hex run at `start` begins inside a DF/FD frame header. Such a run holds fewer than
+    six payload bytes, so it cannot be a whole MAC; a run starting in the payload is still reported."""
+    idx = 0
+    for tok in reversed(line[:start].split()):
+        t = tok.strip("`'\"")
+        if t.upper() in _FRAME_HDR and t == tok.lstrip("`'\""):
+            return 0 < idx + 1 < _FRAME_HDR_LEN
+        if not _BYTE_TOKEN.match(t) or t != tok:
+            return False
+        idx += 1
+    return False
 
 
 def scan_text(text, allow=(), strict=False):
@@ -52,6 +70,8 @@ def scan_text(text, allow=(), strict=False):
                 if kind == "uuid" and (_BASE.match(v) or _KNOWN.match(v)):
                     continue
                 if kind in ("mac", "mac-hex-run") and _PLACEHOLDER.match(v.replace(" ", ":")):
+                    continue
+                if kind == "mac-hex-run" and _starts_in_frame_header(line, m.start()):
                     continue
                 if any(re.search(a, v) for a in allow):
                     continue

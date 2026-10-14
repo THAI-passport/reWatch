@@ -109,3 +109,15 @@ Single place for values that sources disagree on. Other documents link here. Tag
 | Time sync payload is the I-21 packed format (`6a9b05cb` = 2026-10-13 16:23:11), not a Unix timestamp | [H] | C900-Q19 section 6; reproduced by `frames.time_payload` |
 | App never references 0xFF10/0xFF12/FFF1/FF13/FF14 | [C negative] | results/S-21-S-22.md |
 | QR text = BLE MAC only (`LE`+MAC, or `?para=`MAC), 17 chars | [C] | results/S-21-S-22.md |
+
+## Robustness pack (2026-10-13)
+| Claim | Tag | Evidence |
+|---|---|---|
+| Reconnect delay 3000 ms after connect failure, 10000 ms after disconnect (2000 ms after OTA success) | [C] smali | `BaseReconnectBlueActivity` `const-wide/16` 3000 / 10000 / 2000, rechecked at integration |
+| Disconnected notification queue keeps 5 | [C] smali | `MsgPushHelper.onAppMsgReceive` `size() > 4`, rechecked |
+| Key 2 and Key 12 distance unit meters, calorie unit cal (shown / 1000 as km, kcal) | [C] smali | `HistoryStepAdapter.getView` (classes2.dex lines 235-297) divides raw int `DayMinuteStepEntity` distance and calorie by 1000.0f (`const/high16 1148846080`) to format "Km" (metric) or * 0.621371... for "Miles", and "Kcal". `HomeFragment.lambda$updateStepDataAndProgress$15` performs identical / 1000.0f division on `DayStepEntity` strings. R05 reached the same units with invalid citations |
+| Message type "other" with the new table | [C] smali | 13 (`MsgPushHelper.getNewType`); R04 said 255. Type -1 = not pushed |
+| Bind not needed per connection | [H] scope | Shown for find, message and time while the watch was still bound to the phone app; not shown on an unbound watch (LIVE-SESSION-2 section 97) |
+| Pairing on macOS runs | [H] scope | Zero macOS pairing dialogs. "Zero link keys" is not observable from CoreBluetooth; the Android capture (C900-Q19) shows no SMP/LE encryption |
+| Message ack x=37 | [H] capture | Seen in C900-Q19 only; the macOS message run stopped on 0x0E/1 before an ack (LIVE-SESSION-3) |
+| Time sync runs | [H] | Several runs (logs 190018 through 190223), each acked x=13; the run sheet asked for one |

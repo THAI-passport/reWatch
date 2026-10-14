@@ -8,6 +8,7 @@ description: Orchestrates a full reverse-engineering run of a device or companio
 Entry point. Input is `Reverse engineer: <device/app>. Goal: <client behaviour>.` Output is `targets/<slug>/` docs plus `client/<slug>/` code and tests, pushed.
 
 ## Steps
+0. Log steps and decisions in `docs/steps.md` using the format in `re-step-rationale`.
 1. **G0 Brief.** Pick a short slug (lowercase, dashes). Run `python tools/rw.py init <slug> --name "<name>" --goal "<goal>"`. Run `python tools/rw.py doctor` and note missing tools in LOG.md. Write defaults you chose in TARGET.md Assumptions: static only, Android first, Python client, local-only.
 2. **Identify the target software.** If only hardware names were given (model numbers, a brand), follow `re-acquire` section "From hardware name to app".
    If the artifacts are not on this machine (new container, other agent), rebuild them first: `bash tools/rebuild-analysis.sh <slug> --dry-run`, then without `--dry-run` (see `re-acquire`, section "Make it rebuildable"). Never continue past a hash mismatch.

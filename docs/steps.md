@@ -393,3 +393,38 @@ Required by AGENTS.md.
 - **Decision:** `tools/dexgrep.py` so static tasks work where jadx cannot be installed (as in this cloud session).
 - **Decision:** R05 restored to the pack with clean specification of cmd 0x05 activity/telemetry sync and remaining field maps (keys 13, 15).
 
+## 2026-10-13 Robustness pack integration (Asia/Saigon)
+- **Step:** fast-forwarded the work branch to `feat/c900-hiwear-plus` and merged `c900/r01`..`r10`. **Rationale:** the handoff's run sheet targets `feat/c900-hiwear-plus`, but this session may push only its own branch; merging there keeps the feature branch untouched until a PR.
+- **Step:** spot-checked worker `[C]` citations with `tools/dexgrep.py` before applying any doc text. **Rationale:** README section 5 integrator checklist; it caught R05's nonexistent classes.
+- **Step:** applied R08 F-01..F-05 as code plus tests in `CoreTest.kt`. **Rationale:** each finding had a concrete failure path in the current core; fixes are small and local.
+- **Step:** added skill `re-step-rationale`. **Rationale:** the coordinator asked for it; kept short because AGENTS.md already requires rationale in steps.md.
+
+## 2026-10-13 Follow-up static pass (Asia/Saigon)
+- **Step:** traced who displays `DayStepEntity.getDistance/getCalorie` (`dexgrep refs`, then `dump` of `HomeFragment` lambda). **Decision:** settle units from the display code; rejected: waiting for the owner screenshot. **Rationale:** the formatter is static evidence available now; the screenshot can still promote it to [H]. **Evidence:** [C] `div-float` by 1000.0f. **Revisit if:** the owner comparison disagrees.
+- **Step:** `privacy_scan` frame-header exemption. **Decision:** skip runs starting in bytes 1-8 of a DF/FD frame; rejected: allowlisting each value, and skipping whole frames. **Rationale:** a header-start run has fewer than 6 payload bytes so cannot be a MAC; skipping whole frames would hide a classic MAC in a 0x0E key 1 payload. **Evidence:** [V] `test_strict_skips_runs_inside_frame_header`. **Revisit if:** a frame with a different header length is added.
+- **Step:** `HealthSync` in the Kotlin core, inbound only. **Decision:** no cmd 5 request writer; rejected: adding cmd 5 key 1 to the allowlist. **Rationale:** a new write path needs review and owner approval (ground rule 7). **Revisit if:** the owner approves a history-sync request.
+- **Step:** rewrote `re-step-rationale` with a when-to-write table, a **Revisit if** field and c900 examples. **Rationale:** the first version had format only; the failures seen this session (re-accepting bad claims, summaries drifting) need the check-before-acting and rejection rules.
+
+## 2026-10-14 G4 local test run, Key 2 unit settlement, bond prompt decision (Asia/Saigon)
+- **Step:** `cd client/c900-android && ~/tools/gradle/bin/gradle :core:test --rerun-tasks` and `python3 -m unittest discover -s tests`.
+  **Decision:** verified both Kotlin and Python test suites on the owner's macOS host with local JDK 21 (`~/tools/jdk`) and Gradle 8.10.2; rejected: none.
+  **Rationale:** Gradle build in cloud was throttled by Maven Central HTTP 429; running locally verifies all 26 Kotlin tests (`CoreTest`, `FuzzTest`, `HealthSyncTest`) and 150 Python tests cleanly before any merge.
+  **Evidence:** [V] 26 Kotlin tests and 150 Python tests passed.
+  **Revisit if:** Kotlin dependencies or toolchain paths change.
+- **Step:** `dexgrep dump HistoryStepAdapter getView` on `work/c900-apk/com.myled.HiwearPlus.apk` (classes2.dex lines 235-297).
+  **Decision:** settled cmd 5 key 2 hourly distance and calorie units as meters and calories [C]; rejected: assuming key 2 units without bytecode check [I].
+  **Rationale:** the follow-up pass settled key 12 day-total units via `HomeFragment` but left key 2 as assumed [I]; `HistoryStepAdapter.getView` operates directly on `DayMinuteStepEntity` (populated by `StepUtils.getSportBy1Hour` for key 2), dividing raw int distance by 1000.0f (`const/high16 1148846080`) to format "Km" or * 0.621371 for "Miles", and dividing raw int calorie by 1000.0f for "Kcal".
+  **Evidence:** [C] `HistoryStepAdapter.getView` lines 235-297.
+  **Revisit if:** real device capture with non-zero hourly records shows a different conversion factor.
+- **Step:** recorded owner decision on unsolicited `cmd 0x0E key 1` bond prompts in `targets/c900/CLIENT-DESIGN.md`.
+  **Decision:** option (c) - never prompt the user; cache the Classic BT MAC silently and answer with protocol ACK; rejected: option (a) prompt every time, option (b) prompt once per session.
+  **Rationale:** asked owner directly per LIVE-NEXT section 24 requirement; owner decided option (c) ("i want this to be automatic run while i sleep kind of thing") to prevent dialog popups during unattended background operation while sleeping.
+  **Evidence:** Owner prompt response 2026-10-14.
+  **Revisit if:** owner desires interactive Bluetooth Classic audio/call pairing UI in settings.
+
+## 2026-10-14 Review of owner-machine pass (Asia/Saigon)
+- **Step:** made `Session` follow the owner decision for inbound 0x0E key 1. **Decision:** cache the 6-byte classic MAC in memory and ack, no prompt; rejected: leaving code as is, also dropping the 0x0C key 19 prompt. **Rationale:** CLIENT-DESIGN and code disagreed; the decision covers 0x0E key 1 only, and 0x0C key 19 is an explicit pairing request. **Evidence:** owner decision in CLIENT-DESIGN 3.4. **Revisit if:** the owner wants classic audio pairing from the open client.
+
+## 2026-10-14 Cloud Android build (Asia/Saigon)
+- **Step:** built `c900/app-shell` (822e344) in the cloud. **Decision:** machine-local Gradle init script pointing Maven Central at Google's Central mirror; rejected: editing repo build files, the Gradle plugin portal (redirects to Central, still 429). **Rationale:** keeps the repo build unchanged while removing the owner as the only build machine. **Evidence:** [V] 26 core + 23 app tests pass, APK assembles. **Revisit if:** Maven Central stops rate-limiting this environment, or the mirror host is blocked.
+- **Step:** wrote the cloud Gradle setup as five steps in `docs/CLOUD-SETUP.md`, linked from skill `re-client-sim`. **Decision:** mark both with "(ReWork port candidate: ...)"; rejected: a separate list file. **Rationale:** the owner will later ask to port reusable skills to the ReWork base repo; a fixed phrase makes them findable with `grep -rn "ReWork port candidate"`. **Revisit if:** the port happens (remove the markers then).

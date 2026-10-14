@@ -63,7 +63,7 @@ Full per-key layouts, with source methods and smali checks, are in `tasks/result
 Other cmds: 0x05 keys 1/6/10 (history, real-time steps, today); 0x0E key 3 (BT 3.0 info request); 0x19 key 0 (features); 0x1A keys 3/5/7 (support queries), 9 (power save set), **21 exit find-phone**, 23 altitude/pressure, 24 location. jadx printed wrong constant names for several of these keys; the values above are from smali.
 
 Time sync payload (cmd 2 key 1): 4 bytes packing, high bit first, year-2000 (6 bits), month (4), day (5), hour (5), minute (6), second (6) [C, `SettingIssuedUtils.settingSysTime` smali: `add-int/lit16 v2, v2, -0x7d0` confirms the year offset is exactly -2000 / 0x7d0]. Packing in client: `client/c900/frames.time_payload`.
-Message push (cmd 2 key 18): `type, 0, 0, UTF-8 text` with text "title:body" cut at 196 bytes [C].
+Message push (cmd 2 key 18): `type, 0, 0, UTF-8 text` with text "title:body" cut at 196 bytes [C]. With the new type table (this watch) "other" is 13; a type of -1 (app unmapped or switched off in the app) is not pushed at all [C smali, `MsgPushHelper.getNewType` and `onAppMsgReceive`, rechecked 2026-10-13]. Table: C900-Q04 §5.
 
 ## 6. Watch faces and OTA-channel transfer [C; no client sending]
 
@@ -119,7 +119,7 @@ Contacts have **no DF command-channel opcode**. They ride the OTA channel above 
 Ack-driven follow-ups during the sync sequence [C, `BleDataUtils.setSettingSuccess`]: on bind/settings acks the app may createBond if unbound, write cmd 0x0E key 3, push profile / username, request settings info (cmd 9), sport target, and time sync (cmd 2 key 1). Exact key map for every inbound DF payload is still being tabulated (S5).
 
 ### 7.2 Inbound remainder (C900-Q14) [C]
-cmd 5 keys: 2 steps/hour, 4 HR, 5 BP, 7/8 history start/end, 9 sleep, 12 total steps, 13 temperature, 14 SpO2 (p[0..1] date, p[4..7] u32 s-of-day, p[11] %), 15 sport sessions. Field maps (C900-Q16): payload offsets; date = 2 bytes `year-2000 = (b0&0x7F)>>1, month = (b0&1)<<3 | b1>>5, day = b1&0x1F`; lists `count = p[3]`, records from p[4]; times are u32 BE seconds of day. Key 2: 24 x 8 B from p[2] (steps u16, distance u16, calorie u32; 0xFFFF = none). Key 4: 8 B records, bpm at +7. Key 5: 8 B, systolic +6, diastolic +7. Key 9: start, light, deep, end, awake (u16 BE at p[2..11]). Key 12: steps, distance, calorie u32 BE, no date. Key 13: 8 B, degrees +6, signed tenths +7. Key 15: 30 B records (start, end, duration, mode, HR signed, calorie, three mode values). Units of distance/calorie [U]. cmd 9 reply: tag records from frame index 14 (table in C900-Q14). cmd 0x0F key 2/9 face list, key 5 custom layout. 0x0C key 2 = camera shutter; 5/6/14/16 measurement stopped. Battery 0x2A19 byte 0 = percent. FD-ack follow-up chain and createBond conditions: C900-Q14 steps 4-5.
+cmd 5 keys: 2 steps/hour, 4 HR, 5 BP, 7/8 history start/end, 9 sleep, 12 total steps, 13 temperature, 14 SpO2 (p[0..1] date, p[4..7] u32 s-of-day, p[11] %), 15 sport sessions. Field maps (C900-Q16): payload offsets; date = 2 bytes `year-2000 = (b0&0x7F)>>1, month = (b0&1)<<3 | b1>>5, day = b1&0x1F`; lists `count = p[3]`, records from p[4]; times are u32 BE seconds of day. Key 2: 24 x 8 B from p[2] (steps u16, distance u16, calorie u32; 0xFFFF = none). Key 4: 8 B records, bpm at +7. Key 5: 8 B, systolic +6, diastolic +7. Key 9: start, light, deep, end, awake (u16 BE at p[2..11]). Key 12: steps, distance, calorie u32 BE, no date. Key 13: 8 B, degrees +6, signed tenths +7. Key 15: 30 B records (start, end, duration, mode, HR signed, calorie, three mode values). Units: distance in meters, calorie in calories; the app shows value / 1000 as km and kcal (x 0.621 for miles) [C smali, `HistoryStepAdapter.getView` for Key 2 hourly `DayMinuteStepEntity` and `HomeFragment.lambda$updateStepDataAndProgress$15` for Key 12 `DayStepEntity`; `StepUtils` stores raw big-endian u32 with no scaling]. cmd 9 reply: tag records from frame index 14 (table in C900-Q14). cmd 0x0F key 2/9 face list, key 5 custom layout. 0x0C key 2 = camera shutter; 5/6/14/16 measurement stopped. Battery 0x2A19 byte 0 = percent. FD-ack follow-up chain and createBond conditions: C900-Q14 steps 4-5.
 
 ### 7.1 Inbound map, first pass (C900-Q05, partial) [C, `NotifyWriteUtils.dataHandle`, `BleDataUtils`]
 cmd at byte 4, key at byte 6, payload from byte 9. Mapped: 0x05 health (field maps: C900-Q16); 0x08 alarm list; 0x09 settings reply (tag records: C900-Q14 step 2; bytes 9-13 [U]); **0x0C device control**: 1/15 find phone start/stop, 3/4 watch camera open/close, **8 bind accepted** (byte 9 = 1 first bind), **9 bind refused** (app disconnects), 10-13 media keys, 18 BT status, 19 bond request; 0x0E BT 3.0 info (1 classic MAC, 4 contact MD5); 0x0F face replies; 0x11 drink; 0x12 new notify switches; 0x13 OTA-new status (never used); 0x14 sedentary; **0x19 feature map** (same as 0x2A28, byte 0 = 0xAA); 0x1A support bitmaps and location requests; 0x1B assistant events. Full table and the feature bit map: `tasks/results/C900-Q05.md`.
@@ -140,15 +140,25 @@ Exactly 70 Retrofit endpoints in `network/request/Request.java`, all `@QueryMap`
 ## 10. Unknowns and the test that settles each
 | Unknown | Test |
 |---|---|
-| C900 advertised name and whether the scan record has MAC + 12 34 | HW-2 read-only scan |
-| Which of the GATT services the C900 exposes | HW-2 read-only service list |
-| Whether the watch requires bonding | capture (Q19) or HW-3 |
+| C900 advertised name and whether the scan record has MAC + 12 34 | done: `Watch Ultra`, company 0x314C + MAC + 12 34 [H] (FACTS) |
+| Which of the GATT services the C900 exposes | done: NUS command pair, 0x180F, 0x180A, OTA 0xFF00/0xFF10/0xFF12 untouched [H] (LIVE-SESSION-1) |
+| Whether the watch requires bonding | LE: no SMP or encryption seen [H] (C900-Q19); no per-connection bind for find/message/time while bound to the phone app [H]; unbound watch still [U] |
 | Exact PAR container bytes (native lib) | optional native RE; not needed for first contact |
 | C900's returned OTA MTU / groupPacNum | HW-1 capture or approved OTA session |
 | Time year offset in smali | done: -0x7d0 [C] |
 | Whether Hiwear Plus and HryFine use the same opcodes | decompile HryFine (optional) |
-| C900 `PROTOCOL_VERSION` (frame byte 4) and feature map (incl. `binPreviewFlag`, contacts bit) | HW-2 read-only 0x2A27 / 0x2A28 reads |
+| C900 `PROTOCOL_VERSION` (frame byte 4) and feature map (incl. `binPreviewFlag`, contacts bit) | done: 0x2A27 "10000" -> ver 0x10; 0x2A28 value in FACTS [H] |
 | Whether the C900 requests classic bonding (0x0C key 19) | HW-2/HW-3; app side calls createBond conditionally (FACTS §4) |
-| Watch ack x value; which cmd 2 keys the C900 acks | HW-4 single writes or a capture |
+| Watch ack x value; which cmd 2 keys the C900 acks | x = acked frame length [H]; acks seen for keys 1, 11, 18 [H]; other keys [U] |
 | Ack timeout value | done: 100 s [C smali] |
+| Health sync timing (gap between records, app-side timeout) | capture of a full history sync; no app timer confirmed |
 | OTA send interval 300 vs 500 | done: neither is applied [C smali] |
+
+## 11. Robustness pack results (R01-R10, integrated 2026-10-13)
+Accepted after spot checks against the pinned APK (`tools/dexgrep.py`, inner SHA-256 `931efc77...`). Rejected items and reasons: `LOG.md` 2026-10-13 "Robustness pack integration".
+- Reconnect timers: connect failure -> retry after 3000 ms; unexpected disconnect -> 10000 ms (2000 ms after a 5610 OTA success) [C smali, `BaseReconnectBlueActivity.onConnectFail` / `onDisConnected`, rechecked]. Notify on the command TX characteristic is enabled 1000 ms after service discovery [C, R03, not rechecked]. No `requestConnectionPriority` call [C, R03].
+- Classic bonding driven by inbound 0x0E key 1 (`MainActivity$4`, 3 tries, 35 s) runs beside the LE command channel; no LE command checks the bond state [C, R03; consistent with §3].
+- Notifications: `NPNotificationService` -> `MsgPushHelper.onAppMsgReceive`; disconnected queue keeps the newest 5 (`size() > 4` drops the oldest) [C smali, rechecked]; text cut at 196 bytes [C smali `SettingIssuedUtils.messagePush`, rechecked]; feature byte 15 bit 0x02 (`isNewMsgPushSetting`) selects the newer app-type table, set on this watch (byte 15 = 0xE6, FACTS) [C, R04]. Incoming call (cmd 2 key 17) is pushed only while ringing [C, R04]. Type table: `tasks/robust/results/R04.md`.
+- Time sync is written once per connect sequence (after the cmd 2 key 10 ack) and on a user action; no periodic timer [C, R02]. Language is rewritten only when the code differs [C, R02].
+- Health sync: history start and end markers are cmd 5 keys 7 and 8 (log strings present in the APK) [C, rechecked]; every good inbound DF frame gets the FD ack before dispatch (§4). Distance and calorie units settled [C] (meters, cal) from UI formatters in HistoryStepAdapter.getView and HomeFragment (LOG.md).
+- Watch-side observations from the live sessions are consolidated in FACTS.md rows marked [H]; R09's wording corrections are applied there and in LOG.md.

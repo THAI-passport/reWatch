@@ -55,11 +55,11 @@ Each layer depends only on the one below through an interface, so the simulator 
 States: `Idle -> Connecting -> Discovering -> ReadingInfo (0x2A27, 0x2A26, features, battery) -> Binding -> Ready -> Syncing -> Ready`, plus `Error` and `Disconnected`. Connect order follows I-35.
 - Feature map gates every feature (byte 0 must be 0xAA, I-32); unknown bits disable the feature rather than guess.
 - Bind (cmd 3 key 0 with a per-install 8-character id, PROTOCOL section 3): the watch answers 0x0C key 8 (accept) or 9 (refuse) [C]. Binding a new id may displace the vendor app's binding [I], so the first bind is an explicit user action with a warning, never automatic. The vendor server bind call is not made.
-- Bond policy: the client never calls `createBond` on its own. The three app triggers (I-30) become a user prompt ("The watch asks to pair. Allow?") with "No" as the default; declining is logged and the session continues if the watch allows it.
+- Bond policy: the client never calls `createBond` on its own. The three app triggers (I-30) become a user prompt ("The watch asks to pair. Allow?") with "No" as the default. Owner decision (2026-10-14): For unsolicited `cmd 0x0E key 1` (emitted after message pushes and history sync), never prompt the user; cache the Classic MAC silently and send the protocol ACK so background operation while the owner sleeps proceeds uninterrupted without dialogs.
 
 ### 3.5 Health sync and local storage
 - Pull records with cmd 5 keys (PROTOCOL section 7.2); parse with the I-36 date packing; store in a local SQLite/Room database keyed by record date and type; idempotent upsert so re-sync never duplicates.
-- Units for distance and calorie are [U]: store raw values plus a `unit_unknown` flag; show raw until a capture or the watch screen settles them.
+- Units for distance and calorie are settled [C]: raw values are meters and calories; UI formatters divide by 1000 to display Km/Miles and Kcal (HistoryStepAdapter.getView, HomeFragment).
 - Export: optional, user-started, to a local CSV or JSON file (and, if wanted later, Android Health Connect). No upload.
 
 ### 3.6 Notification push
@@ -111,7 +111,7 @@ Evidence columns: **[C] only** = layout read from the app, not seen on a wire; *
 | Call notification (cmd 2 key 17) | [C] | capture | 3c | private payload rules; feature bit |
 | Find phone (inbound 0x0C keys 1/15) | [C] | capture or session 1 (if the user taps it) | 3c | none |
 | Camera shutter (inbound 0x0C key 2) | [C] | capture | 3d | low priority |
-| Health sync (cmd 5) | [C] field maps | capture | 3d | distance/calorie units [U]; history start/end handshake on the wire |
+| Health sync (cmd 5) | [C] field maps | capture | 3d | history start/end handshake on the wire (units settled [C]: meters, cal) |
 | Settings: 12/24 h, units, raise-to-wake, DND | [C] | capture | 3d | write cost [U] |
 | Alarms, weather, sedentary | [C] (C900-Q04) | capture | 3e | write cost [U] |
 | Bond handling (prompts) | [C] app side | capture shows whether the C900 asks | 3b | Q03 [U] |
@@ -124,12 +124,12 @@ Evidence columns: **[C] only** = layout read from the app, not seen on a wire; *
 | Codec | `ver` value; watch ack bytes 6-7 (I-18) | FACTS section 4 |
 | Command queue | Which keys the C900 acks; NAK behaviour on the watch side | NEXT-STEPS section 6 |
 | Session/bind | Bind effect on the vendor app; whether the watch asks to bond (Q03) | OPEN-QUESTIONS Q03 |
-| Health | Units; real record counts; history handshake timing | C900-Q16, capture |
+| Health | Real record counts; history handshake timing (units settled [C]) | C900-Q16, capture |
 | Notifications | Message store size; flash wear per message | ground rule 7, capture |
 | UI | none blocking | - |
 
 ## 10. Owner decisions needed before Phase 3
 1. Platform: Android Kotlin (recommended) or Flutter.
 2. Whether the client may bind as its own "phone" (displacing the vendor app) or must coexist.
-3. Default bond answer when the watch asks: "No" (recommended).
+3. Default bond answer when the watch asks: "No" (recommended). Owner decision (2026-10-14): For unsolicited `cmd 0x0E key 1`, never prompt; cache the Classic MAC only, enabling unattended operation while sleeping.
 4. Phase 3 scope (suggested 3a + 3b first: connect, info, battery, bind, time, find).
