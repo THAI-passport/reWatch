@@ -282,3 +282,158 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 ## 2026-10-14 Review of 8c7918a (Claude, cloud)
 - Accepted: steps.md append-only; `HistoryStepAdapter.getView` citation rechecked with dexgrep (`getDistance`/`getCalorie` on `DayMinuteStepEntity`, `div-float` by 1000.0f).
 - Problem: CLIENT-DESIGN recorded the owner's "never prompt on 0x0E key 1" decision, but `Session.onCommand` still returned `AskUserBond` for it. Fixed: 0x0E key 1 now caches `classicMac` (memory only) and acks; 0x0C key 19 still prompts. Test updated in `CoreTest.sessionFlowLikeRealWatch`. Not compiled in the cloud (Maven 429); rerun `gradle :core:test` on the owner machine.
+
+## 2026-10-14 G4 Android app shell implementation (Antigravity, local)
+- Added `:app` module in `client/c900-android` depending on `:core`, building debug APK (`gradle :app:assembleDebug`).
+- Built components:
+  - `MainActivity`: plain Activity without Compose.
+  - `PacingScheduler`: strict single-GATT-operation-in-flight queue with 20 ms piece pacing and denied-UUID drop.
+  - `GattLink`: Android `BluetoothGatt` adapter mapping `Session.Action` to GATT calls, feeding frames to `FrameReader`.
+  - `WatchService`: `connectedDevice` foreground service owning `Session`, `CommandQueue`, `HealthSync`, with 10000 ms disconnect / 3000 ms connect failure reconnect delays, silent cache for 0x0E key 1, and prompt notification for 0x0C key 19 (never calls `createBond`).
+  - `NotificationMapper`: package-to-type mapper implementing C900-Q04 section 5 new table (23 apps, Other=13, -1 ignored).
+  - `DisconnectedMessageQueue`: bounded FIFO holding newest 5 messages during disconnect.
+  - `NotifyListener`: `NotificationListenerService` forwarding notifications via `Commands.message`.
+  - Manifest permissions strictly as R10: `BLUETOOTH_SCAN (neverForLocation)`, `BLUETOOTH_CONNECT`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE`, `POST_NOTIFICATIONS`, `BIND_NOTIFICATION_LISTENER_SERVICE`. Zero `INTERNET` permission.
+  - Privacy: zero logging of notification text, MAC addresses, or device names.
+- Tests passing:
+  - Gradle: 26 `:core` tests + 9 `:app` tests = 35 JVM unit tests pass (0 failures).
+  - Python: 150 tests pass (`unittest discover -s tests`).
+  - Linter: `python3 tools/rw.py lint` (0 problems).
+  - Privacy scan: `python3 tools/privacy_scan.py targets/c900 docs --strict` (0 findings).
+- What is untested on a device (static/JVM only):
+  - Actual Android BLE stack GATT connection, MTU negotiation, and service discovery on a physical watch.
+  - Real timing of Android `onCharacteristicWrite` callbacks with Bluetooth hardware controller.
+  - Real OS behaviour of `NotificationListenerService` permission grant flow by user.
+  - Live reconnection backoff in sleep/doze mode on physical Android device.
+  - Actual watch display rendering of pushed notifications via `:app` shell.
+
+## 2026-10-14 G4 Android app shell review fixes (Antigravity, local)
+- Review findings applied to branch `c900/app-shell`:
+  1. High — Notification filtering and deduplication:
+     - Evidence: `NotificationMapper` defaulted unmapped apps to 13 (`TYPE_OTHER`); `NotifyListener` forwarded all posts without filtering ongoing events, group summaries, own package, or repeats.
+     - Cause: Unfiltered notification streams push progress bars (music, downloads) multiple times/sec, exhausting the 200-write session budget within minutes and causing flash wear (ground rule 7).
+     - Fix: `NotificationMapper` sets `const val PUSH_UNMAPPED = false` by default (`MsgPushHelper.getShowOtherNotify` [C]). `NotifyListener` filters `FLAG_ONGOING_EVENT`, `FLAG_GROUP_SUMMARY`, and own package. Added `NotificationDeduplicator` dropping identical (package, title, body) within 2000 ms window (placeholder [I], vendor dedupes identical text, R04).
+  2. High — Unsupported watch reconnection loop:
+     - Evidence: `onError` scheduled reconnect in 3000 ms unconditionally, looping indefinitely when `Session` rejected an unsupported watch (`Session.Action.Fail`).
+     - Cause: `Action.Fail` was dispatched to retryable `onError` path.
+     - Fix: Added `onTerminalFail` to `GattLink.Listener`. `WatchService` sets `isFailedTerminal = true`, stops reconnection timers, cancels pending queue items, posts "Watch not supported" user notification, and blocks reconnection until `connectDevice()` is explicitly invoked again.
+  3. Medium — Multi-threaded core state access:
+     - Evidence: Android BLE callbacks delivered on Binder thread, mutating `Session`, `CommandQueue`, `HealthSync` concurrently with main-thread tick and notification dispatch.
+     - Cause: Missing thread marshaling in `GattLink`.
+     - Fix: `GattLink` posts every `BluetoothGattCallback` callback body to `handler` (main looper), ensuring all core state mutations occur on the main looper. Documented in class comments.
+  4. Low — Wall clock timers:
+     - Evidence: `CommandQueue`, `HealthSync`, and `PacingScheduler` used `System.currentTimeMillis()`.
+     - Cause: Wall clock vulnerable to time shifts/NTP adjustments.
+     - Fix: Switched to `SystemClock.elapsedRealtime()` for monotonic uptime timing.
+  5. Low — Unused declared permissions:
+     - Evidence: `RECEIVE_BOOT_COMPLETED` and `WAKE_LOCK` declared in `AndroidManifest.xml` without implementation or R10 approval.
+     - Fix: Removed unused permissions. Retained legacy `BLUETOOTH` and `BLUETOOTH_ADMIN` with `maxSdkVersion="30"` as required for `minSdk 26` (Android 8.0-11 compatibility prior to API 31 runtime permissions).
+  6. Low — GATT resource leak on error disconnect:
+     - Evidence: `BluetoothGatt` remained unclosed on disconnect with non-zero status.
+     - Fix: `GattLink.onConnectionStateChange` immediately calls `gatt.disconnect()` and `gatt.close()` on any error status or `STATE_DISCONNECTED`.
+- Test counts:
+  - Kotlin: 26 `:core` tests + 20 `:app` tests = 46 JVM unit tests pass (0 failures).
+  - Python: 150 tests pass (`unittest discover -s tests`).
+  - Linter: `python3 tools/rw.py lint` (0 problems).
+  - Privacy scan: `python3 tools/privacy_scan.py targets/c900 docs --strict` (0 findings).
+
+## 2026-10-14 G4 stale GATT callback race after reconnect (Antigravity, local)
+- Problem: Moving Bluetooth callbacks onto the main looper in GattLink introduced a race where callbacks from a closed/replaced BluetoothGatt instance could run after the service reconnected. A queued disconnect callback from the old connection would execute on the new connection, resetting the new session, failing active in-flight commands, and triggering an erroneous reconnect loop. Similarly, a late write callback from the old connection could complete an operation belonging to the new connection.
+- Cause: GattLink callbacks were posted to the handler without checking if `gatt === bluetoothGatt`.
+- Fix:
+  - Guarded every `handler.post` callback body in `GattLink.gattCallback` with `if (gatt !== bluetoothGatt) { ... return@post }`.
+  - In `onConnectionStateChange`, if `gatt !== bluetoothGatt`, closes the stale `gatt` via `gatt.close()` (caught for `SecurityException`) to prevent client leaks, while returning early without notifying `listener.onDisconnected` or touching `pacingScheduler`.
+  - In all other callbacks (`onServicesDiscovered`, `onCharacteristicRead`, `onCharacteristicWrite`, `onDescriptorWrite`, `onCharacteristicChanged`), returns immediately if `gatt !== bluetoothGatt`.
+  - Added `fun isCurrent(gatt: BluetoothGatt?): Boolean = gatt != null && gatt === bluetoothGatt`.
+  - Added unit tests in `GattLinkTest` verifying that a stale disconnect after reconnect does not call `listener.onDisconnected` and that stale callbacks from old connections are ignored.
+- Test counts:
+  - Kotlin: 26 `:core` tests + 23 `:app` tests = 49 JVM unit tests pass (0 failures).
+  - Python: 150 tests pass (`unittest discover -s tests`).
+  - Linter: `python3 tools/rw.py lint` (0 problems).
+  - Privacy scan: `python3 tools/privacy_scan.py targets/c900 docs --strict` (0 findings).
+
+## 2026-10-14 G4 Task 2: Device picker UI (Antigravity, local)
+- Implemented `MainActivity` scanning for "Watch Ultra" using Android BLE scanner.
+- Enforced runtime permission requests for `BLUETOOTH_SCAN` and `BLUETOOTH_CONNECT` on API 31+.
+- Discovered devices are listed by index label without logging MAC addresses or device names (privacy rule).
+- Tapping a device starts `WatchService` and calls `connectDevice(device)`.
+- Added unit tests in `DevicePickerTest` (2 tests).
+- All checks pass: 51 Kotlin tests (26 :core + 25 :app), 150 Python tests, lint clean, privacy scan clean.
+
+## 2026-10-14 G4 Task 3: Settings screen (Antigravity, local)
+- Implemented `NotificationSettings` backed by `SharedPreferences` with `pushOtherApps` (off by default) and per-type on/off switches for all 23 known notification categories.
+- Replaced static `PUSH_UNMAPPED` constant in `NotifyListener` with runtime query to `NotificationSettings.pushOtherApps`.
+- Added per-type enablement check (`settings.isTypeEnabled(type)`) in `NotifyListener` before dispatching message frames.
+- Implemented `SettingsActivity` using plain Android Views (`ScrollView`, `LinearLayout`, `Switch`, `Button`).
+- Added unit tests in `NotificationSettingsTest` (5 tests) using in-memory `FakePreferences`.
+- All checks pass: 56 Kotlin tests (26 :core + 30 :app), 150 Python tests, lint clean, privacy scan clean.
+
+## 2026-10-14 G4 Task 4: Status screen (Antigravity, local)
+- Implemented `StatusActivity` displaying:
+  - Connection state from `Session.state` (IDLE, CONNECTING, DISCOVERING, READING_INFO, READY, DISCONNECTED, ERROR).
+  - Battery percentage from `Session.battery` (read from 0x2A19).
+  - Protocol version from `Session.ver` (read from 0x2A27).
+  - HealthSync day totals: distance in km (`distanceM / 1000.0`) and calories in kcal (`calorieCal / 1000.0`) from inbound cmd 5 key 12 frames.
+  - Session write counter: `CommandQueue.writes` of the 200 budget.
+- Decoupled snapshot formatting logic into `StatusSnapshot` with unit tests in `StatusSnapshotTest` (4 tests).
+- All checks pass: 60 Kotlin tests (26 :core + 34 :app), 150 Python tests, lint clean, privacy scan clean.
+
+## 2026-10-14 G4 Task 5: End-to-end JVM test (Antigravity, local)
+- Implemented `EndToEndTest` driving `Session`, `CommandQueue`, `PacingScheduler`, and `HealthSync` against simulated watch (`SimWatch`) via fake GATT link:
+  1. Connection and service discovery (`6e400001-...` with write `6e400002` and notify `6e400003`).
+  2. 4 info reads completed in sequence: 0x2A27 ("10000" -> ver 0x10), 0x2A26 ("C900"), 0x2A28 (features AA...), 0x2A19 (battery 85%).
+  3. Notification enabled on command notify characteristic -> `Session.State.READY`.
+  4. Submitted message command via `CommandQueue`, paced across ATT pieces via `PacingScheduler`.
+  5. `SimWatch` reassembled pieces and returned protocol ACK (`Frames.ack(cmd=2, key=18, x=len, status=1)`) -> `CommandQueue` completed with `Result.Ok`.
+  6. Inbound cmd 5 health sync sequence: key 7 (sync start -> `SYNCING`), key 12 (day total: 8000 steps, 5.60 km, 240.00 kcal), key 8 (sync end -> `DONE`).
+  7. Verified `StatusSnapshot.format` correctly rendered the final session state.
+- Proves consistency only, not hardware (ground rule 6).
+- All checks pass: 61 Kotlin tests (26 :core + 35 :app), 150 Python tests, lint clean, privacy scan clean.
+
+## 2026-10-14 G4 Task 6: Self-review of app/ module (Antigravity, local)
+Checked all 21 files under `client/c900-android/app/` against safety checklist:
+1. All core state touched on main looper only: FIXED. Marshaled `WatchService.sendNotification` and `connectDevice` through `handler.post` so calls from `NotifyListener` (Binder thread) access `Session`, `CommandQueue`, and `DisconnectedMessageQueue` strictly on the main looper. All `BluetoothGattCallback` bodies in `GattLink` remain guarded and posted to `handler`.
+2. Every write goes through CommandQueue (acks via Session): PASS. All command writes flow through `CommandQueue.submit`, which chunks frames into ATT pieces via `Gatt.pieces` and queues them to `PacingScheduler`. ACKs are generated solely by `Session.onCommand` and queued as `GattOp.WritePiece`.
+3. No createBond: PASS. Grep confirmed 0 calls to `createBond` across `app/` and `core/`.
+4. Gatt.isDenied checked: PASS. Verified across `GattLink.dispatchAction`, `GattLink.executeOp`, `GattLink.findCharacteristic`, and `PacingScheduler.enqueue`.
+5. No logging of message text, names or addresses: PASS. Zero `Log.*` or `println` calls exist in `app/`. `privacy_scan.py --strict` returned 0 findings.
+6. elapsedRealtime for every timer: PASS. All clocks in `WatchService`, `CommandQueue`, `HealthSync`, `PacingScheduler`, and `NotificationDeduplicator` use `SystemClock.elapsedRealtime()`.
+7. No permission beyond manifest: PASS. Manifest strictly adheres to R10: `BLUETOOTH_SCAN (neverForLocation)`, `BLUETOOTH_CONNECT`, legacy Bluetooth (maxSdkVersion=30), `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE`, `POST_NOTIFICATIONS`, `BIND_NOTIFICATION_LISTENER_SERVICE`. Zero `INTERNET` permission.
+8. No feature sends on a timer: PASS. All timer runnables (`SCAN_TIMEOUT_MS`, `REFRESH_INTERVAL_MS`, `reconnectRunnable`, `tickRunnable`) only perform local state checks (GATT connect, UI text update, ack timeout fail, sync idle timeout). Zero feature frames are scheduled or sent on timers.
+
+Test counts: 61 Kotlin tests (26 :core + 35 :app), 150 Python tests, lint clean, privacy scan clean.
+
+## 2026-10-14 G4 Task 7: LIVE-APP-1 run sheet and final overnight batch report (Antigravity, local)
+- Created `targets/c900/tasks/LIVE-APP-1.md` defining strict run sheet for first live session on physical Android phone with owner present.
+- Configured budget: 1 connect, 4 info reads, at most 3 feature writes (find, time, one message), total <= 4 pieces, zero pairing/bonding, zero retries.
+- Documented pre-flight checklist, step-by-step test execution, abort conditions, and observation/recording requirements.
+- Sheet was NOT executed (ground rules 1, 2, 7).
+
+### Final Overnight Batch Report (Tasks 1-7)
+- Task status:
+  - Task 1 (Stale GATT callbacks): DONE (commit `822e344`). Guarded callback blocks against stale connection instances; stale disconnect closes stale gatt without notifying listener. 3 unit tests added.
+  - Task 2 (Device picker UI): DONE (commit `39f99e4`). `MainActivity` scans with `BLUETOOTH_SCAN (neverForLocation)` filtered to "Watch Ultra", plain Views, runtime permissions, starts `WatchService`. 2 unit tests added.
+  - Task 3 (Settings screen): DONE (commit `816aefc`). `NotificationSettings` SharedPreferences persistence for "push other apps" (default false) and per-type on/off switches, `SettingsActivity` plain Views, `NotifyListener` integration. 5 unit tests added.
+  - Task 4 (Status screen): DONE (commit `72cb3df`). `StatusActivity` displaying connection state, battery, ver, HealthSync day totals (km, kcal), writes budget (`writes / 200`). 4 unit tests added.
+  - Task 5 (End-to-end JVM test): DONE (commit `08f240e`). `EndToEndTest` driving Session + CommandQueue + PacingScheduler + HealthSync against `SimWatch` via fake link (connect, 4 info reads, notify enable, message send + ack, cmd 5 sync 7..12..8). Proves consistency only, not hardware. 1 end-to-end test added.
+  - Task 6 (Self-review): DONE (commit `07ebb80`). Audited all 21 files in `app/` against 8 safety items. Marshaled `WatchService.sendNotification` and `connectDevice` to main looper via `handler.post`. All items pass/fixed.
+  - Task 7 (LIVE-APP-1 run sheet): DONE. Wrote `targets/c900/tasks/LIVE-APP-1.md`.
+- Tasks skipped: 0.
+- Tasks reverted: 0.
+- Test counts:
+  - Kotlin tests: 61 tests passing (26 `:core` + 35 `:app`), 0 failures, 0 skipped.
+  - Python tests: 150 tests passing (`python3 -m unittest discover -s tests`).
+  - Repository linter: `python3 tools/rw.py lint` (0 problems).
+  - Strict privacy scan: `python3 tools/privacy_scan.py targets/c900 docs --strict` (0 findings).
+- Things only a live run can verify:
+  1. Real Android Bluetooth stack GATT connection, MTU negotiation, and characteristic discovery timing against real Bluetrum/JieLi BLE peripheral.
+  2. Real Android `BluetoothGattCallback.onCharacteristicWrite` callback latency and ATT pacing behavior on physical radio hardware.
+  3. Visual notification rendering, vibration pattern, and font rendering on physical watch display.
+  4. Real Android OS `NotificationListenerService` user permission grant lifecycle and background posting behavior during phone sleep/doze mode.
+  5. Real watch response to unsolicited `cmd 0x0E key 1` and `cmd 0x0C key 19` under Android OS Bluetooth stack (verifying no spontaneous OS pairing dialogs appear).
+  6. Real history sync (cmd 5) multi-record throughput and hourly step record decoding on real hardware.
+
+## 2026-10-14 Review of overnight batch (Claude, cloud)
+- Built and tested in the cloud: core 26, app 35 pass, debug APK assembles. Tasks 1-7 accepted.
+- Problem: LIVE-APP-1 steps 4-5 asked the owner to "trigger" Find and Time, but the app had no way to send them. Fixed: two buttons on the status screen, each one command through Commands/CommandQueue, ignored unless READY, never queued or repeated.
+- Problem: during a live run every enabled mapped app (all on by default) and up to 5 notifications queued before connect would be pushed, breaking the 3-write budget. Fixed in the run sheet: pre-flight turns off every type except SMS and silences other apps. Also noted that FD acks to inbound frames are writes not shown by the counter.

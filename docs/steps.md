@@ -425,6 +425,112 @@ Required by AGENTS.md.
 ## 2026-10-14 Review of owner-machine pass (Asia/Saigon)
 - **Step:** made `Session` follow the owner decision for inbound 0x0E key 1. **Decision:** cache the 6-byte classic MAC in memory and ack, no prompt; rejected: leaving code as is, also dropping the 0x0C key 19 prompt. **Rationale:** CLIENT-DESIGN and code disagreed; the decision covers 0x0E key 1 only, and 0x0C key 19 is an explicit pairing request. **Evidence:** owner decision in CLIENT-DESIGN 3.4. **Revisit if:** the owner wants classic audio pairing from the open client.
 
+## 2026-10-14 G4 Android app shell implementation (Asia/Saigon)
+- **Step:** Added `:app` module in `client/c900-android` configured with AGP 8.7.0, Kotlin 2.0.21, minSdk 26, targetSdk 35, single plain `MainActivity`, and dependency on `:core`. Configured user-space Android SDK via `local.properties`.
+  **Decision:** Minimal Android SDK framework classes without Compose or external UI libraries; rejected: Jetpack Compose.
+  **Rationale:** The G4 app shell goal is a headless/minimal container hosting background connection services that compiles to a debug APK without UI dependencies.
+  **Evidence:** [V] `:app:assembleDebug` and `:app:testDebugUnitTest` pass.
+  **Revisit if:** Full UI screens (Device, Settings, Health) are implemented in Phase 3b.
+- **Step:** Implemented `PacingScheduler` enforcing single in-flight GATT operation and 20 ms piece pacing.
+  **Decision:** Interval tracked from piece execution dispatch (`lastWriteAt`), scheduling subsequent writes after remaining interval; rejected: unpaced bursts or fire-and-forget.
+  **Rationale:** Bluetooth controller buffers drop packets or desync when ATT pieces arrive without pacing (I-16, R08 F-05); decouples scheduling from Android Bluetooth stack for JVM unit testing.
+  **Evidence:** [C] smali `const-wide/16 0x14` in send runnable; [V] `PacingSchedulerTest.testWritePiecesPaced20MsApart`.
+  **Revisit if:** Real HCI capture shows different write gap on C900 hardware.
+- **Step:** Added fail-closed `Gatt.isDenied(uuid)` checks across `GattLink.findCharacteristic`, `GattLink.executeOp`, and `PacingScheduler.enqueue`.
+  **Decision:** Refuse and drop any read, write, or descriptor notification write targeting denied OTA/DFU UUIDs (`0xFF00`, `0x18A8`, `*dcca9e`, `5610`); rejected: allowing caller-specified GATT UUIDs.
+  **Rationale:** Enforces strict OTA isolation (I-14, I-54); prevents companion client from ever touching OTA/firmware channels.
+  **Evidence:** [C] Invariants I-14, I-54; [V] `PacingSchedulerTest.testDeniedUuidsAreNeverQueued`.
+  **Revisit if:** Phase 4 reviewed OTA design is approved by owner.
+- **Step:** Implemented `WatchService` foreground service (`connectedDevice` type) owning `Session`, `CommandQueue`, `HealthSync`, and `GattLink`.
+  **Decision:** Reconnect delays set to 10000 ms on disconnect, 3000 ms on connect failure; rejected: immediate reconnect loop.
+  **Rationale:** PROTOCOL section 11 and smali `BaseReconnectBlueActivity.onDisConnected` (`const-wide/16 10000`) and `reConnectBlue` (`const-wide/16 3000`). Prevents phone battery drain and Bluetooth controller lockups.
+  **Evidence:** [C] smali constants 10000 ms / 3000 ms; PROTOCOL section 11.
+  **Revisit if:** Real device test indicates different backoff is needed.
+- **Step:** Implemented inbound 0x0E key 1 silent memory cache and 0x0C key 19 notification prompt in `WatchService`.
+  **Decision:** Silent memory cache for 0x0E key 1, notification prompt with default No for 0x0C key 19; rejected: calling `createBond` or prompting on 0x0E key 1.
+  **Rationale:** Owner decision 2026-10-14 in CLIENT-DESIGN 3.4 for unattended operation while sleeping; Invariant I-30 for zero spontaneous bonding.
+  **Evidence:** [C] CLIENT-DESIGN 3.4; Invariant I-30.
+  **Revisit if:** Owner requests interactive BT Classic audio pairing.
+- **Step:** Implemented `NotificationMapper` and `DisconnectedMessageQueue`.
+  **Decision:** Extended type table with Other=13; bounded FIFO dropping oldest beyond 5; zero logging of notification text; rejected: type 255 for other, unbounded queue.
+  **Rationale:** Feature byte 15 bit 0x02 is set on C900 Watch Ultra (`BleDataUtils.isNewMsgPushSetting`); smali `MsgPushHelper.onAppMsgReceive` caps queue to 5 (`size > 4 -> remove(0)`); privacy hard rule forbids logging private notification content.
+  **Evidence:** [C] smali `MsgPushHelper.getNewType` and `onAppMsgReceive`; [V] `NotificationMapperTest`, `DisconnectedMessageQueueTest`.
+  **Revisit if:** Feature map byte 15 bit 0x02 is clear on another device family.
+
+## 2026-10-14 G4 Android app shell review fixes (Asia/Saigon)
+- **Step:** Implemented notification filtering and deduplication in `NotificationMapper` and `NotifyListener`.
+  **Decision:** Default `PUSH_UNMAPPED = false` (`TYPE_IGNORE`), filter `FLAG_ONGOING_EVENT`, `FLAG_GROUP_SUMMARY`, and own package name, and deduplicate identical (package, title, body) within 2000 ms window via `NotificationDeduplicator`; rejected: forwarding unmapped apps as type 13 or forwarding ongoing notifications.
+  **Rationale:** Unfiltered ongoing notifications (music progress, file downloads) fire multiple updates per second, each generating 2-3 ATT chunks that exhaust the 200-write session budget within minutes and accelerate flash wear (violating ground rule 7); vendor app only pushes "other" when explicitly toggled on (`MsgPushHelper.getShowOtherNotify` [C]) and dedupes identical text (R04).
+  **Evidence:** [C] `MsgPushHelper.getShowOtherNotify` smali; [V] `NotificationFilterTest`, `NotificationMapperTest`.
+  **Revisit if:** User settings allow opting into unmapped notifications or customized deduplication interval.
+- **Step:** Handled terminal failures (`Session.Action.Fail`) in `GattLink` and `WatchService`.
+  **Decision:** Added `onTerminalFail` callback on `GattLink.Listener`; `WatchService` sets `isFailedTerminal = true`, aborts command queue, displays "Watch not supported" user notification, and blocks all reconnect attempts until `connectDevice()` is called again; rejected: routing `Action.Fail` to `onError` with 3 s reconnect delay.
+  **Rationale:** A failure action from `Session` indicates missing command service or unreviewed protocol version; reconnecting every 3 s against unknown or unsupported firmware risks unexpected device writes and battery drain.
+  **Evidence:** [C] `Session.discovered` and `readResult` failure actions; [V] `ReconnectControllerTest.testTerminalFailBlocksReconnect`.
+  **Revisit if:** Auto-reconnect with exponential backoff for known recoverable session errors is designed.
+- **Step:** Marshaled `BluetoothGattCallback` invocations to service looper in `GattLink`.
+  **Decision:** Post every `BluetoothGattCallback` callback body to `handler` (`Looper.getMainLooper()`); rejected: direct synchronous callback execution on Binder thread.
+  **Rationale:** Android invokes Bluetooth callbacks on arbitrary Binder threads, while `WatchService` interacts with `Session`, `CommandQueue`, and `HealthSync` from main looper (1 s periodic tick, reconnect timer, notification sender); posting to handler guarantees thread confinement and eliminates state corruption.
+  **Evidence:** [C] Android `BluetoothGattCallback` thread specification; [V] `PacingSchedulerTest`.
+  **Revisit if:** Background coroutines or explicit mutex locking is introduced in core.
+- **Step:** Switched timers to monotonic clock `SystemClock.elapsedRealtime()`.
+  **Decision:** Passed `{ SystemClock.elapsedRealtime() }` to `CommandQueue`, `HealthSync`, and `PacingScheduler`; rejected: `System.currentTimeMillis()`.
+  **Rationale:** Monotonic elapsed realtime prevents time skew from NTP adjustments, manual clock changes, or daylight savings that could prematurely trigger or starve ack timeouts (100 s), sync idle timeout (30 s), and piece pacing (20 ms).
+  **Evidence:** [C] Android `SystemClock.elapsedRealtime` API specification; [V] `PacingSchedulerTest`.
+  **Revisit if:** Target platform is decoupled from Android OS stubs.
+- **Step:** Cleaned up permissions in `AndroidManifest.xml` and documented legacy Bluetooth rationale.
+  **Decision:** Removed `RECEIVE_BOOT_COMPLETED` and `WAKE_LOCK`. Retained `android.permission.BLUETOOTH` and `android.permission.BLUETOOTH_ADMIN` with `android:maxSdkVersion="30"`; rejected: retaining unused permissions.
+  **Rationale:** Neither boot completion nor wake locks were approved in R10 or used by the app shell. The legacy `BLUETOOTH` and `BLUETOOTH_ADMIN` permissions with `maxSdkVersion="30"` are necessary because the project targets `minSdk 26` (Android 8.0-11 require legacy Bluetooth permissions prior to Android 12 API 31 `BLUETOOTH_SCAN`/`BLUETOOTH_CONNECT`).
+  **Evidence:** [C] Android API documentation for Bluetooth permissions across API levels 26-31.
+  **Revisit if:** `minSdk` is raised to 31+.
+- **Step:** Ensured immediate release of `BluetoothGatt` on disconnect or error status.
+  **Decision:** Call `gatt.disconnect()`, `gatt.close()`, and null `bluetoothGatt` in `onConnectionStateChange` on any error status or `STATE_DISCONNECTED`, and call `disconnect()` on `onError`; rejected: postponing `close()` until next connect call.
+  **Rationale:** Android has a strict limit on open GATT clients across processes (typically 32); failure to close on error disconnect leaks GATT resources and eventually causes status 133 / connection exhaustion.
+  **Evidence:** [C] Android `BluetoothGatt.close()` documentation.
+  **Revisit if:** Reconnect reuse of existing GATT instance is demonstrated on vendor stack.
+
+## 2026-10-14 G4 drop stale GATT callbacks after reconnect (Asia/Saigon)
+- **Step:** Guarded all `BluetoothGattCallback` bodies in `GattLink` against stale/replaced connections.
+  **Decision:** At the top of every `handler.post` callback block, check `if (gatt !== bluetoothGatt)`; in `onConnectionStateChange`, close the stale connection via `try { gatt.close() } catch (_: SecurityException) {}` without notifying `listener.onDisconnected` or modifying scheduler state; in other callbacks, return immediately; rejected: processing callbacks without verifying connection currency.
+  **Rationale:** When the service reconnects, queued or in-flight callbacks from the old connection executing on the main looper would falsely report disconnects for the new connection, abort active commands, and induce a reconnect loop; late write callbacks could also inappropriately complete new operations.
+  **Evidence:** [C] Android `BluetoothGattCallback` lifecycle; [V] `GattLinkTest.testStaleDisconnectAfterReconnectDoesNotCallListenerOnDisconnected`.
+  **Revisit if:** Multi-device concurrent GATT connections are introduced.
+
+## 2026-10-14 G4 Task 2: Device picker UI and BLE scanner (Asia/Saigon)
+- **Step:** Implemented `MainActivity` BLE device picker scanning for advertised name "Watch Ultra".
+  **Decision:** Filter BLE advertisements to `TARGET_DEVICE_NAME = "Watch Ultra"` (FACTS section 1 [C]) using `ScanFilter`, request runtime permissions `BLUETOOTH_SCAN` and `BLUETOOTH_CONNECT` on Android 12+ without location access, list discovered devices via plain Views (`LinearLayout`, `ListView`, `Button`, `TextView`, `ProgressBar`), start `WatchService` and dispatch `connectDevice` on item selection; rejected: scanning without name filter or using Jetpack Compose/external libraries.
+  **Rationale:** Ground rule: never connect to unexpected devices or firmware; R10 specifies `neverForLocation` flag; plain Views avoid library bloat.
+  **Evidence:** [C] FACTS section 1 advertised name "Watch Ultra"; [V] `DevicePickerTest`.
+  **Revisit if:** Support for multiple watch advertised names is added.
+- **Step:** Implemented `NotificationSettings` and `SettingsActivity` with SharedPreferences persistence.
+  **Decision:** Created `NotificationSettings` wrapping SharedPreferences for "push other apps" (default `false`) and per-type on/off switches (default `true` for mapped types), replaced static `PUSH_UNMAPPED` constant in `NotifyListener`, and built plain Views `SettingsActivity`; rejected: PreferenceFragment / AndroidX Preference library.
+  **Rationale:** Preserves zero-dependency plain View architecture while replacing hardcoded constants with user-configurable settings; keeps unmapped apps off by default to protect the 200-write session budget and watch flash (ground rule 7, vendor `MsgPushHelper.getShowOtherNotify` [C]).
+  **Evidence:** [C] `MsgPushHelper.getShowOtherNotify` smali; [V] `NotificationSettingsTest`.
+  **Revisit if:** User-facing preference categories or custom app mappings are requested.
+- **Step:** Implemented `StatusActivity` and `StatusSnapshot` formatting logic.
+  **Decision:** Built plain Views `StatusActivity` (`ScrollView`, `LinearLayout`, `TextView`, `Button`) auto-refreshing every 1000 ms via main looper Handler, formatting connection state, battery, protocol ver, HealthSync day totals (km, kcal), and session write counter (writes / 200); decoupled pure formatting into `StatusSnapshot`; rejected: polling via background thread or binding LiveData/Flow architecture.
+  **Rationale:** Main thread confinement is maintained by reading `WatchService.activeInstance` on main looper; pure `StatusSnapshot` model enables fast unit test coverage without Android UI stubs; visual feedback on the 200-write budget keeps session limits visible to the user (ground rule 7).
+  **Evidence:** [C] Invariants I-10 (protocol ver), I-24 (distance/cal scaling /1000), ground rule 7 (200-write cap); [V] `StatusSnapshotTest`.
+  **Revisit if:** Live data architecture (e.g. StateFlow) is required for multi-activity UI bindings.
+- **Step:** Implemented end-to-end JVM consistency test `EndToEndTest`.
+  **Decision:** Created `EndToEndTest` driving `Session`, `CommandQueue`, `PacingScheduler`, and `HealthSync` against a simulated peripheral (`SimWatch`) over a fake GATT link, validating connect, 4 info reads (`2a27`, `2a26`, `2a28`, `2a19`), notify enable, message transmission and protocol ACK matching, and inbound cmd 5 health sync sequence (keys 7..12..8); rejected: testing against mockito-stubbed android.bluetooth classes.
+  **Rationale:** Drives exact production logic across core state machines, pacing schedulers, and queue handlers deterministically without Android framework emulation; ground rule 6 explicitly specifies this proves consistency only, not hardware truth.
+  **Evidence:** [V] `EndToEndTest.testEndToEndSessionWithSimWatch`.
+  **Revisit if:** Multi-chunk inbound notification reassembly or dynamic GATT MTU changes are introduced.
+- **Step:** Conducted self-review audit across all `client/c900-android/app/` files and fixed thread marshaling.
+  **Decision:** Audited all 21 files in `app/` against the 8 safety requirements; fixed `WatchService.sendNotification` and `WatchService.connectDevice` to marshal through `handler.post` to guarantee that calls from `NotifyListener` (OS Binder thread) touch `Session`, `CommandQueue`, and `DisconnectedMessageQueue` strictly on the main looper; verified all other items pass (zero `createBond`, fail-closed `Gatt.isDenied`, zero logging, `elapsedRealtime` clocks, manifest-only permissions, zero timer sends); rejected: allowing direct concurrent calls from service entry points.
+  **Rationale:** `NotificationListenerService.onNotificationPosted` executes on a background Binder thread in Android; posting to main looper prevents multi-threaded corruption of core data structures.
+  **Evidence:** [C] Android `NotificationListenerService` threading documentation; [V] `testEndToEndSessionWithSimWatch`.
+  **Revisit if:** Multi-threaded synchronization primitives are added to `core`.
+- **Step:** Authored `targets/c900/tasks/LIVE-APP-1.md` run sheet for initial live device evaluation.
+  **Decision:** Specified strict budget (1 connect, 4 info reads, at most 3 feature writes: find, time, one message, <= 4 ATT pieces), zero pairing/bonding, explicit abort triggers, and scrubbed logging protocols for owner-attended execution; left unexecuted; rejected: executing against real hardware or leaving live session steps unscripted.
+  **Rationale:** Fulfills ground rules 1, 2, and 7; hardware contact requires explicit owner presence and adherence to tight write budgets.
+  **Evidence:** [C] Invariants I-18, I-21, I-35; ground rules 1, 2, 7; `targets/c900/tasks/LIVE-APP-1.md`.
+  **Revisit if:** Additional feature write commands (e.g. alarm, sedentary) are added to the client allowlist.
+
+## 2026-10-14 Review of overnight batch (Asia/Saigon)
+- **Step:** added Find and Sync time buttons (`WatchService.sendFind/sendTimeSync`). **Decision:** one tap = one command, only when READY; rejected: a debug intent or automatic send on connect. **Rationale:** LIVE-APP-1 needs them and an automatic send would be a write the owner did not ask for. **Revisit if:** the live run shows the watch needs time sync on every connect.
+- **Step:** LIVE-APP-1 pre-flight limits notification types to SMS. **Decision:** run-sheet step; rejected: a code-level "test mode". **Rationale:** the settings screen already does it; no new code path to review. **Revisit if:** a second live session needs other types.
 ## 2026-10-14 Cloud Android build (Asia/Saigon)
 - **Step:** built `c900/app-shell` (822e344) in the cloud. **Decision:** machine-local Gradle init script pointing Maven Central at Google's Central mirror; rejected: editing repo build files, the Gradle plugin portal (redirects to Central, still 429). **Rationale:** keeps the repo build unchanged while removing the owner as the only build machine. **Evidence:** [V] 26 core + 23 app tests pass, APK assembles. **Revisit if:** Maven Central stops rate-limiting this environment, or the mirror host is blocked.
 - **Step:** wrote the cloud Gradle setup as five steps in `docs/CLOUD-SETUP.md`, linked from skill `re-client-sim`. **Decision:** mark both with "(ReWork port candidate: ...)"; rejected: a separate list file. **Rationale:** the owner will later ask to port reusable skills to the ReWork base repo; a fixed phrase makes them findable with `grep -rn "ReWork port candidate"`. **Revisit if:** the port happens (remove the markers then).
