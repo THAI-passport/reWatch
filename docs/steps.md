@@ -570,5 +570,13 @@ Required by AGENTS.md.
   **Evidence:** [C] `ci.yml`, `client/c900-android/core/build.gradle.kts`; [V] 37 `:core` tests verified locally on JDK 21.
   **Revisit if:** Full Android SDK container is added to CI to test the `:app` module.
 
+## 2026-10-14 Batch 2 Task A6: Documentation updates (Asia/Saigon)
+- **Step:** updated `targets/c900/TARGET.md` gate table (G4 marked "done (built, not run on hardware)", G5 marked "ready for live run"), updated `targets/c900/HANDOFF.md` with complete evidence breakdown ([C] vs [I]/[U]), hardware settlement criteria, and exact next commands, and updated `client/c900-android/README.md` with build commands, adb install, Android runtime permissions, and notification configuration guide.
+  **Decision:** documented full state of both `:core` and `:app` modules, verified all gate definitions in TARGET.md, and documented step-by-step instructions for owner-attended Part B live run; rejected: leaving placeholders or stale "app not started" text in client README.
+  **Rationale:** Fulfills requirement A6 and AGENTS.md handoff requirements so an independent agent with no prior session context can execute Part B with the owner.
+  **Evidence:** [C] `TARGET.md`, `HANDOFF.md`, `client/c900-android/README.md`.
+  **Revisit if:** New hardware captures settle any remaining [U] fields.
+
+
 
 

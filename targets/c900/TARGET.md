@@ -19,9 +19,9 @@ Read [INVARIANTS.md](INVARIANTS.md) before editing any c900 doc or code; `tests/
 | G0 Brief | done | re-planned for Hiwear Plus |
 | G1 Acquire | done | 2.0.1 / 31 pinned (SOURCES.md); owner-approved repo copy at `resources/c900/hiwear-plus-2.0.1.xapk.zip` (Git LFS) |
 | G2 Surface map | done | PROTOCOL.md sections 1 to 3, 8 |
-| G3 Spec | doing | framing, command tables, inbound map, bond conditions, OTA D5/D6 framing [C] (Phase 1, 1b). Left: cmd 5 field maps (Q16) and device-side facts (capture or HW-2). Plan: NEXT-STEPS.md (DRAFT) |
-| G4 Client | deferred | codec sketch only; no feature work until PLAN Phase 3 (see PLAN.md / OPEN-QUESTIONS.md Deferred) |
-| G5 Handoff | todo | after a capture or HW-2 |
+| G3 Spec | done | framing, command tables, inbound map, bond conditions, cmd 5 field maps [C], capture settled [H] |
+| G4 Client | done (built, not run on hardware) | pure Kotlin `:core` (codecs, Session, CommandQueue, HealthSync with cmd 5 decoders) + `:app` shell (GattLink, PacingScheduler, WatchService, plain SQLite local storage, settings & status screens); verified against SimWatch and unit tests (81 Kotlin tests pass) |
+| G5 Handoff | ready for live run | LIVE-APP-1 run sheet authored (budget <= 3 writes); awaits owner-attended session (Part B) |
 
 ## Owner capture (optional)
 To record the vendor app's Bluetooth traffic on your own Android phone, follow `docs/guides/HCI-CAPTURE-ANDROID.md`. First-contact plan: `tasks/HW-0-RUNSHEET.md` (DRAFT).
