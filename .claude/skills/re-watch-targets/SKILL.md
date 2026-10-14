@@ -1,6 +1,6 @@
 ---
 name: re-watch-targets
-description: What is specific to smartwatches and bands when reverse engineering their companion apps - common vendor stacks (Jieli, Realtek, Nordic and DFU, Telink, Huami/Zepp), standard GATT services (battery, heart rate, current time, alert notification, ANCS and AMS on iOS), typical features, how watch face and OTA formats are usually structured, which probes are read-only safe, and what to record per model family. Load at gate G0 and G2 for any watch or band.
+description: What is specific to smartwatches and bands when reverse engineering their companion apps - vendor stacks (Jieli, Nordic, Realtek, Telink, Huami/Zepp, Bluetrum and others, with a signatures reference), white-label app families, standard GATT services, typical features, watch face and OTA shapes, which probes are read-only safe, and what to record per model family. Use when triaging a new smartwatch, fitness band or badge, identifying its SoC or white-label family, or checking which services are safe to read (gates G0 and G2).
 ---
 
 # re-watch-targets
@@ -18,11 +18,18 @@ Everything here is background knowledge, not evidence about your target. Claims 
 | Stack | How it shows up in an app |
 |---|---|
 | Jieli (JL) | `libjl_*` natives, `com.jieli.*` packages, service 0xAE00; see `re-jieli` |
-| Nordic nRF | Nordic DFU library (`no.nordicsemi.android.dfu`), DFU service 0xFE59 (secure) or the legacy 128-bit DFU service, Nordic UART service 6E400001-B5A3-F393-E0A9-E50E24DCCA9E |
-| Realtek | `com.realsil` or `com.realtek` packages, a Realtek OTA library; service ids vary [U] |
-| Telink | `com.telink` packages, a Telink OTA service with a 128-bit base [U] |
-| Huami / Zepp | 16-bit services 0xFEE0 and 0xFEE1, an auth step using AES with a per-device key obtained at pairing; protocol details vary by generation [U] |
-| Others (Actions, Bestechnic, Goodix, Dialog) | package names in the app and SDK docs; treat as unknown until read [U] |
+| Nordic nRF | `no.nordicsemi.android.dfu` (0xFE59) or mcumgr/SMP; Nordic UART 6E400001-... |
+| Realtek / Telink | `com.realsil` / `com.telink` packages and their OTA libraries |
+| Huami / Zepp | 0xFEE0 and 0xFEE1, AES auth with a per-device key from pairing |
+| Bluetrum, Actions, BES, Goodix, Dialog | package names and SDK docs; unknown until read [U] |
+UUIDs, OTA layers and read-only probes per stack: `.claude/skills/re-watch-targets/references/vendor-stacks.md`.
+
+## White-label app families ([W] names, [U] selectors)
+One app often serves many brands and several chip stacks; the stack is picked per device, not per app.
+| App family (examples) | What selects the protocol |
+|---|---|
+| FitCloudPro, DaFit, VeryFit, GloryFit, CO-FIT | advertised name prefix, a manufacturer-data product id, or a server catalog record keyed by either |
+Packages, selectors and public write-ups per family: `references/vendor-stacks.md`. For each: list every selector and the code path it picks (`re-ble-android-patterns`, "Name dispatch", "Server catalogs"), record app-to-model mapping in FACTS.md, and never assume two brands in one app share a protocol.
 
 ## Standard GATT services worth probing first (read-only safe, [W])
 | Service | UUID | Typical use |

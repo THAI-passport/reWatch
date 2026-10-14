@@ -602,7 +602,11 @@ Required by AGENTS.md.
   **Decision:** supported matching known peripheral address suffix `D7:CC` and name `"Watch"` while preserving privacy masking in UI; added unit test `testDeviceAddressMatchingWithKnownSuffix` (83 tests passing), compiled APK, and installed to test phone.
   **Rationale:** Overcomes empty name strings in Android device cache when peripheral advertises with legacy PDU without full local name.
   **Evidence:** [H] `AdapterService` dump shows target device `xx:xx:xx:xx:d7:cc` with `name=""`; [V] 83 Kotlin unit tests pass; `adb install -r` returned Success.
-  **Revisit if:** Owner reports discovered item `Watch Ultra #1` on screen.
+## 2026-10-14 Merge PR #3 (skills, tools, fail-closed write guard) into c900/batch-2 (Asia/Saigon)
+- **Step:** pulled and merged `origin/main` (PR #3 commit `5e12a2c`) into `c900/batch-2`. Resolved 9 file conflicts: kept both Kotlin and client Python test jobs in `.github/workflows/ci.yml`; preserved both C900 constant substitution pitfall and expanded iOS triage in `re-static`; merged Bluetrum OTA channel notes and transport patterns in `re-ble-android-patterns`; preserved vendor-stacks and C900 stack identification in `re-watch-targets` and `targets/c900/PROTOCOL.md`; combined fixed and log entries in `FIXES.md`, `LOG.md`, `README.md`, and `docs/SOP.md`.
+  **Decision:** updated `tools/rw.py:task_flags` with `EXTERNAL_FLAGS` (ignoring pip/git tool setup flags mentioned in guides) and closed file handles properly; updated `.privacy-allow` for published vendor SDK UUIDs and `scrub_capture.py` pseudonym addresses.
+  **Rationale:** Keeps the work branch synchronized with upstream repository tooling and test infrastructure while retaining all C900 Batch 2 code and live-run fixes.
+  **Evidence:** [V] 161 root Python tests pass (OK, 1 skipped); 36 t900-c900 client tests pass; 83 Kotlin unit tests pass; `python3 tools/rw.py lint` reports 0 problems; `python3 tools/privacy_scan.py targets docs --strict` reports 0 findings; `python3 tools/rw.py taskflags c900` reports 0 undefined flags.
 
 
 

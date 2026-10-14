@@ -18,6 +18,7 @@ jobs:
           python-version: "3.12"
       - run: python tools/rw.py lint
       - run: python -m unittest discover -s tests
+      - run: python -m unittest discover -s client/t900-c900/tests -t client/t900-c900
 
   core-test:
     runs-on: ubuntu-latest
@@ -32,4 +33,3 @@ jobs:
           gradle-version: "8.10.2"
       - run: gradle :core:test
         working-directory: client/c900-android
-
