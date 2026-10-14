@@ -6,6 +6,10 @@ import os
 from typing import Any, Dict, Optional, Tuple
 
 
+class GuardStateError(Exception):
+    """The ledger exists but cannot be read; writes are refused until a person fixes it."""
+
+
 class SafeWriteGuard:
     """Guard tracking flash write budget per device address."""
 
@@ -25,38 +29,42 @@ class SafeWriteGuard:
         addr_hash = hashlib.sha256(address.upper().encode("utf-8")).hexdigest()[:16]
         return os.path.join(self.state_dir, f"state_{addr_hash}.json")
 
+    @staticmethod
+    def _fresh_state() -> Dict[str, Any]:
+        return {
+            "date": datetime.date.today().isoformat(),
+            "daily_count": 0,
+            "last_write_timestamp": 0.0,
+            "last_payload_sha256": "",
+            "total_writes": 0,
+        }
+
     def _load_state(self, address: str) -> Dict[str, Any]:
+        """Load the ledger. A missing file is a fresh device; an unreadable one raises
+        GuardStateError so the budget is never silently reset (fail closed)."""
         path = self._state_file(address)
         if not os.path.isfile(path):
-            return {
-                "date": datetime.date.today().isoformat(),
-                "daily_count": 0,
-                "last_write_timestamp": 0.0,
-                "last_payload_sha256": "",
-                "total_writes": 0,
-            }
+            return self._fresh_state()
         try:
             with open(path, "r", encoding="utf-8") as f:
                 state = json.load(f)
-            today = datetime.date.today().isoformat()
-            if state.get("date") != today:
-                state["date"] = today
-                state["daily_count"] = 0
-            return state
-        except Exception:
-            return {
-                "date": datetime.date.today().isoformat(),
-                "daily_count": 0,
-                "last_write_timestamp": 0.0,
-                "last_payload_sha256": "",
-                "total_writes": 0,
-            }
+            if not isinstance(state, dict) or not isinstance(state.get("daily_count"), int):
+                raise ValueError("unexpected ledger contents")
+        except (OSError, ValueError) as exc:
+            raise GuardStateError(f"safe-write ledger {path} is unreadable ({exc}); inspect or remove it by hand") from exc
+        today = datetime.date.today().isoformat()
+        if state.get("date") != today:
+            state["date"] = today
+            state["daily_count"] = 0
+        return state
 
     def _save_state(self, address: str, state: Dict[str, Any]) -> None:
         os.makedirs(self.state_dir, exist_ok=True)
         path = self._state_file(address)
-        with open(path, "w", encoding="utf-8") as f:
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
             json.dump(state, f, indent=2)
+        os.replace(tmp, path)  # atomic: a crash never leaves a half-written ledger
 
     def check_allowed(
         self,
@@ -69,7 +77,10 @@ class SafeWriteGuard:
         if dry_run:
             return True, "Dry-run mode: write permitted without state mutation"
 
-        state = self._load_state(address)
+        try:
+            state = self._load_state(address)
+        except GuardStateError as exc:
+            return False, str(exc)
         now = datetime.datetime.now().timestamp()
         payload_hash = hashlib.sha256(payload).hexdigest()
 
