@@ -38,4 +38,12 @@ class DevicePickerTest {
         val shortMfg = byteArrayOf(0x12, 0x34)
         assertFalse(MainActivity.isMatchingDevice(null, shortMfg))
     }
+
+    @Test
+    fun testDeviceAddressMatchingWithKnownSuffix() {
+        assertTrue(MainActivity.isMatchingDevice(null, null, "11:22:33:44:D7:CC"))
+        assertTrue(MainActivity.isMatchingDevice(null, null, "11:22:33:44:d7:cc"))
+        assertFalse(MainActivity.isMatchingDevice(null, null, "11:22:33:44:D7:CD"))
+        assertFalse(MainActivity.isMatchingDevice(null, null, null))
+    }
 }

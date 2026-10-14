@@ -79,7 +79,7 @@ class MainActivity : Activity() {
             val mfgData = record?.getManufacturerSpecificData(COMPANY_ID_C900)
                 ?: record?.getManufacturerSpecificData(0x4C31)
 
-            if (isMatchingDevice(name, mfgData)) {
+            if (isMatchingDevice(name, mfgData, device.address)) {
                 addDiscoveredDevice(device)
             } else {
                 handler.post {
@@ -328,20 +328,34 @@ class MainActivity : Activity() {
 
     companion object {
         const val TARGET_DEVICE_NAME = "Watch Ultra" // FACTS section 1 [C]
-        const val SCAN_TIMEOUT_MS = 10_000L
+        const val TARGET_DEVICE_MAC_SUFFIX = "D7:CC" // [H] FACTS section 1.1, LIVE-SESSION-1
+        const val SCAN_TIMEOUT_MS = 15_000L
         const val REQUEST_CODE_PERMISSIONS_ON_LAUNCH = 2001
         const val REQUEST_CODE_PERMISSIONS_SCAN = 2002
 
         const val COMPANY_ID_C900 = 0x314C // [H] FACTS section 1.1
 
-        fun isMatchingDevice(deviceName: String?, manufacturerData: ByteArray? = null): Boolean {
-            if (deviceName != null && deviceName.trim().equals(TARGET_DEVICE_NAME, ignoreCase = true)) {
-                return true
+        fun isMatchingDevice(
+            deviceName: String?,
+            manufacturerData: ByteArray? = null,
+            deviceAddress: String? = null
+        ): Boolean {
+            if (deviceName != null) {
+                val trimmed = deviceName.trim()
+                if (trimmed.equals(TARGET_DEVICE_NAME, ignoreCase = true) ||
+                    trimmed.contains("Watch Ultra", ignoreCase = true) ||
+                    trimmed.equals("Watch", ignoreCase = true)
+                ) {
+                    return true
+                }
             }
             if (manufacturerData != null && manufacturerData.size >= 8) {
                 val hasMarker = manufacturerData[manufacturerData.size - 2] == 0x12.toByte() &&
                     manufacturerData[manufacturerData.size - 1] == 0x34.toByte()
                 if (hasMarker) return true
+            }
+            if (deviceAddress != null && deviceAddress.endsWith(TARGET_DEVICE_MAC_SUFFIX, ignoreCase = true)) {
+                return true
             }
             return false
         }

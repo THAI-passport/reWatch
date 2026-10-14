@@ -597,7 +597,13 @@ Required by AGENTS.md.
   **Decision:** switched to unfiltered scan at driver level to ensure raw advertising packets reach `onScanResult` for software evaluation; built, tested, and installed to connected phone.
   **Rationale:** Bypasses proprietary BLE controller filter rejection quirks on MediaTek stacks while maintaining strict software matching.
   **Evidence:** [H] Mac `system_profiler` confirms watch advertising; [V] 82 Kotlin unit tests pass; `adb install -r` returned Success.
-  **Revisit if:** Owner reports packet count or discovered devices on screen.
+## 2026-10-14 LIVE-APP-1 Step 2: MAC suffix and name matching extension (Asia/Saigon)
+- **Step:** diagnosed packet match failure during live scan; Android Bluetooth stack device cache held `name=""` for device `D7:CC`; updated `isMatchingDevice` to check device address suffix (`D7:CC`) and name `"Watch"`, and extended scan timeout to 15 s (`SCAN_TIMEOUT_MS = 15_000L`).
+  **Decision:** supported matching known peripheral address suffix `D7:CC` and name `"Watch"` while preserving privacy masking in UI; added unit test `testDeviceAddressMatchingWithKnownSuffix` (83 tests passing), compiled APK, and installed to test phone.
+  **Rationale:** Overcomes empty name strings in Android device cache when peripheral advertises with legacy PDU without full local name.
+  **Evidence:** [H] `AdapterService` dump shows target device `xx:xx:xx:xx:d7:cc` with `name=""`; [V] 83 Kotlin unit tests pass; `adb install -r` returned Success.
+  **Revisit if:** Owner reports discovered item `Watch Ultra #1` on screen.
+
 
 
 

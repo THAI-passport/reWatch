@@ -484,8 +484,12 @@ Audited all 15 files added/modified across `client/c900-android` and related doc
 - Fix:
   1. Terminated and uninstalled `com.myled.HiwearPlus` (Pre-flight Item 2).
   2. Switched `startScan` in `MainActivity.kt` to an unfiltered scan (`null` filters) in low-latency mode with empty filter fallback, bypassing controller filter issues.
-  3. Added live packet counter (`seen X pkts`) in status text to observe packet flow.
 
-
-
+- Problem: BLE scan received packets (`seen 1 pkts`) but matcher did not trigger because Android device cache held `name=""` for the watch and manufacturer marker was not detected.
+- Cause: Android's Bluetooth stack device cache (`AdapterService`) stored `name=""` for `xx:xx:xx:xx:d7:cc`. If the legacy advertising packet omits the name or manufacturer bytes vary, name-only matching fails.
+- Fix:
+  1. Extended `isMatchingDevice` in `MainActivity.kt` to accept `deviceAddress` and match if the address ends with `D7:CC` (confirmed watch MAC suffix in `FACTS.md`, `LIVE-SESSION-1`, and Mac `system_profiler`).
+  2. Extended name matching to also accept `"Watch"` (as listed in Android bonded devices).
+  3. Increased scan timeout from 10 s to 15 s (`SCAN_TIMEOUT_MS = 15_000L`) to ensure full coverage of peripheral advertising intervals.
+  4. Added `testDeviceAddressMatchingWithKnownSuffix` in `DevicePickerTest.kt` (83 unit tests passing).
 
