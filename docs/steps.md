@@ -582,7 +582,13 @@ Required by AGENTS.md.
   **Decision:** verified that all 6 safety checklist items passed cleanly; recorded test counts (81 Kotlin tests across `:core` and `:app`, 150 Python tests, 0 lint problems, 0 strict privacy scan findings) and documented the 4 hardware-only verification items; rejected: merging or pushing to main or opening an unrequested PR.
   **Rationale:** Fulfills requirement A7 and Ground Rules 1, 2, 3, 5, 7.
   **Evidence:** [C] Invariants I-10, I-14, I-15, I-16, I-18, I-21, I-30, I-35, I-54; [V] 81 Kotlin unit tests pass; `python tools/rw.py lint` (0 problems); `python tools/privacy_scan.py targets/c900 docs --strict` (0 findings).
-  **Revisit if:** Owner approves beginning Part B live execution with the watch.
+## 2026-10-14 LIVE-APP-1 Pre-Flight: Android 14/15 FGS SecurityException fix (Asia/Saigon)
+- **Step:** diagnosed crash on cold launch (`SecurityException: Starting FGS with type connectedDevice ... requires permissions: any of [BLUETOOTH_CONNECT, BLUETOOTH_SCAN]`) on Android 14+; updated `WatchService.startServiceForeground` to guard against missing BT runtime permissions, call FGS start in `onStartCommand` and `connectDevice`, and updated `MainActivity.onCreate` to check permissions on launch (`checkPermissionsOnLaunch`).
+  **Decision:** guarded `startForeground` in `WatchService` and added runtime permission prompt in `MainActivity.onCreate` rather than waiting for scan button click; re-tested, assembled APK, and installed via ADB to the connected device.
+  **Rationale:** Resolves cold launch crash on Android 14+ devices (targetSdk 35) while preserving zero-permission idle service bounds and safe FGS promotion.
+  **Evidence:** [C] Logcat exception trace; [V] 81 Kotlin unit tests pass; `gradle :app:assembleDebug` succeeds; `adb install -r` returned Success.
+  **Revisit if:** Owner reports any additional runtime permission or lifecycle issue during Step 1.
+
 
 
 

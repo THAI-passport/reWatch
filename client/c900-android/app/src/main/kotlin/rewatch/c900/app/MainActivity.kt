@@ -90,6 +90,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         val root = createViewHierarchy()
         setContentView(root)
+        checkPermissionsOnLaunch()
         bindWatchService()
     }
 
@@ -187,10 +188,17 @@ class MainActivity : Activity() {
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
     }
 
+    private fun checkPermissionsOnLaunch() {
+        val needed = requiredPermissions(this)
+        if (needed.isNotEmpty()) {
+            requestPermissions(needed.toTypedArray(), REQUEST_CODE_PERMISSIONS_ON_LAUNCH)
+        }
+    }
+
     private fun checkPermissionsAndStartScan() {
         val needed = requiredPermissions(this)
         if (needed.isNotEmpty()) {
-            requestPermissions(needed.toTypedArray(), REQUEST_CODE_PERMISSIONS)
+            requestPermissions(needed.toTypedArray(), REQUEST_CODE_PERMISSIONS_SCAN)
             return
         }
         startScan()
@@ -202,12 +210,16 @@ class MainActivity : Activity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_CODE_PERMISSIONS) {
-            val allGranted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+        val allGranted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+        if (requestCode == REQUEST_CODE_PERMISSIONS_SCAN) {
             if (allGranted) {
                 startScan()
             } else {
                 statusText.text = "Bluetooth scan permissions required"
+            }
+        } else if (requestCode == REQUEST_CODE_PERMISSIONS_ON_LAUNCH) {
+            if (!allGranted) {
+                statusText.text = "Permissions required to scan and connect"
             }
         }
     }
@@ -301,7 +313,8 @@ class MainActivity : Activity() {
     companion object {
         const val TARGET_DEVICE_NAME = "Watch Ultra" // FACTS section 1 [C]
         const val SCAN_TIMEOUT_MS = 10_000L
-        const val REQUEST_CODE_PERMISSIONS = 2001
+        const val REQUEST_CODE_PERMISSIONS_ON_LAUNCH = 2001
+        const val REQUEST_CODE_PERMISSIONS_SCAN = 2002
 
         fun isMatchingDevice(deviceName: String?): Boolean {
             return deviceName != null && deviceName.trim().equals(TARGET_DEVICE_NAME, ignoreCase = true)

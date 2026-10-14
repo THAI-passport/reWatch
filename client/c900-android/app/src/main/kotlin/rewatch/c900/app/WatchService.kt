@@ -1,5 +1,6 @@
 package rewatch.c900.app
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -7,6 +8,7 @@ import android.app.Service
 import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Binder
 import android.os.Build
@@ -204,6 +206,7 @@ class WatchService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        startServiceForeground()
         return START_STICKY
     }
 
@@ -224,6 +227,7 @@ class WatchService : Service() {
     }
     fun connectDevice(device: BluetoothDevice) {
         handler.post {
+            startServiceForeground()
             targetDevice = device
             reconnectController.onDeviceConnecting(true)
             session.connecting()
@@ -295,21 +299,32 @@ class WatchService : Service() {
     }
 
     private fun startServiceForeground() {
-        val notification = Notification.Builder(this, CHANNEL_SERVICE)
-            .setContentTitle("reWatch")
-            .setContentText("C900 companion service running")
-            .setOngoing(true)
-            .setSmallIcon(android.R.drawable.stat_notify_sync)
-            .build()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val hasBtConnect = checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+            val hasBtScan = checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED
+            if (!hasBtConnect && !hasBtScan) {
+                return
+            }
+        }
+        try {
+            val notification = Notification.Builder(this, CHANNEL_SERVICE)
+                .setContentTitle("reWatch")
+                .setContentText("C900 companion service running")
+                .setOngoing(true)
+                .setSmallIcon(android.R.drawable.stat_notify_sync)
+                .build()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                NOTIFICATION_ID_SERVICE,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
-            )
-        } else {
-            startForeground(NOTIFICATION_ID_SERVICE, notification)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(
+                    NOTIFICATION_ID_SERVICE,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+                )
+            } else {
+                startForeground(NOTIFICATION_ID_SERVICE, notification)
+            }
+        } catch (_: SecurityException) {
+            // Guard against edge cases where permissions were revoked
         }
     }
 
