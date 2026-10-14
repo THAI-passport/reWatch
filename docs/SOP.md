@@ -71,3 +71,13 @@ Build a software device from the spec to test the client, but a simulator writte
 ## Lessons from the T900/C900 benchmark pass (2026-10-12)
 - When the artifact is blocked, still finish G0 and seed PROTOCOL/FACTS from the third-party document as `[W]`, then build the pure codec and simulator ahead with every layout value a named constant. A hand-computed vector in a test is own arithmetic, not evidence; say so in the test.
 - Read a third-party frame layout for internal contradictions before coding it (here the ack header 0xFD versus the app header 0xDF, and what the length field counts); each goes into FACTS.md as a dispute.
+
+## Lessons from the skill review (2026-10-14)
+- Triage the app framework before grepping Java: Flutter keeps logic in `libapp.so`, React Native in `assets/index.android.bundle` (Hermes or JS). See `re-static`.
+- aarch64 unicorn: CPACR_EL1 FP/SIMD on, a TLS page for TPIDR_EL0, PLT hooks return to LR, return to a mapped sentinel. Harness and table in `re-native-emulation`.
+- Protobuf payloads: `protoc --decode_raw` on samples before naming fields. See `re-protocol-spec`.
+- Always record the ABI split of an XAPK/APKS; natives live only there.
+- Scrub capture summaries with `tools/scrub_capture.py` before committing; review the output by eye.
+- Check a task pack with `python tools/rw.py taskflags <slug>` before handing it off.
+- A skill description should say what a user would ask, not only which gate it belongs to.
+
