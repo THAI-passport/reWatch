@@ -367,3 +367,13 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Implemented `SettingsActivity` using plain Android Views (`ScrollView`, `LinearLayout`, `Switch`, `Button`).
 - Added unit tests in `NotificationSettingsTest` (5 tests) using in-memory `FakePreferences`.
 - All checks pass: 56 Kotlin tests (26 :core + 30 :app), 150 Python tests, lint clean, privacy scan clean.
+
+## 2026-10-14 G4 Task 4: Status screen (Antigravity, local)
+- Implemented `StatusActivity` displaying:
+  - Connection state from `Session.state` (IDLE, CONNECTING, DISCOVERING, READING_INFO, READY, DISCONNECTED, ERROR).
+  - Battery percentage from `Session.battery` (read from 0x2A19).
+  - Protocol version from `Session.ver` (read from 0x2A27).
+  - HealthSync day totals: distance in km (`distanceM / 1000.0`) and calories in kcal (`calorieCal / 1000.0`) from inbound cmd 5 key 12 frames.
+  - Session write counter: `CommandQueue.writes` of the 200 budget.
+- Decoupled snapshot formatting logic into `StatusSnapshot` with unit tests in `StatusSnapshotTest` (4 tests).
+- All checks pass: 60 Kotlin tests (26 :core + 34 :app), 150 Python tests, lint clean, privacy scan clean.
