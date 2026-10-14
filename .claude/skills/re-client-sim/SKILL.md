@@ -31,6 +31,8 @@ Per-device state file keyed by a hash of the address: write counter, last payloa
 - `python tools/rw.py lint` in CI. Workflow file: matrix of Python versions, install `.[test]`, run lint then `pytest -q`. Do not write test counts in prose.
 - Dependency discipline: every test needing an optional package or native artifact uses `importorskip` with a reason.
 
+- Gradle/Android clients built in a cloud session: follow `docs/CLOUD-SETUP.md` "Android / Kotlin (Gradle) builds" (allow the Google hosts, SDK via sdkmanager, machine-local Central mirror). Maven Central 429 is expected there; do not retry it. (ReWork port candidate: belongs in the ReWork base client skill.)
+
 ## First-contact tooling
 `probe --qualify` writes a report shaped like the hardware test template (masked addresses, git-ignored). Provide a hardware checklist: order of operations, what to capture, what a failure looks like, stop conditions.
 
