@@ -27,7 +27,8 @@ Signs: `com.google.protobuf`, generated message classes (`parseFrom`, `toByteArr
 1. Look for embedded descriptors first: `FileDescriptorProto` bytes or `.proto` names in dex strings and `.rodata`; generated Java classes carry field numbers as constants.
 2. Decode samples before naming fields: `printf '<hex>' | xxd -r -p | protoc --decode_raw` gives field numbers and wire types. Use built example payloads or capture payloads; strip any outer frame header and checksum first.
 3. Then name fields from the generated classes, field by field, and tag each `[C]` with the class.
-4. Plain TLV: write a table of tag, length width and endianness, value; test nesting on a real sample.
+4. nanopb in a stripped `.so`: find `pb_decode`/`pb_encode` by error strings (`"wrong wire type"`, `"invalid varint"`) or the varint loop; the descriptor is the 2nd argument (x1). nanopb 0.4+ uses `pb_msgdesc_t` with packed `field_info`; older versions a `pb_field_t` array ending in a zero entry. Easiest: call the library's own `pb_field_iter_begin`/`pb_field_iter_next` under the `re-native-emulation` harness and read tag, type and sizes from the iterator [W: nanopb docs/reference.md].
+5. Plain TLV: write a table of tag, length width and endianness, value; test nesting on a real sample.
 Write the schema into PROTOCOL.md as a table, not as copied `.proto` text from the vendor.
 
 ## Reading a vendor SDK's command layer

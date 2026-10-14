@@ -29,7 +29,7 @@ One app often serves many brands and several chip stacks; the stack is picked pe
 | App family (examples) | What selects the protocol |
 |---|---|
 | FitCloudPro, DaFit, VeryFit, GloryFit, CO-FIT | advertised name prefix, a manufacturer-data product id, or a server catalog record keyed by either |
-For each: list every selector and the code path it picks (`re-ble-android-patterns`, "Name dispatch", "Server catalogs"), record app-to-model mapping in FACTS.md, and never assume two brands in one app share a protocol.
+Packages, selectors and public write-ups per family: `references/vendor-stacks.md`. For each: list every selector and the code path it picks (`re-ble-android-patterns`, "Name dispatch", "Server catalogs"), record app-to-model mapping in FACTS.md, and never assume two brands in one app share a protocol.
 
 ## Standard GATT services worth probing first (read-only safe, [W])
 | Service | UUID | Typical use |

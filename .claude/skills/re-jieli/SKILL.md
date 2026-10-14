@@ -32,7 +32,7 @@ Device-pulled: CRC-16/XMODEM of the whole file, `NotifyPrepareEnv` (opcode 0x21)
 `libjl_fatfs` is a FAT implementation; a 16 MiB NOR flash with a FAT16 gallery is reported for one product [W]. Native libraries often hold no limits at all; that negative result is worth recording [C]. The SDK defines storage-management commands (browse, delete by name, format, read file). Treat delete and format as destructive: record their ids, never send them [U for payloads].
 
 ## OTA: read-only awareness
-`jl_bt_ota` implements firmware upgrade over the same transport. Study the flow to know what a watch accepts, and to know what to avoid. Never send OTA data to a real device; a bad image bricks it. Record only which service, characteristics and commands are involved.
+`jl_bt_ota` implements firmware upgrade over the same transport: the official OTA SDK docs put it on 0xAE00 itself, with the device pulling blocks (opcode 0xE5, seek and length) [W]. A service-UUID blocklist therefore does not stop Jieli OTA; the client must refuse the OTA opcodes. Study the flow to know what a watch accepts, and to know what to avoid. Never send OTA data to a real device; a bad image bricks it. Record only which service, characteristics and commands are involved.
 
 ## Emulating libjl_auth [V]
 Use `re-native-emulation` and its harness for the generic unicorn setup (CPACR_EL1, TPIDR_EL0, PLT hooks returning to LR). Jieli specifics:

@@ -22,8 +22,8 @@ Before decompiling, grep the target's PROTOCOL.md, FACTS.md and LOG.md for the a
 `unzip -l <apk or ABI split>` and decide what holds the logic; a thin Java shell greps empty.
 | Sign | Framework | Where the logic is |
 |---|---|---|
-| `lib/<abi>/libflutter.so` + `libapp.so` | Flutter | Dart AOT in `libapp.so`; Java has only `MethodChannel` bridges (`io.flutter.plugin.common.MethodChannel`). Find the BLE plugin (`flutter_blue_plus`, `flutter_reactive_ble` or a vendor plugin) on the Java side, then strings in `libapp.so`; `blutter` recovers Dart symbols if installed |
-| `assets/index.android.bundle` | React Native | Check the first bytes: Hermes bytecode has magic `c6 1f bc 03 c1 03 19 1f`; otherwise plain or minified JS. Hermes: `hbctool` or `hermes-dec` if installed, else string tables for UUIDs and opcodes. BLE goes through a native module (`react-native-ble-plx` and similar) |
+| `lib/<abi>/libflutter.so` + `libapp.so` | Flutter | Dart AOT in `libapp.so`; Java has only `MethodChannel` bridges (`io.flutter.plugin.common.MethodChannel`). Find the BLE plugin (`flutter_blue_plus`, `flutter_reactive_ble` or a vendor plugin) on the Java side, then strings in `libapp.so`; `blutter` recovers Dart symbols (Dart 2.17 to about 3.9 [W]) but needs network and a C++ compiler to build the matching Dart SDK; offline, fall back to strings in `libapp.so` and the MethodChannel boundary |
+| `assets/index.android.bundle` | React Native | Check the first bytes: Hermes bytecode has magic `c6 1f bc 03 c1 03 19 1f`; otherwise plain or minified JS. HBC version is the uint32 at offset 8; use `hermes-dec` (P1sec, HBC up to about 96-98); `hbctool` stops at HBC 76-89 [W]. Else string tables for UUIDs and opcodes. BLE goes through a native module (`react-native-ble-plx` and similar) |
 | `assets/www/`, Capacitor/Cordova | web | JS in plain files |
 | big vendor `.so` + thin Java | native core | `re-native-emulation` |
 | none of these | Java/Kotlin | continue below |
@@ -34,7 +34,7 @@ Record the framework in TARGET.md. Tools named here are optional; note in LOG.md
 
 ## Method (order matters)
 1. Manifest: permissions (BLUETOOTH_*, NEARBY_WIFI_*, CHANGE_WIFI_STATE, USB, foreground services) and exported components and deep links.
-2. Separate vendor code from SDKs. Bundled SDKs (a chip vendor's BLE/OTA SDK, Nordic, Telink, Jieli, Realtek) are documented behaviour to read, not novel findings; tag them `[C]` with "SDK: <package>" (capability, not proof of use). Stack signatures: `re-watch-targets/references/vendor-stacks.md`.
+2. Separate vendor code from SDKs. Bundled SDKs (a chip vendor's BLE/OTA SDK, Nordic, Telink, Jieli, Realtek) are documented behaviour to read, not novel findings; tag them `[C]` with "SDK: <package>" and cite the app's own call site; with no caller in app code write "unreferenced by app" so G3/G4 do not treat dead SDK code as target behaviour. Stack signatures: `re-watch-targets/references/vendor-stacks.md`.
 3. Find the UI action that connects or sends. From it, find how the app chooses a transport. Do not start from the first UUID hit.
 4. Transport details (UUIDs, write types, MTU, scan filters, ACKs, Wi-Fi): run the searches in `re-ble-android-patterns`. In short: all `UUID.fromString(` literals minus library noise; identify the vendor class holding service constants and everything that references it. Standard 0x2902 is the CCCD.
 5. GATT callback: MTU request, service/characteristic lookup order, descriptor writes, write type (`setWriteType`: 1 no-response, 2 default).
@@ -54,4 +54,4 @@ Record the framework in TARGET.md. Tools named here are optional; note in LOG.md
 Write into PROTOCOL.md a surface map: transports (with service UUIDs/ports/SSID patterns), characteristics and their roles, scan filters, command inventory (opcode, direction, source method), pacing constants, stored switches, unknowns. Every row tagged. Native libraries found go to the list for `re-native-emulation`.
 
 ## Other platforms
-iOS: class-dump / Ghidra on the decrypted Mach-O, `Info.plist` for Bluetooth usage strings; same method. Desktop: strings and import tables first. Web/Electron: unpack asar and read JS, endpoints are plain.
+iOS: first `otool -l <binary> | grep -A4 LC_ENCRYPTION_INFO`; `cryptid 1` means FairPlay-encrypted code: stop and ask the owner for a decrypted IPA, still read `Info.plist`, usage strings and bundled assets. On a decrypted binary grep selectors `scanForPeripheralsWithServices:`, `discoverCharacteristics:forService:`, `writeValue:forCharacteristic:type:`, `setNotifyValue:forCharacteristic:`, `UUIDWithString:`; class-dump or Ghidra; same method. Desktop: strings and import tables first. Web/Electron: unpack asar and read JS, endpoints are plain.
