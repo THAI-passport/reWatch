@@ -502,6 +502,8 @@ Required by AGENTS.md.
   **Rationale:** Ground rule: never connect to unexpected devices or firmware; R10 specifies `neverForLocation` flag; plain Views avoid library bloat.
   **Evidence:** [C] FACTS section 1 advertised name "Watch Ultra"; [V] `DevicePickerTest`.
   **Revisit if:** Support for multiple watch advertised names is added.
-
-
-
+- **Step:** Implemented `NotificationSettings` and `SettingsActivity` with SharedPreferences persistence.
+  **Decision:** Created `NotificationSettings` wrapping SharedPreferences for "push other apps" (default `false`) and per-type on/off switches (default `true` for mapped types), replaced static `PUSH_UNMAPPED` constant in `NotifyListener`, and built plain Views `SettingsActivity`; rejected: PreferenceFragment / AndroidX Preference library.
+  **Rationale:** Preserves zero-dependency plain View architecture while replacing hardcoded constants with user-configurable settings; keeps unmapped apps off by default to protect the 200-write session budget and watch flash (ground rule 7, vendor `MsgPushHelper.getShowOtherNotify` [C]).
+  **Evidence:** [C] `MsgPushHelper.getShowOtherNotify` smali; [V] `NotificationSettingsTest`.
+  **Revisit if:** User-facing preference categories or custom app mappings are requested.

@@ -73,8 +73,10 @@ class NotifyListener : NotificationListenerService() {
 
         if (NotificationFilter.shouldFilter(n.flags, pkg, packageName)) return
 
-        val type = NotificationMapper.mapPackage(pkg)
+        val settings = NotificationSettings.fromContext(this)
+        val type = NotificationMapper.mapPackage(pkg, pushUnmapped = settings.pushOtherApps)
         if (type == NotificationMapper.TYPE_IGNORE) return
+        if (!settings.isTypeEnabled(type)) return
 
         val extras = n.extras ?: return
         val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""

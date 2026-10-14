@@ -360,5 +360,10 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
 - Added unit tests in `DevicePickerTest` (2 tests).
 - All checks pass: 51 Kotlin tests (26 :core + 25 :app), 150 Python tests, lint clean, privacy scan clean.
 
-
-
+## 2026-10-14 G4 Task 3: Settings screen (Antigravity, local)
+- Implemented `NotificationSettings` backed by `SharedPreferences` with `pushOtherApps` (off by default) and per-type on/off switches for all 23 known notification categories.
+- Replaced static `PUSH_UNMAPPED` constant in `NotifyListener` with runtime query to `NotificationSettings.pushOtherApps`.
+- Added per-type enablement check (`settings.isTypeEnabled(type)`) in `NotifyListener` before dispatching message frames.
+- Implemented `SettingsActivity` using plain Android Views (`ScrollView`, `LinearLayout`, `Switch`, `Button`).
+- Added unit tests in `NotificationSettingsTest` (5 tests) using in-memory `FakePreferences`.
+- All checks pass: 56 Kotlin tests (26 :core + 30 :app), 150 Python tests, lint clean, privacy scan clean.
