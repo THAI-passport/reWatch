@@ -587,7 +587,13 @@ Required by AGENTS.md.
   **Decision:** guarded `startForeground` in `WatchService` and added runtime permission prompt in `MainActivity.onCreate` rather than waiting for scan button click; re-tested, assembled APK, and installed via ADB to the connected device.
   **Rationale:** Resolves cold launch crash on Android 14+ devices (targetSdk 35) while preserving zero-permission idle service bounds and safe FGS promotion.
   **Evidence:** [C] Logcat exception trace; [V] 81 Kotlin unit tests pass; `gradle :app:assembleDebug` succeeds; `adb install -r` returned Success.
-  **Revisit if:** Owner reports any additional runtime permission or lifecycle issue during Step 1.
+## 2026-10-14 LIVE-APP-1 Step 2: BLE scanner filter and manufacturer data matching (Asia/Saigon)
+- **Step:** diagnosed "no devices found" during BLE scan despite watch being active and visible to Mac Bluetooth; updated `MainActivity.kt` to use composite scan filters (`TARGET_DEVICE_NAME`, company ID `0x314C`, and catch-all `ScanFilter`) and extended `isMatchingDevice` to match either the target device name or manufacturer data carrying the C900 marker bytes (`0x12, 0x34`).
+  **Decision:** supported both local name and company 0x314C manufacturer data matching in software, added `testManufacturerDataMatchingWithMarker` unit test in `DevicePickerTest.kt`, re-tested (82 tests passing), and re-installed debug APK via ADB to test phone.
+  **Rationale:** Resolves packet dropping on Android BLE controllers when the peripheral transmits device names in Scan Response (`SCAN_RSP`) packets rather than primary `ADV_IND` packets.
+  **Evidence:** [H] `SPBluetoothDataType` confirms watch actively advertising; [C] `FACTS.md` section 1.1 company ID `0x314C` + `12 34`; [V] 82 Kotlin tests pass; `adb install -r` returned Success.
+  **Revisit if:** Owner reports discovered device list behavior during Step 2.
+
 
 
 

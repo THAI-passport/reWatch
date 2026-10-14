@@ -67,13 +67,15 @@ class MainActivity : Activity() {
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             val device = result?.device ?: return
-            val name = result.scanRecord?.deviceName ?: try {
+            val record = result.scanRecord
+            val name = record?.deviceName ?: try {
                 device.name
             } catch (_: SecurityException) {
                 null
             }
+            val mfgData = record?.getManufacturerSpecificData(COMPANY_ID_C900)
 
-            if (isMatchingDevice(name)) {
+            if (isMatchingDevice(name, mfgData)) {
                 addDiscoveredDevice(device)
             }
         }
@@ -245,15 +247,17 @@ class MainActivity : Activity() {
         progressBar.visibility = View.VISIBLE
         statusText.text = "Scanning for $TARGET_DEVICE_NAME..."
 
-        val filter = ScanFilter.Builder()
-            .setDeviceName(TARGET_DEVICE_NAME)
-            .build()
+        val filters = listOf(
+            ScanFilter.Builder().setDeviceName(TARGET_DEVICE_NAME).build(),
+            ScanFilter.Builder().setManufacturerData(COMPANY_ID_C900, byteArrayOf()).build(),
+            ScanFilter.Builder().build()
+        )
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
 
         try {
-            scanner.startScan(listOf(filter), settings, scanCallback)
+            scanner.startScan(filters, settings, scanCallback)
             handler.postDelayed({ stopScan() }, SCAN_TIMEOUT_MS)
         } catch (_: SecurityException) {
             statusText.text = "SecurityException during BLE scan"
@@ -316,8 +320,18 @@ class MainActivity : Activity() {
         const val REQUEST_CODE_PERMISSIONS_ON_LAUNCH = 2001
         const val REQUEST_CODE_PERMISSIONS_SCAN = 2002
 
-        fun isMatchingDevice(deviceName: String?): Boolean {
-            return deviceName != null && deviceName.trim().equals(TARGET_DEVICE_NAME, ignoreCase = true)
+        const val COMPANY_ID_C900 = 0x314C // [H] FACTS section 1.1
+
+        fun isMatchingDevice(deviceName: String?, manufacturerData: ByteArray? = null): Boolean {
+            if (deviceName != null && deviceName.trim().equals(TARGET_DEVICE_NAME, ignoreCase = true)) {
+                return true
+            }
+            if (manufacturerData != null && manufacturerData.size >= 8) {
+                val hasMarker = manufacturerData[manufacturerData.size - 2] == 0x12.toByte() &&
+                    manufacturerData[manufacturerData.size - 1] == 0x34.toByte()
+                if (hasMarker) return true
+            }
+            return false
         }
 
         fun requiredPermissions(context: Context): List<String> {

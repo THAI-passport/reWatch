@@ -25,4 +25,17 @@ class DevicePickerTest {
         assertFalse(MainActivity.isMatchingDevice(""))
         assertFalse(MainActivity.isMatchingDevice("   "))
     }
+
+    @Test
+    fun testManufacturerDataMatchingWithMarker() {
+        val validMfg = byteArrayOf(0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x12, 0x34)
+        assertTrue(MainActivity.isMatchingDevice(null, validMfg))
+        assertTrue(MainActivity.isMatchingDevice("Unknown", validMfg))
+
+        val invalidMarker = byteArrayOf(0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x12, 0x35)
+        assertFalse(MainActivity.isMatchingDevice(null, invalidMarker))
+
+        val shortMfg = byteArrayOf(0x12, 0x34)
+        assertFalse(MainActivity.isMatchingDevice(null, shortMfg))
+    }
 }

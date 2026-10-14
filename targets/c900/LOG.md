@@ -471,12 +471,21 @@ Audited all 15 files added/modified across `client/c900-android` and related doc
   3. Real watch handling of unsolicited 0x0E key 1 and 0x0C key 19 on Android OS BLE stack without spontaneous pairing dialogs.
   4. Real multi-frame health sync throughput and hourly record transmission on physical radio.
 
-### 2026-10-14 LIVE-APP-1 Pre-Flight Fix
+### 2026-10-14 LIVE-APP-1 Pre-Flight Fixes
 - Problem: App crashed immediately on first cold launch with `SecurityException: Starting FGS with type connectedDevice ... requires permissions: any of [BLUETOOTH_CONNECT, BLUETOOTH_SCAN, ...]` on Android 14+ (targetSdk 35).
 - Cause: `MainActivity.onCreate` bound `WatchService` with `BIND_AUTO_CREATE` before runtime permissions were requested, and `WatchService.onCreate` immediately called `startForeground(..., FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)` without checking whether Bluetooth permissions were already granted.
 - Fix:
   1. In `WatchService.startServiceForeground`, check whether `BLUETOOTH_CONNECT` or `BLUETOOTH_SCAN` is granted before starting FGS with type `connectedDevice`, and catch `SecurityException`.
   2. Call `startServiceForeground()` in `onStartCommand()` and `connectDevice()` once permissions are confirmed and device connection begins.
   3. In `MainActivity.onCreate`, trigger runtime permission checks on launch (`checkPermissionsOnLaunch()`) so dialogs appear immediately per Step 1.
+
+- Problem: Device scan timed out with "no devices found" on Android test phone even though watch was nearby and advertising.
+- Cause: Hardware-offloaded scan filter `ScanFilter.Builder().setDeviceName("Watch Ultra")` dropped advertisements on the phone's BLE controller because the watch transmits its name in the Scan Response packet (`SCAN_RSP`) rather than the primary advertising PDU (`ADV_IND`).
+- Fix:
+  1. Updated `startScan` in `MainActivity.kt` with composite scan filters: `setDeviceName`, `setManufacturerData(0x314C, byteArrayOf())`, and a catch-all `ScanFilter.Builder().build()`.
+  2. Updated `scanCallback` to inspect both `record.deviceName` / `device.name` and `record.getManufacturerSpecificData(0x314C)`.
+  3. Updated `isMatchingDevice` to match either `TARGET_DEVICE_NAME` or manufacturer data with C900 marker bytes `0x12, 0x34` (company `0x314C`).
+  4. Added unit tests in `DevicePickerTest.kt`.
+
 
 
