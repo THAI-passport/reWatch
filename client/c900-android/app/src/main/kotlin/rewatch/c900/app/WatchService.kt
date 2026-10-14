@@ -212,22 +212,26 @@ class WatchService : Service() {
         super.onDestroy()
     }
     fun connectDevice(device: BluetoothDevice) {
-        targetDevice = device
-        reconnectController.onDeviceConnecting(true)
-        session.connecting()
-        gattLink.connect(device)
+        handler.post {
+            targetDevice = device
+            reconnectController.onDeviceConnecting(true)
+            session.connecting()
+            gattLink.connect(device)
+        }
     }
 
     fun sendNotification(type: Int, title: String, body: String) {
-        if (session.state == Session.State.READY) {
-            try {
-                val cmd = session.commands().message(type, title, body)
-                commandQueue.submit(cmd) { /* completed */ }
-            } catch (_: IllegalStateException) {
+        handler.post {
+            if (session.state == Session.State.READY) {
+                try {
+                    val cmd = session.commands().message(type, title, body)
+                    commandQueue.submit(cmd) { /* completed */ }
+                } catch (_: IllegalStateException) {
+                    disconnectedQueue.enqueue(type, title, body)
+                }
+            } else {
                 disconnectedQueue.enqueue(type, title, body)
             }
-        } else {
-            disconnectedQueue.enqueue(type, title, body)
         }
     }
 

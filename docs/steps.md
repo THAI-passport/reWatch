@@ -517,3 +517,8 @@ Required by AGENTS.md.
   **Rationale:** Drives exact production logic across core state machines, pacing schedulers, and queue handlers deterministically without Android framework emulation; ground rule 6 explicitly specifies this proves consistency only, not hardware truth.
   **Evidence:** [V] `EndToEndTest.testEndToEndSessionWithSimWatch`.
   **Revisit if:** Multi-chunk inbound notification reassembly or dynamic GATT MTU changes are introduced.
+- **Step:** Conducted self-review audit across all `client/c900-android/app/` files and fixed thread marshaling.
+  **Decision:** Audited all 21 files in `app/` against the 8 safety requirements; fixed `WatchService.sendNotification` and `WatchService.connectDevice` to marshal through `handler.post` to guarantee that calls from `NotifyListener` (OS Binder thread) touch `Session`, `CommandQueue`, and `DisconnectedMessageQueue` strictly on the main looper; verified all other items pass (zero `createBond`, fail-closed `Gatt.isDenied`, zero logging, `elapsedRealtime` clocks, manifest-only permissions, zero timer sends); rejected: allowing direct concurrent calls from service entry points.
+  **Rationale:** `NotificationListenerService.onNotificationPosted` executes on a background Binder thread in Android; posting to main looper prevents multi-threaded corruption of core data structures.
+  **Evidence:** [C] Android `NotificationListenerService` threading documentation; [V] `testEndToEndSessionWithSimWatch`.
+  **Revisit if:** Multi-threaded synchronization primitives are added to `core`.

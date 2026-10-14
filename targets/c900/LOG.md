@@ -389,3 +389,16 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
   7. Verified `StatusSnapshot.format` correctly rendered the final session state.
 - Proves consistency only, not hardware (ground rule 6).
 - All checks pass: 61 Kotlin tests (26 :core + 35 :app), 150 Python tests, lint clean, privacy scan clean.
+
+## 2026-10-14 G4 Task 6: Self-review of app/ module (Antigravity, local)
+Checked all 21 files under `client/c900-android/app/` against safety checklist:
+1. All core state touched on main looper only: FIXED. Marshaled `WatchService.sendNotification` and `connectDevice` through `handler.post` so calls from `NotifyListener` (Binder thread) access `Session`, `CommandQueue`, and `DisconnectedMessageQueue` strictly on the main looper. All `BluetoothGattCallback` bodies in `GattLink` remain guarded and posted to `handler`.
+2. Every write goes through CommandQueue (acks via Session): PASS. All command writes flow through `CommandQueue.submit`, which chunks frames into ATT pieces via `Gatt.pieces` and queues them to `PacingScheduler`. ACKs are generated solely by `Session.onCommand` and queued as `GattOp.WritePiece`.
+3. No createBond: PASS. Grep confirmed 0 calls to `createBond` across `app/` and `core/`.
+4. Gatt.isDenied checked: PASS. Verified across `GattLink.dispatchAction`, `GattLink.executeOp`, `GattLink.findCharacteristic`, and `PacingScheduler.enqueue`.
+5. No logging of message text, names or addresses: PASS. Zero `Log.*` or `println` calls exist in `app/`. `privacy_scan.py --strict` returned 0 findings.
+6. elapsedRealtime for every timer: PASS. All clocks in `WatchService`, `CommandQueue`, `HealthSync`, `PacingScheduler`, and `NotificationDeduplicator` use `SystemClock.elapsedRealtime()`.
+7. No permission beyond manifest: PASS. Manifest strictly adheres to R10: `BLUETOOTH_SCAN (neverForLocation)`, `BLUETOOTH_CONNECT`, legacy Bluetooth (maxSdkVersion=30), `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE`, `POST_NOTIFICATIONS`, `BIND_NOTIFICATION_LISTENER_SERVICE`. Zero `INTERNET` permission.
+8. No feature sends on a timer: PASS. All timer runnables (`SCAN_TIMEOUT_MS`, `REFRESH_INTERVAL_MS`, `reconnectRunnable`, `tickRunnable`) only perform local state checks (GATT connect, UI text update, ack timeout fail, sync idle timeout). Zero feature frames are scheduled or sent on timers.
+
+Test counts: 61 Kotlin tests (26 :core + 35 :app), 150 Python tests, lint clean, privacy scan clean.
