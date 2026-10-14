@@ -549,3 +549,10 @@ Required by AGENTS.md.
   **Evidence:** [C] PROTOCOL.md §7.2, §11; [V] `CoreTest.collectAllRecordsAndExposeWhenDone` (37 Kotlin core unit tests pass).
   **Revisit if:** Owner approves outbound cmd 5 health record query triggers.
 
+## 2026-10-14 Batch 2 Task A3: Local storage in :app (Asia/Saigon)
+- **Step:** implemented plain SQLite storage helper in `client/c900-android/app/src/main/kotlin/rewatch/c900/app/HealthStorage.kt`, pure dedupe logic in `HealthDeduplicator.kt`, unit tests in `HealthDedupeTest.kt`, and wired persistence into `WatchService.kt`.
+  **Decision:** created 8 SQLite tables with composite primary keys `(date, time)` using `CONFLICT_REPLACE` via `android.database.sqlite`; decoupled deduplication logic into pure Kotlin functions in `HealthDeduplicator` to unit-test all record types without Android emulator or Room dependencies; rejected: adding Room or external ORM libraries, or exposing any network export API.
+  **Rationale:** Fulfills requirement A3; plain SQLite satisfies local persistence with zero added dependencies; pure function dedupe testing allows fast JVM test execution; composite primary keys guarantee idempotency across repeated health sync passes.
+  **Evidence:** [C] PROTOCOL.md §7.2, CLIENT-DESIGN §3.5; [V] `HealthDedupeTest` (8 dedupe unit tests pass, 43 app unit tests total).
+  **Revisit if:** Schema migration is needed for additional vendor record types.
+

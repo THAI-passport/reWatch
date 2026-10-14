@@ -88,6 +88,7 @@ class WatchService : Service() {
     lateinit var healthSync: HealthSync private set
     lateinit var commandQueue: CommandQueue private set
     lateinit var gattLink: GattLink private set
+    lateinit var healthStorage: HealthStorage private set
 
     val disconnectedQueue = DisconnectedMessageQueue()
     private var targetDevice: BluetoothDevice? = null
@@ -153,7 +154,13 @@ class WatchService : Service() {
         }
 
         override fun onCommandReceived(cmd: Frames.Inbound.Cmd, frameLen: Int) {
+            val wasSyncing = healthSync.state == HealthSync.State.SYNCING
             healthSync.onCommand(cmd)
+            if (wasSyncing && healthSync.state == HealthSync.State.DONE) {
+                healthSync.syncedData?.let { data ->
+                    healthStorage.saveSync(data)
+                }
+            }
             val actions = session.onCommand(cmd, frameLen)
             actions.forEach { gattLink.dispatchAction(it) }
         }
@@ -184,6 +191,7 @@ class WatchService : Service() {
 
         session = Session()
         healthSync = HealthSync(nowMs = { SystemClock.elapsedRealtime() })
+        healthStorage = HealthStorage(this)
         gattLink = GattLink(this, handler, gattListener)
         commandQueue = CommandQueue(
             write = { piece -> gattLink.writePiece(piece) },
@@ -209,6 +217,9 @@ class WatchService : Service() {
         reconnectController.cancelReconnect()
         handler.removeCallbacksAndMessages(null)
         gattLink.disconnect()
+        if (::healthStorage.isInitialized) {
+            healthStorage.close()
+        }
         super.onDestroy()
     }
     fun connectDevice(device: BluetoothDevice) {
