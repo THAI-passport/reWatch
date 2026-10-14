@@ -44,7 +44,23 @@ class HealthSync(private val nowMs: () -> Long, private val idleTimeoutMs: Long 
         val kcal get() = calorieCal / 1000.0
 
         companion object {
-            fun parse(p: ByteArray): DayTotal? = if (p.size < 12) null else DayTotal(u32(p, 0), u32(p, 4), u32(p, 8))
+            const val KEY = 12
+            fun parse(p: ByteArray): DayTotal? = try {
+                if (p.size < 12) null
+                else {
+                    val steps = u32(p, 0)
+                    val dist = u32(p, 4)
+                    val cal = u32(p, 8)
+                    if (steps > 240000L || dist > 192000L || cal > 4464000L) {
+                        DayTotal(0L, 0L, 0L)
+                    } else {
+                        DayTotal(steps, dist, cal)
+                    }
+                }
+            } catch (_: Throwable) {
+                null
+            }
+
             private fun u32(p: ByteArray, o: Int): Long =
                 (0 until 4).fold(0L) { acc, i -> (acc shl 8) or (p[o + i].toLong() and 0xFF) }
         }
