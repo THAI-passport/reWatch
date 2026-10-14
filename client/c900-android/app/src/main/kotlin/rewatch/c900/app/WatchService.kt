@@ -220,6 +220,21 @@ class WatchService : Service() {
         }
     }
 
+    /**
+     * One user-triggered command (LIVE-APP-1 steps 4-5). Only when READY; never queued, never repeated.
+     * Goes through Commands (allowlist) and CommandQueue (one in flight, write budget).
+     */
+    fun sendFind() = sendUserCommand { it.find(true) }
+
+    fun sendTimeSync() = sendUserCommand { it.time(java.time.LocalDateTime.now()) }
+
+    private fun sendUserCommand(build: (rewatch.c900.Commands) -> rewatch.c900.Commands.Out) {
+        handler.post {
+            if (session.state != Session.State.READY) return@post
+            commandQueue.submit(build(session.commands())) { /* result shown via status */ }
+        }
+    }
+
     fun sendNotification(type: Int, title: String, body: String) {
         handler.post {
             if (session.state == Session.State.READY) {

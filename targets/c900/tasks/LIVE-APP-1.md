@@ -14,7 +14,7 @@ First live evaluation of the open companion Android application (`client/c900-an
 | Connections | Exactly 1 GATT connection | Avoid connection churn and status 133 controller exhaustion |
 | Info Reads | Exactly 4 reads | `0x2A27` (HW rev), `0x2A26` (SW rev), `0x2A28` (Features), `0x2A19` (Battery) |
 | Feature Writes | At most 3 commands | 1 Find, 1 Time, 1 Message push (maximum 4 ATT pieces) |
-| Total Write Budget | < 5 pieces (hard cap: 200) | Strict adherence to flash wear protection (ground rule 7) |
+| Total Write Budget | < 5 command pieces (hard cap: 200). The app also acks every inbound frame (FD ack, 1 piece each, not counted by the status counter); those are expected | Strict adherence to flash wear protection (ground rule 7) |
 | Bonding | Zero pairing / bonding | No `createBond()` calls; 0x0E key 1 cached silently; 0x0C key 19 prompt default No |
 | Retries | Zero manual retries | A timeout, disconnect, or NAK is a protocol result |
 
@@ -35,6 +35,8 @@ Complete every check before starting:
   ```bash
   adb install -r app/build/outputs/apk/debug/app-debug.apk
   ```
+- [ ] Before connecting, open reWatch Settings: leave "push other apps" OFF and switch OFF every type except SMS. Otherwise any chat notification during the session, or one queued before connect (up to 5 are flushed when the session becomes ready), is an unplanned write.
+- [ ] Silence other apps on the phone for the session (Do Not Disturb with SMS allowed), so the only message push is the one in Step 6.
 - [ ] Grant Notification Listener access in Android Settings:
   `Settings -> Apps & notifications -> Special app access -> Notification access -> reWatch (toggle ON)`
 
@@ -65,7 +67,7 @@ Complete every check before starting:
 4. Verify ongoing persistent notification `reWatch: C900 companion service running` appears in Android notification shade.
 
 ### Step 4: Write 1 — Find Watch Alert
-1. Trigger Find command (1 piece, 10 bytes: cmd `0x02`, key `0x0B`, payload `0x01`).
+1. Tap **Find watch (1 write)** on the status screen once (1 piece, 10 bytes: cmd `0x02`, key `0x0B`, payload `0x01`).
 2. Observe Watch:
    - Screen turns on with alert text ("the bracelet has been found!").
    - Motor vibrates.
@@ -73,7 +75,7 @@ Complete every check before starting:
    - Writes budget counter increments to `1 / 200`.
 
 ### Step 5: Write 2 — Time Synchronization
-1. Trigger Time sync command (1 piece, 13 bytes: cmd `0x02`, key `0x01`, 4-byte packed time payload).
+1. Tap **Sync time (1 write)** on the status screen once (1 piece, 13 bytes: cmd `0x02`, key `0x01`, 4-byte packed time payload).
 2. Observe Watch:
    - Watch clock face updates to match the Android phone's current local time.
 3. Observe Status Screen:

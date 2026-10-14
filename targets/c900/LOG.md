@@ -432,3 +432,8 @@ Test counts: 61 Kotlin tests (26 :core + 35 :app), 150 Python tests, lint clean,
   4. Real Android OS `NotificationListenerService` user permission grant lifecycle and background posting behavior during phone sleep/doze mode.
   5. Real watch response to unsolicited `cmd 0x0E key 1` and `cmd 0x0C key 19` under Android OS Bluetooth stack (verifying no spontaneous OS pairing dialogs appear).
   6. Real history sync (cmd 5) multi-record throughput and hourly step record decoding on real hardware.
+
+## 2026-10-14 Review of overnight batch (Claude, cloud)
+- Built and tested in the cloud: core 26, app 35 pass, debug APK assembles. Tasks 1-7 accepted.
+- Problem: LIVE-APP-1 steps 4-5 asked the owner to "trigger" Find and Time, but the app had no way to send them. Fixed: two buttons on the status screen, each one command through Commands/CommandQueue, ignored unless READY, never queued or repeated.
+- Problem: during a live run every enabled mapped app (all on by default) and up to 5 notifications queued before connect would be pushed, breaking the 3-write budget. Fixed in the run sheet: pre-flight turns off every type except SMS and silences other apps. Also noted that FD acks to inbound frames are writes not shown by the counter.
