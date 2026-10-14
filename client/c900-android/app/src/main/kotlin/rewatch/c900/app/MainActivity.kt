@@ -81,12 +81,6 @@ class MainActivity : Activity() {
 
             if (isMatchingDevice(name, mfgData, device.address)) {
                 addDiscoveredDevice(device)
-            } else {
-                handler.post {
-                    if (discoveredDevices.isEmpty() && isScanning) {
-                        statusText.text = "Scanning for $TARGET_DEVICE_NAME... (seen $totalPacketsSeen)"
-                    }
-                }
             }
         }
 
@@ -283,7 +277,7 @@ class MainActivity : Activity() {
         scanButton.text = "Start Scan"
         progressBar.visibility = View.INVISIBLE
         val count = discoveredDevices.size
-        statusText.text = if (count > 0) "Found $count device(s)" else "Scan finished (seen $totalPacketsSeen pkts, 0 matched)"
+        statusText.text = if (count > 0) "Found $count device(s)" else "Scan finished (no matching device found)"
 
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
         val scanner = bluetoothManager?.adapter?.bluetoothLeScanner
