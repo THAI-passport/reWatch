@@ -507,3 +507,8 @@ Required by AGENTS.md.
   **Rationale:** Preserves zero-dependency plain View architecture while replacing hardcoded constants with user-configurable settings; keeps unmapped apps off by default to protect the 200-write session budget and watch flash (ground rule 7, vendor `MsgPushHelper.getShowOtherNotify` [C]).
   **Evidence:** [C] `MsgPushHelper.getShowOtherNotify` smali; [V] `NotificationSettingsTest`.
   **Revisit if:** User-facing preference categories or custom app mappings are requested.
+- **Step:** Implemented `StatusActivity` and `StatusSnapshot` formatting logic.
+  **Decision:** Built plain Views `StatusActivity` (`ScrollView`, `LinearLayout`, `TextView`, `Button`) auto-refreshing every 1000 ms via main looper Handler, formatting connection state, battery, protocol ver, HealthSync day totals (km, kcal), and session write counter (writes / 200); decoupled pure formatting into `StatusSnapshot`; rejected: polling via background thread or binding LiveData/Flow architecture.
+  **Rationale:** Main thread confinement is maintained by reading `WatchService.activeInstance` on main looper; pure `StatusSnapshot` model enables fast unit test coverage without Android UI stubs; visual feedback on the 200-write budget keeps session limits visible to the user (ground rule 7).
+  **Evidence:** [C] Invariants I-10 (protocol ver), I-24 (distance/cal scaling /1000), ground rule 7 (200-write cap); [V] `StatusSnapshotTest`.
+  **Revisit if:** Live data architecture (e.g. StateFlow) is required for multi-activity UI bindings.
