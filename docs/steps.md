@@ -489,3 +489,11 @@ Required by AGENTS.md.
   **Evidence:** [C] Android `BluetoothGatt.close()` documentation.
   **Revisit if:** Reconnect reuse of existing GATT instance is demonstrated on vendor stack.
 
+## 2026-10-14 G4 drop stale GATT callbacks after reconnect (Asia/Saigon)
+- **Step:** Guarded all `BluetoothGattCallback` bodies in `GattLink` against stale/replaced connections.
+  **Decision:** At the top of every `handler.post` callback block, check `if (gatt !== bluetoothGatt)`; in `onConnectionStateChange`, close the stale connection via `try { gatt.close() } catch (_: SecurityException) {}` without notifying `listener.onDisconnected` or modifying scheduler state; in other callbacks, return immediately; rejected: processing callbacks without verifying connection currency.
+  **Rationale:** When the service reconnects, queued or in-flight callbacks from the old connection executing on the main looper would falsely report disconnects for the new connection, abort active commands, and induce a reconnect loop; late write callbacks could also inappropriately complete new operations.
+  **Evidence:** [C] Android `BluetoothGattCallback` lifecycle; [V] `GattLinkTest.testStaleDisconnectAfterReconnectDoesNotCallListenerOnDisconnected`.
+  **Revisit if:** Multi-device concurrent GATT connections are introduced.
+
+

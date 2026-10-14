@@ -337,3 +337,19 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
   - Linter: `python3 tools/rw.py lint` (0 problems).
   - Privacy scan: `python3 tools/privacy_scan.py targets/c900 docs --strict` (0 findings).
 
+## 2026-10-14 G4 stale GATT callback race after reconnect (Antigravity, local)
+- Problem: Moving Bluetooth callbacks onto the main looper in GattLink introduced a race where callbacks from a closed/replaced BluetoothGatt instance could run after the service reconnected. A queued disconnect callback from the old connection would execute on the new connection, resetting the new session, failing active in-flight commands, and triggering an erroneous reconnect loop. Similarly, a late write callback from the old connection could complete an operation belonging to the new connection.
+- Cause: GattLink callbacks were posted to the handler without checking if `gatt === bluetoothGatt`.
+- Fix:
+  - Guarded every `handler.post` callback body in `GattLink.gattCallback` with `if (gatt !== bluetoothGatt) { ... return@post }`.
+  - In `onConnectionStateChange`, if `gatt !== bluetoothGatt`, closes the stale `gatt` via `gatt.close()` (caught for `SecurityException`) to prevent client leaks, while returning early without notifying `listener.onDisconnected` or touching `pacingScheduler`.
+  - In all other callbacks (`onServicesDiscovered`, `onCharacteristicRead`, `onCharacteristicWrite`, `onDescriptorWrite`, `onCharacteristicChanged`), returns immediately if `gatt !== bluetoothGatt`.
+  - Added `fun isCurrent(gatt: BluetoothGatt?): Boolean = gatt != null && gatt === bluetoothGatt`.
+  - Added unit tests in `GattLinkTest` verifying that a stale disconnect after reconnect does not call `listener.onDisconnected` and that stale callbacks from old connections are ignored.
+- Test counts:
+  - Kotlin: 26 `:core` tests + 23 `:app` tests = 49 JVM unit tests pass (0 failures).
+  - Python: 150 tests pass (`unittest discover -s tests`).
+  - Linter: `python3 tools/rw.py lint` (0 problems).
+  - Privacy scan: `python3 tools/privacy_scan.py targets/c900 docs --strict` (0 findings).
+
+
