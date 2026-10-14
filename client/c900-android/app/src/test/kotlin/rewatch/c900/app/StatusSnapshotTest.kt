@@ -80,4 +80,33 @@ class StatusSnapshotTest {
         assertEquals("1 / 200", snapshot.writesBudget)
         assertEquals(1, writtenPieces)
     }
+
+    @Test
+    fun testFormatsLast7DaysHistoryFromStorage() {
+        val history = listOf(
+            HealthStorage.DaySummary("2026-10-13", steps = 8000, distanceM = 5600, calorieCal = 240000),
+            HealthStorage.DaySummary("2026-10-12", steps = 10000, distanceM = 7000, calorieCal = 300000),
+            HealthStorage.DaySummary("2026-10-11", steps = 6000, distanceM = 4200, calorieCal = 180000)
+        )
+
+        val snapshot = StatusSnapshot.format(null, null, null, history)
+        assertEquals(3, snapshot.historyLast7Days.size)
+
+        val day1 = snapshot.historyLast7Days[0]
+        assertEquals("2026-10-13", day1.date)
+        assertEquals(8000L, day1.steps)
+        assertEquals("5.60 km", day1.distanceKm)
+        assertEquals("240.00 kcal", day1.caloriesKcal)
+        assertEquals("2026-10-13: 8000 steps, 5.60 km, 240.00 kcal", day1.displayText)
+
+        val day2 = snapshot.historyLast7Days[1]
+        assertEquals("2026-10-12", day2.date)
+        assertEquals("7.00 km", day2.distanceKm)
+        assertEquals("300.00 kcal", day2.caloriesKcal)
+
+        val day3 = snapshot.historyLast7Days[2]
+        assertEquals("2026-10-11", day3.date)
+        assertEquals("4.20 km", day3.distanceKm)
+        assertEquals("180.00 kcal", day3.caloriesKcal)
+    }
 }

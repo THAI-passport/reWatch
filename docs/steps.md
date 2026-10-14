@@ -556,3 +556,11 @@ Required by AGENTS.md.
   **Evidence:** [C] PROTOCOL.md §7.2, CLIENT-DESIGN §3.5; [V] `HealthDedupeTest` (8 dedupe unit tests pass, 43 app unit tests total).
   **Revisit if:** Schema migration is needed for additional vendor record types.
 
+## 2026-10-14 Batch 2 Task A4: Status screen 7-day history (Asia/Saigon)
+- **Step:** updated `client/c900-android/app/src/main/kotlin/rewatch/c900/app/StatusActivity.kt` to query `HealthStorage.getLast7DaysSummaries` and display steps, distance (km), and kcal for the last 7 days via plain Views; added unit tests in `StatusSnapshotTest.kt`.
+  **Decision:** added `DayHistoryItem` and `historyLast7Days` to `StatusSnapshot` so 7-day display formatting is decoupled and unit-tested without framework dependencies; rendered history dynamically using plain `LinearLayout` and `TextView` in `StatusActivity`; rejected: adding chart or complex external UI dependencies.
+  **Rationale:** Fulfills requirement A4; plain Views conform to the project UI style (no external UI libraries, no emoji, plain ASCII); formatting decoupling allows testing history presentation in pure JVM tests.
+  **Evidence:** [C] PROTOCOL.md §7.2, CLIENT-DESIGN §3.5; [V] `StatusSnapshotTest.testFormatsLast7DaysHistoryFromStorage` (44 app unit tests pass).
+  **Revisit if:** Owner requests graphical bar charts or daily breakdowns by hour.
+
+

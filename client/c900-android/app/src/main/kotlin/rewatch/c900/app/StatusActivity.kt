@@ -17,6 +17,18 @@ import rewatch.c900.Session
 import java.util.Locale
 
 /**
+ * Single day summary item for last 7 days display.
+ */
+data class DayHistoryItem(
+    val date: String,
+    val steps: Long,
+    val distanceKm: String,
+    val caloriesKcal: String
+) {
+    val displayText get() = "$date: $steps steps, $distanceKm, $caloriesKcal"
+}
+
+/**
  * Snapshot model of watch status displayed on the status screen.
  * Formatted cleanly for display and unit-testable without Android framework dependencies.
  */
@@ -26,29 +38,45 @@ data class StatusSnapshot(
     val version: String,
     val distanceKm: String,
     val caloriesKcal: String,
-    val writesBudget: String
+    val writesBudget: String,
+    val historyLast7Days: List<DayHistoryItem> = emptyList()
 ) {
     companion object {
         const val MAX_BUDGET = 200 // Ground rule 7 session write budget
 
-        fun from(service: WatchService?): StatusSnapshot {
+        fun from(service: WatchService?, storage: HealthStorage? = null): StatusSnapshot {
+            val history = try {
+                storage?.getLast7DaysSummaries()
+            } catch (_: Throwable) {
+                null
+            }
             if (service == null) {
+                val histItems = history?.map {
+                    DayHistoryItem(
+                        date = it.date,
+                        steps = it.steps,
+                        distanceKm = "%.2f km".format(Locale.US, it.km),
+                        caloriesKcal = "%.2f kcal".format(Locale.US, it.kcal)
+                    )
+                } ?: emptyList()
                 return StatusSnapshot(
                     connectionState = "Service not running",
                     battery = "—",
                     version = "—",
                     distanceKm = "—",
                     caloriesKcal = "—",
-                    writesBudget = "0 / $MAX_BUDGET"
+                    writesBudget = "0 / $MAX_BUDGET",
+                    historyLast7Days = histItems
                 )
             }
-            return format(service.session, service.healthSync, service.commandQueue)
+            return format(service.session, service.healthSync, service.commandQueue, history)
         }
 
         fun format(
             session: Session?,
             healthSync: HealthSync?,
-            commandQueue: CommandQueue?
+            commandQueue: CommandQueue?,
+            history: List<HealthStorage.DaySummary>? = null
         ): StatusSnapshot {
             val stateStr = when (session?.state) {
                 Session.State.READY -> "Connected (Ready)"
@@ -71,25 +99,36 @@ data class StatusSnapshot(
             val writes = commandQueue?.writes ?: 0
             val writesStr = "$writes / $MAX_BUDGET"
 
+            val historyItems = history?.map {
+                DayHistoryItem(
+                    date = it.date,
+                    steps = it.steps,
+                    distanceKm = "%.2f km".format(Locale.US, it.km),
+                    caloriesKcal = "%.2f kcal".format(Locale.US, it.kcal)
+                )
+            } ?: emptyList()
+
             return StatusSnapshot(
                 connectionState = stateStr,
                 battery = batteryStr,
                 version = verStr,
                 distanceKm = distStr,
                 caloriesKcal = calStr,
-                writesBudget = writesStr
+                writesBudget = writesStr,
+                historyLast7Days = historyItems
             )
         }
     }
 }
 
 /**
- * Status screen displaying live watch telemetry:
+ * Status screen displaying live watch telemetry and local history:
  * - Connection state (Session.state)
  * - Battery percentage (Session.battery)
  * - Protocol version (Session.ver)
  * - Last HealthSync day totals (km, kcal)
  * - Session write counter (CommandQueue.writes of the 200 budget)
+ * - Last 7 days of steps, distance (km), kcal from local storage (HealthStorage)
  *
  * Plain Views without external UI libraries.
  */
@@ -98,12 +137,14 @@ class StatusActivity : Activity() {
     private val handler = Handler(Looper.getMainLooper())
     private var isResumed = false
 
+    private lateinit var healthStorage: HealthStorage
     private lateinit var stateView: TextView
     private lateinit var batteryView: TextView
     private lateinit var verView: TextView
     private lateinit var distanceView: TextView
     private lateinit var caloriesView: TextView
     private lateinit var writesView: TextView
+    private lateinit var historyContainer: LinearLayout
 
     private val refreshRunnable = object : Runnable {
         override fun run() {
@@ -115,6 +156,7 @@ class StatusActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        healthStorage = HealthStorage(this)
         val root = createViewHierarchy()
         setContentView(root)
     }
@@ -132,14 +174,41 @@ class StatusActivity : Activity() {
         super.onPause()
     }
 
+    override fun onDestroy() {
+        if (::healthStorage.isInitialized) {
+            healthStorage.close()
+        }
+        super.onDestroy()
+    }
+
     fun updateViews() {
-        val snapshot = StatusSnapshot.from(WatchService.activeInstance)
+        val snapshot = StatusSnapshot.from(WatchService.activeInstance, healthStorage)
         stateView.text = snapshot.connectionState
         batteryView.text = snapshot.battery
         verView.text = snapshot.version
         distanceView.text = snapshot.distanceKm
         caloriesView.text = snapshot.caloriesKcal
         writesView.text = snapshot.writesBudget
+
+        // Render last 7 days history
+        historyContainer.removeAllViews()
+        if (snapshot.historyLast7Days.isEmpty()) {
+            val emptyView = TextView(this).apply {
+                text = "No history records stored yet."
+                textSize = 13f
+                setPadding(0, 4, 0, 8)
+            }
+            historyContainer.addView(emptyView)
+        } else {
+            for (item in snapshot.historyLast7Days) {
+                val row = TextView(this).apply {
+                    text = "${item.date}: ${item.steps} steps  |  ${item.distanceKm}  |  ${item.caloriesKcal}"
+                    textSize = 13f
+                    setPadding(0, 4, 0, 4)
+                }
+                historyContainer.addView(row)
+            }
+        }
     }
 
     private fun createViewHierarchy(): View {
@@ -181,6 +250,18 @@ class StatusActivity : Activity() {
         container.addView(createSectionHeader("Health Day Totals (cmd 5 key 12)"))
         distanceView = createValueRow(container, "Distance:")
         caloriesView = createValueRow(container, "Calories:")
+
+        // Last 7 Days History
+        container.addView(createSectionHeader("Last 7 Days (Local Storage)"))
+        historyContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, 4, 0, 16)
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+        container.addView(historyContainer)
 
         // Session Write Budget
         container.addView(createSectionHeader("Session Write Budget"))
