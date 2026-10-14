@@ -53,3 +53,9 @@ Problems hit while building reWatch's own tools (seeded from reWork, see docs/FR
 - Problem: the owner-supplied watch landscape mixes third-party claims with no tags, has a stray JSX tag and a garbled flash-size range, and tells the reader to build inside another repo.
 - Cause: external source; written for a different workflow.
 - Solution: stored as `docs/recon/budget-smartwatch-landscape.md` with a banner and flaws table; JSX tag converted; every claim is `[W]`; the build-location advice is overridden. Status: Solved for storage; claims stay unverified until G0/G1.
+
+## 2026-10-14, skill review: overlaps, missing generic rules, missing tools
+- Problem: an external review of `.claude/skills/` found gate-only trigger text, the gate map and tag legend held only in AGENTS.md, generic unicorn rules buried in `re-jieli`, duplicated text between `re-static` and `re-ble-android-patterns`, and promised steps (scrub, flag check) with no tool behind them. Its proposed tag legend redefined `[W]` and `[V]` and added `[C-SDK]`, which would have contradicted AGENTS.md.
+- Cause: skills grew per target; generic lessons stayed where they were first learned.
+- Solution: see FIXES.md "Skill suite review". The legend stays as in AGENTS.md; SDK code is `[C]` with an "SDK:" note. First flag-check attempt only read fenced blocks and found nothing because the task packs put commands in inline code spans; it now reads both. Status: Solved.
+
