@@ -229,4 +229,119 @@ class HealthSyncTest {
         now = 1000; h.tick(); assertEquals(HealthSync.State.TIMED_OUT, h.state)
         h.onCommand(cmd(8)); assertEquals(HealthSync.State.TIMED_OUT, h.state)   // late end marker ignored
     }
+
+    @Test fun collectAllRecordsAndExposeWhenDone() {
+        var now = 0L
+        val h = HealthSync({ now }, idleTimeoutMs = 1000)
+
+        // Hand-built vectors (own arithmetic, not a capture)
+        val pDate = byteArrayOf(0x35, 0x4D) // 2026-10-13
+
+        // Key 2: 194 bytes, hour 7 has 1200 steps
+        val pKey2 = ByteArray(194).apply {
+            this[0] = pDate[0]; this[1] = pDate[1]
+            for (i in 0 until 24) {
+                val off = 2 + 8 * i
+                if (i == 7) {
+                    this[off] = 0x04; this[off + 1] = 0xB0.toByte() // 1200 steps
+                    this[off + 2] = 0x03; this[off + 3] = 0x52        // 850 m
+                    this[off + 7] = 0x2D                              // 45 cal
+                } else {
+                    this[off] = 0xFF.toByte(); this[off + 1] = 0xFF.toByte()
+                }
+            }
+        }
+
+        // Key 4: 12 B HR: 2026-10-13, 07:30:00 (27000s), bpm 72
+        val pKey4 = byteArrayOf(0x35, 0x4D, 0, 1, 0, 0, 0x69, 0x78, 1, 0, 0, 72)
+
+        // Key 5: 12 B BP: 2026-10-13, 07:30:00, 118/76
+        val pKey5 = byteArrayOf(0x35, 0x4D, 0, 1, 0, 0, 0x69, 0x78, 0, 0, 118, 76)
+
+        // Key 9: 12 B Sleep: 2026-10-13, start 1380, light 240, deep 120, end 420, awake 15
+        val pKey9 = byteArrayOf(0x35, 0x4D, 0x05, 0x64, 0, 0xF0.toByte(), 0, 0x78, 0x01, 0xA4.toByte(), 0, 0x0F)
+
+        // Key 12: 12 B Day total: 8000 steps, 5600 m, 320 cal
+        val pKey12 = byteArrayOf(0, 0, 0x1F, 0x40, 0, 0, 0x15, 0xE0.toByte(), 0, 0, 0x01, 0x40)
+
+        // Key 13: 12 B Temp: 2026-10-13, 07:30:00, 36.6 C (deg 36, tenths 6)
+        val pKey13 = byteArrayOf(0x35, 0x4D, 0, 1, 0, 0, 0x69, 0x78, 1, 0, 36, 6)
+
+        // Key 14: 12 B SpO2: 2026-10-13, 07:30:00, 98%
+        val pKey14 = byteArrayOf(0x35, 0x4D, 0, 0, 0, 0, 0x69, 0x78, 0, 0, 0, 98)
+
+        // Key 15: 34 B Sport: 2026-10-13, 1 session, start 27000, end 28800, dur 1800, mode 0, hr 120, cal 250
+        val pKey15 = ByteArray(34).apply {
+            this[0] = 0x35; this[1] = 0x4D; this[3] = 1
+            this[6] = 0x69; this[7] = 0x78 // start 27000
+            this[10] = 0x70; this[11] = 0x80.toByte() // end 28800
+            this[14] = 0x07; this[15] = 0x08 // dur 1800
+            this[16] = 0 // mode run
+            this[17] = 120 // hr
+            this[21] = 0xFA.toByte() // 250 cal
+            this[24] = 0x0B; this[25] = 0xB8.toByte() // rawModeData1 = 3000
+        }
+
+        h.onCommand(cmd(7)); assertEquals(HealthSync.State.SYNCING, h.state)
+        h.onCommand(cmd(2, pKey2))
+        h.onCommand(cmd(4, pKey4))
+        h.onCommand(cmd(5, pKey5))
+        h.onCommand(cmd(9, pKey9))
+        h.onCommand(cmd(12, pKey12))
+        h.onCommand(cmd(13, pKey13))
+        h.onCommand(cmd(14, pKey14))
+        h.onCommand(cmd(15, pKey15))
+
+        // Records not exposed until DONE
+        assertNull(h.syncedData)
+        assertEquals(emptyList(), h.hourlySteps)
+        assertEquals(emptyList(), h.heartRates)
+
+        // End sync
+        h.onCommand(cmd(8)); assertEquals(HealthSync.State.DONE, h.state)
+
+        val data = h.syncedData
+        assertNotNull(data)
+        assertEquals(1, data!!.hourlySteps.size)
+        assertEquals(1, data.hourlySteps[0].records.size)
+        assertEquals(1200, data.hourlySteps[0].records[0].steps)
+
+        assertEquals(1, data.heartRates.size)
+        assertEquals(72, data.heartRates[0].records[0].bpm)
+
+        assertEquals(1, data.bloodPressures.size)
+        assertEquals(118, data.bloodPressures[0].records[0].systolic)
+        assertEquals(76, data.bloodPressures[0].records[0].diastolic)
+
+        assertEquals(1, data.sleepSummaries.size)
+        assertEquals(360, data.sleepSummaries[0].totalSleepMinutes)
+
+        assertEquals(8000L, data.dayTotal!!.steps)
+        assertEquals(5.6, data.dayTotal!!.km, 1e-6)
+
+        assertEquals(1, data.temperatures.size)
+        assertEquals(36.6, data.temperatures[0].records[0].temperatureC, 1e-6)
+
+        assertEquals(1, data.spo2Records.size)
+        assertEquals(98, data.spo2Records[0].percent)
+
+        assertEquals(1, data.sportSessions.size)
+        assertEquals(1800L, data.sportSessions[0].records[0].durationSeconds)
+        assertEquals(3000L, data.sportSessions[0].records[0].rawModeData1)
+
+        // Convenience accessors match
+        assertEquals(data.hourlySteps, h.hourlySteps)
+        assertEquals(data.heartRates, h.heartRates)
+        assertEquals(data.bloodPressures, h.bloodPressures)
+        assertEquals(data.sleepSummaries, h.sleepSummaries)
+        assertEquals(data.temperatures, h.temperatures)
+        assertEquals(data.spo2Records, h.spo2Records)
+        assertEquals(data.sportSessions, h.sportSessions)
+
+        // Starting a new sync clears everything
+        h.onCommand(cmd(7))
+        assertEquals(HealthSync.State.SYNCING, h.state)
+        assertNull(h.syncedData)
+        assertEquals(emptyList(), h.hourlySteps)
+    }
 }

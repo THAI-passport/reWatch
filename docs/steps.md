@@ -541,3 +541,11 @@ Required by AGENTS.md.
   **Rationale:** PROTOCOL.md §7 and C900-Q16 define strict field layouts and bounds in pure bytecode without Android framework dependencies; returning null on truncated or out-of-bounds payloads avoids crashes on unexpected BLE noise.
   **Evidence:** [C] PROTOCOL.md §7, C900-Q16, `DevBaseDataUtils.getDateBean`, `StepUtils.getSportBy1Hour`, `HrUtils.getHrDataList`, `DevBaseDataUtils.getBloodBean`, `SleepUtils.receiveTotalSleepData`, `TempUtils.getTempDataList`, `DevBaseDataUtils.getSportModeData`; [V] `HealthParsersTest` (10 unit & fuzz tests pass).
   **Revisit if:** A full-sync capture reveals multi-record payloads for key 14 or alternative field meanings for [U] mode data.
+
+## 2026-10-14 Batch 2 Task A2: Wire parsers into HealthSync (Asia/Saigon)
+- **Step:** wired all cmd 5 health record decoders into `client/c900-android/core/src/main/kotlin/rewatch/c900/HealthSync.kt` and verified via `CoreTest.collectAllRecordsAndExposeWhenDone`.
+  **Decision:** aggregated incoming cmd 5 payloads per key into internal record lists during sync, and exposed an immutable `SyncedHealthData` snapshot plus convenience accessors strictly upon reaching `State.DONE`; maintained `HealthSync` as strictly inbound-only with zero outbound cmd 5 requests; rejected: exposing partial/uncommitted sync records while still `SYNCING` or adding automated pull requests.
+  **Rationale:** Fulfills requirement A2 and prevents UI/storage layers from reading incomplete sync states; avoids unsolicited radio writes without explicit owner authorization.
+  **Evidence:** [C] PROTOCOL.md §7.2, §11; [V] `CoreTest.collectAllRecordsAndExposeWhenDone` (37 Kotlin core unit tests pass).
+  **Revisit if:** Owner approves outbound cmd 5 health record query triggers.
+
