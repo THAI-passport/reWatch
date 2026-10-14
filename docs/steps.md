@@ -563,4 +563,12 @@ Required by AGENTS.md.
   **Evidence:** [C] PROTOCOL.md §7.2, CLIENT-DESIGN §3.5; [V] `StatusSnapshotTest.testFormatsLast7DaysHistoryFromStorage` (44 app unit tests pass).
   **Revisit if:** Owner requests graphical bar charts or daily breakdowns by hour.
 
+## 2026-10-14 Batch 2 Task A5: CI GitHub Actions job for Kotlin core (Asia/Saigon)
+- **Step:** added `core-test` job to `.github/workflows/ci.yml` running `:core:test` on `ubuntu-latest` with JDK 21 and Gradle 8.10.2 via `gradle/actions/setup-gradle@v4`.
+  **Decision:** added a dedicated job running only `:core:test` on ubuntu-latest while leaving the `:app` module out and keeping existing multi-platform Python test matrix untouched; rejected: running `:app` tests in CI without Android SDK or modifying existing Python workflow jobs.
+  **Rationale:** Fulfills requirement A5; `:core` is pure JVM Kotlin and compiles/tests rapidly on standard runners without needing the heavy Android SDK; validates core protocol changes automatically in CI.
+  **Evidence:** [C] `ci.yml`, `client/c900-android/core/build.gradle.kts`; [V] 37 `:core` tests verified locally on JDK 21.
+  **Revisit if:** Full Android SDK container is added to CI to test the `:app` module.
+
+
 
