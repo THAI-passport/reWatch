@@ -12,7 +12,8 @@ The client selects its wire transport dynamically during GATT service discovery,
 | JieLi RCSP | Service `0000AE00-0000-1000-8000-00805F9B34FB`<br>Write Char `0000AE01-0000-1000-8000-00805F9B34FB`<br>Notify Char `0000AE02-0000-1000-8000-00805F9B34FB` | Advertised on T800 / T900 Ultra series watches paired with HiWatch Pro | [W] |
 | SIG Battery Service | Service `0x180F`, Char `0x2A19` (Battery Level) | Present on both C900 and T900 devices for passive status polling | [W] |
 | SIG Device Info | Service `0x180A`, Chars `0x2A24` (Model), `0x2A26` (Firmware) | Present on both for static device identification | [W] |
-| Prohibited OTA | Service `0x18A8` (Cus5610) / `0xAE10` / `0xAE20` | Blacklisted: writing triggers fatal bootloader bricking | [W] |
+| Prohibited OTA | Service `0x18A8` (Cus5610) / `0xAE10` / `0xAE20` | Blacklisted: writing triggers fatal bootloader bricking | [W], no primary source; kept blocked |
+| Prohibited OTA (JieLi) | RCSP opcodes `0xE0`-`0xEF` on the normal `0xAE00` link | Refused by `build_jieli_frame` and by both links (`is_rcsp_ota_frame`) | 0xE5 [W] Jieli OTA SDK docs (device-pulled blocks); rest of range [I] |
 
 ## 2. Framing
 

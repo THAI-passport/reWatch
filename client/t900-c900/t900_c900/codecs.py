@@ -140,8 +140,22 @@ def crc16_xmodem(data: bytes) -> int:
     return crc
 
 
+# JieLi OTA runs over the normal 0xAE00 RCSP link, not a separate service: the
+# official OTA SDK docs describe device-pulled firmware blocks with opcode 0xE5 [W].
+# The neighbouring 0xE0-0xEF range is blocked as a whole until the app's OTA command
+# table is read [I]. No code path may build or send these frames.
+PROHIBITED_RCSP_OPCODES = frozenset(range(0xE0, 0xF0))
+
+
+def is_rcsp_ota_frame(data: bytes) -> bool:
+    """True if data is (the first chunk of) an RCSP frame carrying an OTA opcode."""
+    return len(data) >= 5 and data[:3] == JIELI_HEADER and data[4] in PROHIBITED_RCSP_OPCODES
+
+
 def build_jieli_frame(flag: int, opcode: int, body: bytes) -> bytes:
-    """Build a JieLi RCSP wire frame."""
+    """Build a JieLi RCSP wire frame. Refuses OTA opcodes."""
+    if opcode in PROHIBITED_RCSP_OPCODES:
+        raise ValueError("HARD BLOCKED: RCSP opcode 0x%02X is in the OTA range" % opcode)
     body_len = len(body)
     header = JIELI_HEADER + bytes([flag, opcode, (body_len >> 8) & 0xFF, body_len & 0xFF])
     return header + body + JIELI_TRAILER

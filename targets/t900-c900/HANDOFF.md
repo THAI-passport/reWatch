@@ -54,5 +54,5 @@ Statement tags in [PROTOCOL.md](file:///Users/puredent/Desktop/reWatch/targets/t
    - Dial upload: test with a solid color test dial using safe-write protection.
 
 ## Risks and Bricking Hazards
-- **OTA Bootloader Deathtrap (CRITICAL HAZARD)**: Never issue write commands to Service `0x18A8` (Cus5610) or JieLi OTA `0xAE10`. Bluetrum and JieLi budget bootloaders lack write-protection boundaries and will overwrite running code mid-transfer, bricking the device permanently. The client hard-blacklists these services.
+- **OTA Bootloader Deathtrap (CRITICAL HAZARD)**: Never issue write commands to Service `0x18A8` (Cus5610) or JieLi OTA `0xAE10` (both unsourced, kept blocked). JieLi OTA is documented on `0xAE00` itself, so the client also refuses RCSP opcodes `0xE0`-`0xEF`. Bluetrum and JieLi budget bootloaders lack write-protection boundaries and will overwrite running code mid-transfer, bricking the device permanently. The client hard-blacklists these services.
 - **Flash Memory Wear**: Budget watches use low-grade SPI NOR flash (2 MB to 8 MB) with limited erase cycle endurance. The safe-write guard enforces a maximum daily write cap (50 writes) and delta skipping to prevent wear.
