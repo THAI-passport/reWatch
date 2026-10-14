@@ -577,6 +577,14 @@ Required by AGENTS.md.
   **Evidence:** [C] `TARGET.md`, `HANDOFF.md`, `client/c900-android/README.md`.
   **Revisit if:** New hardware captures settle any remaining [U] fields.
 
+## 2026-10-14 Batch 2 Task A7: Self-review and batch report (Asia/Saigon)
+- **Step:** executed systematic self-review across all Batch 2 changes against the 6 safety items (no new opcodes/ALLOWLIST, no createBond, no logging of text/names/addresses, elapsedRealtime for timers, main looper core state, zero network permission); recorded checklist outcomes and full Batch 2 report in `targets/c900/LOG.md`.
+  **Decision:** verified that all 6 safety checklist items passed cleanly; recorded test counts (81 Kotlin tests across `:core` and `:app`, 150 Python tests, 0 lint problems, 0 strict privacy scan findings) and documented the 4 hardware-only verification items; rejected: merging or pushing to main or opening an unrequested PR.
+  **Rationale:** Fulfills requirement A7 and Ground Rules 1, 2, 3, 5, 7.
+  **Evidence:** [C] Invariants I-10, I-14, I-15, I-16, I-18, I-21, I-30, I-35, I-54; [V] 81 Kotlin unit tests pass; `python tools/rw.py lint` (0 problems); `python tools/privacy_scan.py targets/c900 docs --strict` (0 findings).
+  **Revisit if:** Owner approves beginning Part B live execution with the watch.
+
+
 
 
 

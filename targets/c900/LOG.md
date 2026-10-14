@@ -437,3 +437,37 @@ Test counts: 61 Kotlin tests (26 :core + 35 :app), 150 Python tests, lint clean,
 - Built and tested in the cloud: core 26, app 35 pass, debug APK assembles. Tasks 1-7 accepted.
 - Problem: LIVE-APP-1 steps 4-5 asked the owner to "trigger" Find and Time, but the app had no way to send them. Fixed: two buttons on the status screen, each one command through Commands/CommandQueue, ignored unless READY, never queued or repeated.
 - Problem: during a live run every enabled mapped app (all on by default) and up to 5 notifications queued before connect would be pushed, breaking the 3-write budget. Fixed in the run sheet: pre-flight turns off every type except SMS and silences other apps. Also noted that FD acks to inbound frames are writes not shown by the counter.
+
+## 2026-10-14 Batch 2 Self-Review and Report (Antigravity, local)
+
+### Self-Review Checklist (Tasks A1-A6)
+Audited all 15 files added/modified across `client/c900-android` and related docs:
+1. No new opcode or ALLOWLIST change: PASS. `Commands.kt`, `Frames.kt`, and `CommandQueue.kt` were untouched. No new builder opcodes were added.
+2. No createBond: PASS. Grep confirmed 0 calls to `createBond` in code across `app/` and `core/`.
+3. No logging of message text, names, or addresses: PASS. Zero `Log.*`, `println`, or `print` calls in main source trees. `tools/privacy_scan.py --strict` returned 0 findings.
+4. elapsedRealtime for timers: PASS. Monotonic clock `SystemClock.elapsedRealtime()` is strictly used across `NotifyListener`, `PacingScheduler`, `HealthSync`, and `WatchService`. Zero `currentTimeMillis` calls for timers.
+5. All core state on main looper: PASS. `WatchService` initializes and manipulates `Session`, `CommandQueue`, `HealthSync`, and `HealthStorage` strictly on `handler` (main looper); all GATT callbacks in `GattLink` are posted to main looper with stale instance guards.
+6. No network permission: PASS. `AndroidManifest.xml` contains zero `android.permission.INTERNET` or network permissions. Local SQLite storage (`health.db`) stays entirely on device.
+
+### Batch 2 Report
+- Tasks status:
+  - Task A1 (Health record parsers in :core): DONE (commit `dba7dcd`). Added pure Kotlin parsers in `HealthRecords.kt` for cmd 5 keys 2, 4, 5, 9, 12, 13, 14, 15 with shared 2-byte date decoder, non-throwing null safety, and 10 hand-built vector & fuzz tests in `HealthParsersTest.kt`.
+  - Task A2 (Wire parsers into HealthSync): DONE (commit `c379260`). Aggregates parsed records per key during sync and exposes immutable `SyncedHealthData` snapshot and typed convenience accessors strictly when `DONE`. Zero outbound writes. Verified with `CoreTest.collectAllRecordsAndExposeWhenDone`.
+  - Task A3 (Local storage in :app): DONE (commit `4cbb892`). Added plain SQLite storage (`HealthStorage.kt`) with composite primary keys `(date, time)` per record kind, `CONFLICT_REPLACE` upserts, pure deduplication functions in `HealthDeduplicator.kt`, and unit tests in `HealthDedupeTest.kt` (8 tests). Wired into `WatchService`.
+  - Task A4 (Status screen 7-day history): DONE (commit `5a3ad64`). Updated `StatusActivity.kt` to query `HealthStorage.getLast7DaysSummaries` and render steps, distance (km), and kcal for the last 7 days via plain Views. Updated `StatusSnapshotTest.kt`.
+  - Task A5 (CI GitHub Actions job): DONE (commit `0730bae`). Added `core-test` job running `:core:test` on `ubuntu-latest` with JDK 21 and Gradle 8.10.2 via `gradle/actions/setup-gradle@v4`.
+  - Task A6 (Docs updates): DONE (commit `e7d7d0a`). Updated `TARGET.md` gate status (G4 marked done, G5 ready for live run), `HANDOFF.md` with complete evidence summary and next command, and `client/c900-android/README.md` with build, adb install, permissions, and notification controls.
+  - Task A7 (Self-review & report): DONE.
+- Tasks reverted: 0.
+- Tasks skipped: 0.
+- Test counts:
+  - Kotlin tests: 81 tests passing (37 `:core` + 44 `:app`), 0 failures, 0 skipped.
+  - Python tests: 150 tests passing (`unittest discover -s tests`).
+  - Repository linter: `python3 tools/rw.py lint` (0 problems).
+  - Strict privacy scan: `python3 tools/privacy_scan.py targets/c900 docs --strict` (0 findings).
+- What only hardware can settle:
+  1. Real BLE connection, MTU negotiation, and characteristic discovery timing against real Bluetrum peripheral.
+  2. Physical watch display rendering of SMS notifications and vibration patterns.
+  3. Real watch handling of unsolicited 0x0E key 1 and 0x0C key 19 on Android OS BLE stack without spontaneous pairing dialogs.
+  4. Real multi-frame health sync throughput and hourly record transmission on physical radio.
+
