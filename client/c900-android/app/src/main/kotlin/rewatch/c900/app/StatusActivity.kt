@@ -192,7 +192,16 @@ class StatusActivity : Activity() {
         }
         container.addView(budgetNote)
 
-        // Actions
+        // Actions: one tap = one command (LIVE-APP-1 steps 4-5); ignored unless connected and ready.
+        container.addView(Button(this).apply {
+            text = "Find watch (1 write)"
+            setOnClickListener { WatchService.activeInstance?.sendFind() }
+        })
+        container.addView(Button(this).apply {
+            text = "Sync time (1 write)"
+            setOnClickListener { WatchService.activeInstance?.sendTimeSync() }
+        })
+
         val refreshButton = Button(this).apply {
             text = "Refresh Now"
             setOnClickListener { updateViews() }

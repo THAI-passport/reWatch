@@ -527,3 +527,7 @@ Required by AGENTS.md.
   **Rationale:** Fulfills ground rules 1, 2, and 7; hardware contact requires explicit owner presence and adherence to tight write budgets.
   **Evidence:** [C] Invariants I-18, I-21, I-35; ground rules 1, 2, 7; `targets/c900/tasks/LIVE-APP-1.md`.
   **Revisit if:** Additional feature write commands (e.g. alarm, sedentary) are added to the client allowlist.
+
+## 2026-10-14 Review of overnight batch (Asia/Saigon)
+- **Step:** added Find and Sync time buttons (`WatchService.sendFind/sendTimeSync`). **Decision:** one tap = one command, only when READY; rejected: a debug intent or automatic send on connect. **Rationale:** LIVE-APP-1 needs them and an automatic send would be a write the owner did not ask for. **Revisit if:** the live run shows the watch needs time sync on every connect.
+- **Step:** LIVE-APP-1 pre-flight limits notification types to SMS. **Decision:** run-sheet step; rejected: a code-level "test mode". **Rationale:** the settings screen already does it; no new code path to review. **Revisit if:** a second live session needs other types.
