@@ -352,4 +352,13 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
   - Linter: `python3 tools/rw.py lint` (0 problems).
   - Privacy scan: `python3 tools/privacy_scan.py targets/c900 docs --strict` (0 findings).
 
+## 2026-10-14 G4 Task 2: Device picker UI (Antigravity, local)
+- Implemented `MainActivity` scanning for "Watch Ultra" using Android BLE scanner.
+- Enforced runtime permission requests for `BLUETOOTH_SCAN` and `BLUETOOTH_CONNECT` on API 31+.
+- Discovered devices are listed by index label without logging MAC addresses or device names (privacy rule).
+- Tapping a device starts `WatchService` and calls `connectDevice(device)`.
+- Added unit tests in `DevicePickerTest` (2 tests).
+- All checks pass: 51 Kotlin tests (26 :core + 25 :app), 150 Python tests, lint clean, privacy scan clean.
+
+
 
