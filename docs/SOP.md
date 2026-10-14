@@ -56,7 +56,7 @@ Build a software device from the spec to test the client, but a simulator writte
 - Safe-write for storage: counter, delta skipping, minimum interval, daily cap, applied after the payload is known and before the first data frame.
 - Check every claim in a task pack against the real flags; invented flags waste the first hardware session.
 - Budget smartwatch ecosystem reality: models with similar numbering (e.g. T900 vs C900) often originate from completely different ODM solution houses and silicon architectures (JieLi Pi32 vs Bluetrum RISC-V). Build modular profile selectors rather than assuming monolithic protocol compatibility.
-- Critical hazard: budget OTA bootloader services (such as Bluetrum Cus5610 0x18A8 and JieLi 0xAE10) often lack memory boundary checks and overwrite executing code when written to over BLE. Hard-blacklist OTA service UUIDs at the client link layer.
+- Critical hazard: budget OTA bootloader services (such as Bluetrum Cus5610 0x18A8 and JieLi 0xAE10) often lack memory boundary checks and overwrite executing code when written to over BLE. Hard-blacklist OTA service UUIDs at the client link layer. (2026-10-14: neither id has a primary source; keep them blocked. Jieli OTA is documented on 0xAE00 itself, so also refuse OTA opcodes, not only services.)
 - Framing checksums: HryFine Sum8 checksum requires clearing byte[3] to 0x00 prior to computing the arithmetic sum of the full frame modulo 256.
 - In-memory simulation speed: do not introduce artificial chunk pacing sleeps in unit test simulators; guard sleep delays with hardware link checks so test suites finish in milliseconds.
 

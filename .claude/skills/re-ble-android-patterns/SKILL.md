@@ -21,6 +21,7 @@ Start at the UI action (connect, send, apply watch face), follow it to the sende
 | Name dispatch | string compares near the scan callback: `startsWith`, `contains`, `equalsIgnoreCase`, `toUpperCase`; also name lists in resources and `strings.xml` |
 | Server catalogs | Retrofit or OkHttp interfaces, endpoints containing `device`, `product`, `badge`, `watch`, `firmware`, `dial`, `face`; JSON field names such as `deviceName`, `signalName`, `deviceType` |
 | Wi-Fi | `WifiNetworkSpecifier`, `WifiManager`, `ConnectivityManager.bindProcessToNetwork`, `new Socket(`, `InetSocketAddress`, `192.168.`, `HttpURLConnection`, `Content-Range` |
+| Classic BT (SPP/RFCOMM) | `00001101-0000-1000-8000-00805f9b34fb`, `createRfcommSocketToServiceRecord`, `createInsecureRfcommSocketToServiceRecord`, `BluetoothSocket`, `getBondedDevices` (dual-mode watches may move bulk data here) |
 | Native links | `System.loadLibrary`, `native ` method declarations, `JNI_OnLoad` registrations |
 | RxAndroidBle | `RxBleClient`, `RxBleConnection`, `establishConnection`, `setupNotification`, `writeCharacteristic`, `requestMtu` |
 | Nordic Android-BLE-Library | `extends BleManager`, `writeCharacteristic(`, `setNotificationCallback`, `enableNotifications`, `requestMtu(`, `isRequiredServiceSupported` |
@@ -34,7 +35,7 @@ Start at the UI action (connect, send, apply watch face), follow it to the sende
 - **Notifications.** Find the assembler: replies can be split over notifications; look for a length field and a checksum, and for JSON accumulated until braces balance.
 - **Flow control and ACK.** Common patterns: batch of N packets then wait for an ACK; per-packet sequence numbers with a "fail at index" reply that restarts from a given packet; a device-pulled model where the device requests offsets. Write the state machine as a table (state, event, action) before coding.
 - **Checksums.** Read the method; names are obfuscated but the loop is recognisable (table lookup, shifts, 0x1021, 0xEDB88320). `tools/crcfind.py` identifies a CRC from sample frames.
-- **Wi-Fi modes.** Joining a device access point (SSID prefix, password rules, `bindProcessToNetwork`), a fixed gateway address and port, control words versus length-prefixed frames, HTTP upload with ranges. Record how the phone joins, which models use it, the frame limits and any rate cap in the code.
+- **Wi-Fi modes.** Joining a device access point (SSID prefix, password rules, `bindProcessToNetwork`), a fixed gateway address and port, control words versus length-prefixed frames, HTTP upload with ranges. Watch faces and media often go: BLE command opens a SoftAP on the watch, the app binds to it, then HTTP upload (`MultipartBody`, `@Multipart`, `@POST`) or a TCP socket to a fixed gateway (`192.168.4.1`, `192.168.10.1`, `192.168.43.1` are common [W]). Record how the phone joins, which models use it, the frame limits and any rate cap in the code.
 - **Several transports in one app.** Build a table: transport, selector (name, service, catalog field), models, evidence. Do not assume one transport per app.
 
 ## Out of scope here

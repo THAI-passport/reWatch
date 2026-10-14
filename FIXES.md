@@ -10,7 +10,8 @@ Things that need fixing in reWatch itself (tools, templates, skills), and things
 - Cloud sessions: apkpure, adoptium and github release hosts are blocked unless the environment allows them (README, AGENTS.md).
 - iOS, desktop and firmware notes in the skills are thin.
 - `client/t900-c900/t900_c900/safe_write.py` resets the budget when its state file is unreadable (fails open) and saves non-atomically; the skill reference fails closed. Port the reference behaviour into that client with a test.
-- Vendor stack UUIDs in `re-watch-targets/references/vendor-stacks.md` are `[W]` from memory and public docs (the Telink OTA base especially); confirm against an SDK or app on the first target that uses each stack.
+- Vendor stack UUIDs and white-label rows in `re-watch-targets/references/vendor-stacks.md` now carry public sources from an external review, but nobody here has read those sources; check them on the first target that uses each stack.
+- Jieli OTA is documented to run on 0xAE00 (opcode 0xE5 block pulls), so `client/t900-c900`'s blocklist of 0xAE10/0xAE20 does not stop it: add an RCSP opcode blocklist for the OTA commands, with a test. Also re-tag 0x18A8 and 0xAE10 in `targets/t900-c900` and `targets/c900` as unsourced (keep them blocked).
 - The unicorn harness does not apply relocations; add R_AARCH64_RELATIVE handling the first time a real library needs it, with a test.
 - `tools/scrub_capture.py` matches `--mask` hex at any nibble offset; a match straddling a byte boundary would mask the wrong nibbles. Rare; align to even offsets if it bites.
 
