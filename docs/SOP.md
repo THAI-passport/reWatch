@@ -56,7 +56,7 @@ Build a software device from the spec to test the client, but a simulator writte
 - Safe-write for storage: counter, delta skipping, minimum interval, daily cap, applied after the payload is known and before the first data frame.
 - Check every claim in a task pack against the real flags; invented flags waste the first hardware session.
 - Budget smartwatch ecosystem reality: models with similar numbering (e.g. T900 vs C900) often originate from completely different ODM solution houses and silicon architectures (JieLi Pi32 vs Bluetrum RISC-V). Build modular profile selectors rather than assuming monolithic protocol compatibility.
-- Critical hazard: budget OTA bootloader services (such as Bluetrum Cus5610 0x18A8 and JieLi 0xAE10) often lack memory boundary checks and overwrite executing code when written to over BLE. Hard-blacklist OTA service UUIDs at the client link layer.
+- Critical hazard: budget OTA bootloader services (such as Bluetrum Cus5610 0x18A8 and JieLi 0xAE10) often lack memory boundary checks and overwrite executing code when written to over BLE. Hard-blacklist OTA service UUIDs at the client link layer. (2026-10-14: neither id has a primary source; keep them blocked. Jieli OTA is documented on 0xAE00 itself, so also refuse OTA opcodes, not only services.)
 - Framing checksums: HryFine Sum8 checksum requires clearing byte[3] to 0x00 prior to computing the arithmetic sum of the full frame modulo 256.
 - In-memory simulation speed: do not introduce artificial chunk pacing sleeps in unit test simulators; guard sleep delays with hardware link checks so test suites finish in milliseconds.
 
@@ -71,3 +71,13 @@ Build a software device from the spec to test the client, but a simulator writte
 ## Lessons from the T900/C900 benchmark pass (2026-10-12)
 - When the artifact is blocked, still finish G0 and seed PROTOCOL/FACTS from the third-party document as `[W]`, then build the pure codec and simulator ahead with every layout value a named constant. A hand-computed vector in a test is own arithmetic, not evidence; say so in the test.
 - Read a third-party frame layout for internal contradictions before coding it (here the ack header 0xFD versus the app header 0xDF, and what the length field counts); each goes into FACTS.md as a dispute.
+
+## Lessons from the skill review (2026-10-14)
+- Triage the app framework before grepping Java: Flutter keeps logic in `libapp.so`, React Native in `assets/index.android.bundle` (Hermes or JS). See `re-static`.
+- aarch64 unicorn: CPACR_EL1 FP/SIMD on, a TLS page for TPIDR_EL0, PLT hooks return to LR, return to a mapped sentinel. Harness and table in `re-native-emulation`.
+- Protobuf payloads: `protoc --decode_raw` on samples before naming fields. See `re-protocol-spec`.
+- Always record the ABI split of an XAPK/APKS; natives live only there.
+- Scrub capture summaries with `tools/scrub_capture.py` before committing; review the output by eye.
+- Check a task pack with `python tools/rw.py taskflags <slug>` before handing it off.
+- A skill description should say what a user would ask, not only which gate it belongs to.
+

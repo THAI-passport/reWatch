@@ -1,5 +1,6 @@
 """Abstract link layer, RecordingLink for dry runs/simulations, and BleakLink for hardware."""
 from typing import Any, Callable, Dict, List, Optional, Protocol, Tuple
+from .codecs import is_rcsp_ota_frame
 from .models import is_service_prohibited
 
 
@@ -75,6 +76,8 @@ class RecordingLink:
     async def write(self, char_uuid: str, data: bytes, response: bool = False) -> None:
         if is_service_prohibited(char_uuid):
             raise RuntimeError(f"HARD BLOCKED: Attempted write to prohibited hazard service {char_uuid}")
+        if is_rcsp_ota_frame(data):
+            raise RuntimeError(f"HARD BLOCKED: RCSP OTA opcode 0x{data[4]:02X} on {char_uuid}")
         self.writes.append((char_uuid, data, response))
         if self.simulator is not None:
             await self.simulator.handle_write(char_uuid, data)
@@ -159,6 +162,8 @@ class BleakLink:
             raise RuntimeError("Link not connected")
         if is_service_prohibited(char_uuid):
             raise RuntimeError(f"HARD BLOCKED: Attempted write to prohibited hazard service {char_uuid}")
+        if is_rcsp_ota_frame(data):
+            raise RuntimeError(f"HARD BLOCKED: RCSP OTA opcode 0x{data[4]:02X} on {char_uuid}")
         await self._client.write_gatt_char(char_uuid, data, response=response)
 
     async def read(self, char_uuid: str) -> bytes:

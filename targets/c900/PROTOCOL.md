@@ -7,7 +7,7 @@ Every statement carries a tag: [C] [V] [H] [W] [I] [U]. Disputed values live in 
 |---|---|---|---|
 | Nordic UART service | service 6E400001-B5A3-F393-E0A9-E50E24DCCA9F, write ...0002, notify ...0003 | [U] | [W] |
 | Battery service | 0x180F / 0x2A19 | [U] | [W] |
-| OTA (never touch) | 0x18A8 (Cus5610) | never | [W] |
+| OTA (never touch) | 0x18A8 (Cus5610) | never | [W], no primary source (imported landscape doc only); kept blocked |
 
 ## 2. Framing
 | Frame | Header | Length | Payload | Checksum | Tag |

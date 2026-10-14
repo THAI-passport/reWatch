@@ -3,6 +3,9 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 PROHIBITED_SERVICES: List[str] = [
+    # Kept blocked although unsourced: 0x18A8 and 0xAE10/0xAE20 come only from an
+    # imported third-party landscape doc [W, no primary source]. Blocking costs nothing.
+    # JieLi OTA itself runs on 0xAE00: see PROHIBITED_RCSP_OPCODES in codecs.py.
     # Bluetrum Cus5610 OTA Bootloader service - writing bricks devices permanently
     "000018a8-0000-1000-8000-00805f9b34fb",
     "18a8",
