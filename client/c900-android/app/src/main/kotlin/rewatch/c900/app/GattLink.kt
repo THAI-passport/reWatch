@@ -25,9 +25,10 @@ import java.util.UUID
  * [rewatch.c900.CommandQueue], and [rewatch.c900.HealthSync] are touched strictly on the main looper thread.
  */
 class GattLink(
-    private val context: Context,
+    private val context: Context? = null,
     private val handler: Handler = Handler(Looper.getMainLooper()),
-    private val listener: Listener
+    private val listener: Listener,
+    private val post: (Runnable) -> Unit = { handler.post(it) }
 ) {
     interface Listener {
         fun onConnected()
@@ -41,7 +42,7 @@ class GattLink(
         fun onTerminalFail(reason: String)
     }
 
-    private var bluetoothGatt: BluetoothGatt? = null
+    internal var bluetoothGatt: BluetoothGatt? = null
     private var activeOp: GattOp? = null
     private var frameReader = FrameReader()
 
@@ -50,9 +51,18 @@ class GattLink(
         postDelayed = { delayMs, task -> handler.postDelayed(task, delayMs) }
     )
 
-    private val gattCallback = object : BluetoothGattCallback() {
+    fun isCurrent(gatt: BluetoothGatt?): Boolean = gatt != null && gatt === bluetoothGatt
+
+    internal val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-            handler.post {
+            post {
+                if (gatt !== bluetoothGatt) {
+                    try {
+                        gatt.close()
+                    } catch (_: SecurityException) {
+                    }
+                    return@post
+                }
                 if (status != BluetoothGatt.GATT_SUCCESS || newState == BluetoothProfile.STATE_DISCONNECTED) {
                     pacingScheduler.clear()
                     activeOp = null
@@ -78,7 +88,8 @@ class GattLink(
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-            handler.post {
+            post {
+                if (gatt !== bluetoothGatt) return@post
                 if (status != BluetoothGatt.GATT_SUCCESS) {
                     listener.onError("discoverServices failed: status $status")
                     return@post
@@ -96,7 +107,8 @@ class GattLink(
             value: ByteArray,
             status: Int
         ) {
-            handler.post {
+            post {
+                if (gatt !== bluetoothGatt) return@post
                 handleReadResult(characteristic.uuid.toString(), if (status == BluetoothGatt.GATT_SUCCESS) value else null)
             }
         }
@@ -108,7 +120,8 @@ class GattLink(
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            handler.post {
+            post {
+                if (gatt !== bluetoothGatt) return@post
                 handleReadResult(characteristic.uuid.toString(), if (status == BluetoothGatt.GATT_SUCCESS) characteristic.value else null)
             }
         }
@@ -118,7 +131,8 @@ class GattLink(
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            handler.post {
+            post {
+                if (gatt !== bluetoothGatt) return@post
                 val op = activeOp
                 if (op is GattOp.WritePiece) {
                     activeOp = null
@@ -132,7 +146,8 @@ class GattLink(
             descriptor: BluetoothGattDescriptor,
             status: Int
         ) {
-            handler.post {
+            post {
+                if (gatt !== bluetoothGatt) return@post
                 val op = activeOp
                 if (op is GattOp.EnableNotify) {
                     activeOp = null
@@ -146,7 +161,8 @@ class GattLink(
             characteristic: BluetoothGattCharacteristic,
             value: ByteArray
         ) {
-            handler.post {
+            post {
+                if (gatt !== bluetoothGatt) return@post
                 handleNotificationBytes(characteristic.uuid.toString(), value)
             }
         }
@@ -157,7 +173,8 @@ class GattLink(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
         ) {
-            handler.post {
+            post {
+                if (gatt !== bluetoothGatt) return@post
                 handleNotificationBytes(characteristic.uuid.toString(), characteristic.value ?: ByteArray(0))
             }
         }
