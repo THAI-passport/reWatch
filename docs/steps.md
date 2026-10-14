@@ -496,4 +496,12 @@ Required by AGENTS.md.
   **Evidence:** [C] Android `BluetoothGattCallback` lifecycle; [V] `GattLinkTest.testStaleDisconnectAfterReconnectDoesNotCallListenerOnDisconnected`.
   **Revisit if:** Multi-device concurrent GATT connections are introduced.
 
+## 2026-10-14 G4 Task 2: Device picker UI and BLE scanner (Asia/Saigon)
+- **Step:** Implemented `MainActivity` BLE device picker scanning for advertised name "Watch Ultra".
+  **Decision:** Filter BLE advertisements to `TARGET_DEVICE_NAME = "Watch Ultra"` (FACTS section 1 [C]) using `ScanFilter`, request runtime permissions `BLUETOOTH_SCAN` and `BLUETOOTH_CONNECT` on Android 12+ without location access, list discovered devices via plain Views (`LinearLayout`, `ListView`, `Button`, `TextView`, `ProgressBar`), start `WatchService` and dispatch `connectDevice` on item selection; rejected: scanning without name filter or using Jetpack Compose/external libraries.
+  **Rationale:** Ground rule: never connect to unexpected devices or firmware; R10 specifies `neverForLocation` flag; plain Views avoid library bloat.
+  **Evidence:** [C] FACTS section 1 advertised name "Watch Ultra"; [V] `DevicePickerTest`.
+  **Revisit if:** Support for multiple watch advertised names is added.
+
+
 
