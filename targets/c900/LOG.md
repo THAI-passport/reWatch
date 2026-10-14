@@ -377,3 +377,15 @@ Append every pitfall, newest last. Entry: date, gate, problem, cause, solution (
   - Session write counter: `CommandQueue.writes` of the 200 budget.
 - Decoupled snapshot formatting logic into `StatusSnapshot` with unit tests in `StatusSnapshotTest` (4 tests).
 - All checks pass: 60 Kotlin tests (26 :core + 34 :app), 150 Python tests, lint clean, privacy scan clean.
+
+## 2026-10-14 G4 Task 5: End-to-end JVM test (Antigravity, local)
+- Implemented `EndToEndTest` driving `Session`, `CommandQueue`, `PacingScheduler`, and `HealthSync` against simulated watch (`SimWatch`) via fake GATT link:
+  1. Connection and service discovery (`6e400001-...` with write `6e400002` and notify `6e400003`).
+  2. 4 info reads completed in sequence: 0x2A27 ("10000" -> ver 0x10), 0x2A26 ("C900"), 0x2A28 (features AA...), 0x2A19 (battery 85%).
+  3. Notification enabled on command notify characteristic -> `Session.State.READY`.
+  4. Submitted message command via `CommandQueue`, paced across ATT pieces via `PacingScheduler`.
+  5. `SimWatch` reassembled pieces and returned protocol ACK (`Frames.ack(cmd=2, key=18, x=len, status=1)`) -> `CommandQueue` completed with `Result.Ok`.
+  6. Inbound cmd 5 health sync sequence: key 7 (sync start -> `SYNCING`), key 12 (day total: 8000 steps, 5.60 km, 240.00 kcal), key 8 (sync end -> `DONE`).
+  7. Verified `StatusSnapshot.format` correctly rendered the final session state.
+- Proves consistency only, not hardware (ground rule 6).
+- All checks pass: 61 Kotlin tests (26 :core + 35 :app), 150 Python tests, lint clean, privacy scan clean.

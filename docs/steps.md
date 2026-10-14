@@ -512,3 +512,8 @@ Required by AGENTS.md.
   **Rationale:** Main thread confinement is maintained by reading `WatchService.activeInstance` on main looper; pure `StatusSnapshot` model enables fast unit test coverage without Android UI stubs; visual feedback on the 200-write budget keeps session limits visible to the user (ground rule 7).
   **Evidence:** [C] Invariants I-10 (protocol ver), I-24 (distance/cal scaling /1000), ground rule 7 (200-write cap); [V] `StatusSnapshotTest`.
   **Revisit if:** Live data architecture (e.g. StateFlow) is required for multi-activity UI bindings.
+- **Step:** Implemented end-to-end JVM consistency test `EndToEndTest`.
+  **Decision:** Created `EndToEndTest` driving `Session`, `CommandQueue`, `PacingScheduler`, and `HealthSync` against a simulated peripheral (`SimWatch`) over a fake GATT link, validating connect, 4 info reads (`2a27`, `2a26`, `2a28`, `2a19`), notify enable, message transmission and protocol ACK matching, and inbound cmd 5 health sync sequence (keys 7..12..8); rejected: testing against mockito-stubbed android.bluetooth classes.
+  **Rationale:** Drives exact production logic across core state machines, pacing schedulers, and queue handlers deterministically without Android framework emulation; ground rule 6 explicitly specifies this proves consistency only, not hardware truth.
+  **Evidence:** [V] `EndToEndTest.testEndToEndSessionWithSimWatch`.
+  **Revisit if:** Multi-chunk inbound notification reassembly or dynamic GATT MTU changes are introduced.
