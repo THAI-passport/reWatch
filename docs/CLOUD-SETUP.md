@@ -33,6 +33,23 @@ bash tools/cloud_bootstrap.sh
 
 The script is the source of truth for install steps, pinned URLs, and SHA-256 checks (jadx 1.5.6, apktool 3.0.3, the Hiwear zip). Read `tools/cloud_bootstrap.sh` if you need to run steps by hand (for example when `curl|bash` is forbidden — open the file and run each section).
 
+## Android / Kotlin (Gradle) builds in a cloud session
+(ReWork port candidate: generic to any target with a Gradle client; move into the ReWork base skills when skills are ported.)
+
+Do these steps in order; do not debug the network by trial and error.
+1. Ask the owner to allow `dl.google.com` and `maven.google.com` (environment menu, Edit, Network access, Allowed domains, keep "Allow package managers" ticked). Check: `curl -s -o /dev/null -w "%{http_code}" https://dl.google.com/dl/android/maven2/com/android/tools/build/gradle/maven-metadata.xml` prints 200.
+2. Android SDK (skip for a pure JVM module): download `https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip`, unzip to `~/tools/android-sdk/cmdline-tools/latest`, then `yes | ~/tools/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/tools/android-sdk "platforms;android-35" "build-tools;35.0.0"`. Write `sdk.dir=$HOME/tools/android-sdk` to the project's `local.properties` (git-ignored).
+3. Maven Central usually answers 429 from cloud sessions. Do not retry it and do not use the Gradle plugin portal (it redirects to Central). Point Central at Google's mirror with a machine-local init script, never a repo change:
+   ```
+   mkdir -p ~/.gradle/init.d && cat > ~/.gradle/init.d/central-mirror.gradle <<'G'
+   def m = { RepositoryHandler rs -> rs.all { r -> if (r instanceof MavenArtifactRepository && r.url.toString().contains('repo.maven.apache.org')) { r.url = 'https://maven-central.storage-download.googleapis.com/maven2/' } } }
+   settingsEvaluated { s -> m(s.pluginManagement.repositories); m(s.dependencyResolutionManagement.repositories) }
+   allprojects { m(repositories); buildscript { m(repositories) } }
+   G
+   ```
+4. Build: `cd client/<slug>-android && gradle :core:test :app:testDebugUnitTest :app:assembleDebug`. Expected: BUILD SUCCESSFUL. Count tests from `*/build/test-results/**/*.xml`, not from console output.
+5. If step 1 is not done yet, the JVM-only module (`:core:test`) still builds after step 3; the app module needs steps 1-2.
+
 ## Troubleshooting
 
 | Symptom | Cause | What to do |
