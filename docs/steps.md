@@ -424,3 +424,6 @@ Required by AGENTS.md.
 
 ## 2026-10-14 Review of owner-machine pass (Asia/Saigon)
 - **Step:** made `Session` follow the owner decision for inbound 0x0E key 1. **Decision:** cache the 6-byte classic MAC in memory and ack, no prompt; rejected: leaving code as is, also dropping the 0x0C key 19 prompt. **Rationale:** CLIENT-DESIGN and code disagreed; the decision covers 0x0E key 1 only, and 0x0C key 19 is an explicit pairing request. **Evidence:** owner decision in CLIENT-DESIGN 3.4. **Revisit if:** the owner wants classic audio pairing from the open client.
+
+## 2026-10-14 Cloud Android build (Asia/Saigon)
+- **Step:** built `c900/app-shell` (822e344) in the cloud. **Decision:** machine-local Gradle init script pointing Maven Central at Google's Central mirror; rejected: editing repo build files, the Gradle plugin portal (redirects to Central, still 429). **Rationale:** keeps the repo build unchanged while removing the owner as the only build machine. **Evidence:** [V] 26 core + 23 app tests pass, APK assembles. **Revisit if:** Maven Central stops rate-limiting this environment, or the mirror host is blocked.
