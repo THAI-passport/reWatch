@@ -402,3 +402,33 @@ Checked all 21 files under `client/c900-android/app/` against safety checklist:
 8. No feature sends on a timer: PASS. All timer runnables (`SCAN_TIMEOUT_MS`, `REFRESH_INTERVAL_MS`, `reconnectRunnable`, `tickRunnable`) only perform local state checks (GATT connect, UI text update, ack timeout fail, sync idle timeout). Zero feature frames are scheduled or sent on timers.
 
 Test counts: 61 Kotlin tests (26 :core + 35 :app), 150 Python tests, lint clean, privacy scan clean.
+
+## 2026-10-14 G4 Task 7: LIVE-APP-1 run sheet and final overnight batch report (Antigravity, local)
+- Created `targets/c900/tasks/LIVE-APP-1.md` defining strict run sheet for first live session on physical Android phone with owner present.
+- Configured budget: 1 connect, 4 info reads, at most 3 feature writes (find, time, one message), total <= 4 pieces, zero pairing/bonding, zero retries.
+- Documented pre-flight checklist, step-by-step test execution, abort conditions, and observation/recording requirements.
+- Sheet was NOT executed (ground rules 1, 2, 7).
+
+### Final Overnight Batch Report (Tasks 1-7)
+- Task status:
+  - Task 1 (Stale GATT callbacks): DONE (commit `822e344`). Guarded callback blocks against stale connection instances; stale disconnect closes stale gatt without notifying listener. 3 unit tests added.
+  - Task 2 (Device picker UI): DONE (commit `39f99e4`). `MainActivity` scans with `BLUETOOTH_SCAN (neverForLocation)` filtered to "Watch Ultra", plain Views, runtime permissions, starts `WatchService`. 2 unit tests added.
+  - Task 3 (Settings screen): DONE (commit `816aefc`). `NotificationSettings` SharedPreferences persistence for "push other apps" (default false) and per-type on/off switches, `SettingsActivity` plain Views, `NotifyListener` integration. 5 unit tests added.
+  - Task 4 (Status screen): DONE (commit `72cb3df`). `StatusActivity` displaying connection state, battery, ver, HealthSync day totals (km, kcal), writes budget (`writes / 200`). 4 unit tests added.
+  - Task 5 (End-to-end JVM test): DONE (commit `08f240e`). `EndToEndTest` driving Session + CommandQueue + PacingScheduler + HealthSync against `SimWatch` via fake link (connect, 4 info reads, notify enable, message send + ack, cmd 5 sync 7..12..8). Proves consistency only, not hardware. 1 end-to-end test added.
+  - Task 6 (Self-review): DONE (commit `07ebb80`). Audited all 21 files in `app/` against 8 safety items. Marshaled `WatchService.sendNotification` and `connectDevice` to main looper via `handler.post`. All items pass/fixed.
+  - Task 7 (LIVE-APP-1 run sheet): DONE. Wrote `targets/c900/tasks/LIVE-APP-1.md`.
+- Tasks skipped: 0.
+- Tasks reverted: 0.
+- Test counts:
+  - Kotlin tests: 61 tests passing (26 `:core` + 35 `:app`), 0 failures, 0 skipped.
+  - Python tests: 150 tests passing (`python3 -m unittest discover -s tests`).
+  - Repository linter: `python3 tools/rw.py lint` (0 problems).
+  - Strict privacy scan: `python3 tools/privacy_scan.py targets/c900 docs --strict` (0 findings).
+- Things only a live run can verify:
+  1. Real Android Bluetooth stack GATT connection, MTU negotiation, and characteristic discovery timing against real Bluetrum/JieLi BLE peripheral.
+  2. Real Android `BluetoothGattCallback.onCharacteristicWrite` callback latency and ATT pacing behavior on physical radio hardware.
+  3. Visual notification rendering, vibration pattern, and font rendering on physical watch display.
+  4. Real Android OS `NotificationListenerService` user permission grant lifecycle and background posting behavior during phone sleep/doze mode.
+  5. Real watch response to unsolicited `cmd 0x0E key 1` and `cmd 0x0C key 19` under Android OS Bluetooth stack (verifying no spontaneous OS pairing dialogs appear).
+  6. Real history sync (cmd 5) multi-record throughput and hourly step record decoding on real hardware.

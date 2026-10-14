@@ -522,3 +522,8 @@ Required by AGENTS.md.
   **Rationale:** `NotificationListenerService.onNotificationPosted` executes on a background Binder thread in Android; posting to main looper prevents multi-threaded corruption of core data structures.
   **Evidence:** [C] Android `NotificationListenerService` threading documentation; [V] `testEndToEndSessionWithSimWatch`.
   **Revisit if:** Multi-threaded synchronization primitives are added to `core`.
+- **Step:** Authored `targets/c900/tasks/LIVE-APP-1.md` run sheet for initial live device evaluation.
+  **Decision:** Specified strict budget (1 connect, 4 info reads, at most 3 feature writes: find, time, one message, <= 4 ATT pieces), zero pairing/bonding, explicit abort triggers, and scrubbed logging protocols for owner-attended execution; left unexecuted; rejected: executing against real hardware or leaving live session steps unscripted.
+  **Rationale:** Fulfills ground rules 1, 2, and 7; hardware contact requires explicit owner presence and adherence to tight write budgets.
+  **Evidence:** [C] Invariants I-18, I-21, I-35; ground rules 1, 2, 7; `targets/c900/tasks/LIVE-APP-1.md`.
+  **Revisit if:** Additional feature write commands (e.g. alarm, sedentary) are added to the client allowlist.
