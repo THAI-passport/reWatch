@@ -592,7 +592,13 @@ Required by AGENTS.md.
   **Decision:** supported both local name and company 0x314C manufacturer data matching in software, added `testManufacturerDataMatchingWithMarker` unit test in `DevicePickerTest.kt`, re-tested (82 tests passing), and re-installed debug APK via ADB to test phone.
   **Rationale:** Resolves packet dropping on Android BLE controllers when the peripheral transmits device names in Scan Response (`SCAN_RSP`) packets rather than primary `ADV_IND` packets.
   **Evidence:** [H] `SPBluetoothDataType` confirms watch actively advertising; [C] `FACTS.md` section 1.1 company ID `0x314C` + `12 34`; [V] 82 Kotlin tests pass; `adb install -r` returned Success.
-  **Revisit if:** Owner reports discovered device list behavior during Step 2.
+## 2026-10-14 LIVE-APP-1 Step 2: Unfiltered scan and live packet diagnostics (Asia/Saigon)
+- **Step:** diagnosed remaining scan timeout after vendor app uninstall; changed `MainActivity.startScan` to use an unfiltered scan (`null` filters) in low-latency mode with empty filter fallback, bypassing controller-level parameter rejections; added live packet counter in status text (`seen X pkts`).
+  **Decision:** switched to unfiltered scan at driver level to ensure raw advertising packets reach `onScanResult` for software evaluation; built, tested, and installed to connected phone.
+  **Rationale:** Bypasses proprietary BLE controller filter rejection quirks on MediaTek stacks while maintaining strict software matching.
+  **Evidence:** [H] Mac `system_profiler` confirms watch advertising; [V] 82 Kotlin unit tests pass; `adb install -r` returned Success.
+  **Revisit if:** Owner reports packet count or discovered devices on screen.
+
 
 
 

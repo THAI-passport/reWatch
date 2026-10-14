@@ -64,8 +64,11 @@ class MainActivity : Activity() {
         }
     }
 
+    private var totalPacketsSeen = 0
+
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
+            totalPacketsSeen++
             val device = result?.device ?: return
             val record = result.scanRecord
             val name = record?.deviceName ?: try {
@@ -74,9 +77,16 @@ class MainActivity : Activity() {
                 null
             }
             val mfgData = record?.getManufacturerSpecificData(COMPANY_ID_C900)
+                ?: record?.getManufacturerSpecificData(0x4C31)
 
             if (isMatchingDevice(name, mfgData)) {
                 addDiscoveredDevice(device)
+            } else {
+                handler.post {
+                    if (discoveredDevices.isEmpty() && isScanning) {
+                        statusText.text = "Scanning for $TARGET_DEVICE_NAME... (seen $totalPacketsSeen)"
+                    }
+                }
             }
         }
 
@@ -242,26 +252,28 @@ class MainActivity : Activity() {
 
         discoveredDevices.clear()
         listAdapter.clear()
+        totalPacketsSeen = 0
         isScanning = true
         scanButton.text = "Stop Scan"
         progressBar.visibility = View.VISIBLE
         statusText.text = "Scanning for $TARGET_DEVICE_NAME..."
 
-        val filters = listOf(
-            ScanFilter.Builder().setDeviceName(TARGET_DEVICE_NAME).build(),
-            ScanFilter.Builder().setManufacturerData(COMPANY_ID_C900, byteArrayOf()).build(),
-            ScanFilter.Builder().build()
-        )
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
 
         try {
-            scanner.startScan(filters, settings, scanCallback)
+            // First attempt: unfiltered scan to bypass controller-side parameter rejections
+            scanner.startScan(null, settings, scanCallback)
             handler.postDelayed({ stopScan() }, SCAN_TIMEOUT_MS)
-        } catch (_: SecurityException) {
-            statusText.text = "SecurityException during BLE scan"
-            stopScan()
+        } catch (_: Exception) {
+            try {
+                scanner.startScan(listOf(ScanFilter.Builder().build()), settings, scanCallback)
+                handler.postDelayed({ stopScan() }, SCAN_TIMEOUT_MS)
+            } catch (_: SecurityException) {
+                statusText.text = "SecurityException during BLE scan"
+                stopScan()
+            }
         }
     }
 
@@ -271,7 +283,7 @@ class MainActivity : Activity() {
         scanButton.text = "Start Scan"
         progressBar.visibility = View.INVISIBLE
         val count = discoveredDevices.size
-        statusText.text = if (count > 0) "Found $count device(s)" else "Scan finished (no devices found)"
+        statusText.text = if (count > 0) "Found $count device(s)" else "Scan finished (seen $totalPacketsSeen pkts, 0 matched)"
 
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
         val scanner = bluetoothManager?.adapter?.bluetoothLeScanner

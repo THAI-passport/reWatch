@@ -479,13 +479,13 @@ Audited all 15 files added/modified across `client/c900-android` and related doc
   2. Call `startServiceForeground()` in `onStartCommand()` and `connectDevice()` once permissions are confirmed and device connection begins.
   3. In `MainActivity.onCreate`, trigger runtime permission checks on launch (`checkPermissionsOnLaunch()`) so dialogs appear immediately per Step 1.
 
-- Problem: Device scan timed out with "no devices found" on Android test phone even though watch was nearby and advertising.
-- Cause: Hardware-offloaded scan filter `ScanFilter.Builder().setDeviceName("Watch Ultra")` dropped advertisements on the phone's BLE controller because the watch transmits its name in the Scan Response packet (`SCAN_RSP`) rather than the primary advertising PDU (`ADV_IND`).
+- Problem: BLE scan continued to report "no devices found" on Android test phone because `setManufacturerData` with empty byte array caused controller parameter rejections, and vendor app Hiwear Plus held the background connection until uninstalled.
+- Cause: (1) Vendor app `com.myled.HiwearPlus` held the peripheral connection in background, which stops BLE advertising; (2) Hardware scan filter lists with empty byte arrays cause controller parameter rejections on MediaTek Bluetooth stacks.
 - Fix:
-  1. Updated `startScan` in `MainActivity.kt` with composite scan filters: `setDeviceName`, `setManufacturerData(0x314C, byteArrayOf())`, and a catch-all `ScanFilter.Builder().build()`.
-  2. Updated `scanCallback` to inspect both `record.deviceName` / `device.name` and `record.getManufacturerSpecificData(0x314C)`.
-  3. Updated `isMatchingDevice` to match either `TARGET_DEVICE_NAME` or manufacturer data with C900 marker bytes `0x12, 0x34` (company `0x314C`).
-  4. Added unit tests in `DevicePickerTest.kt`.
+  1. Terminated and uninstalled `com.myled.HiwearPlus` (Pre-flight Item 2).
+  2. Switched `startScan` in `MainActivity.kt` to an unfiltered scan (`null` filters) in low-latency mode with empty filter fallback, bypassing controller filter issues.
+  3. Added live packet counter (`seen X pkts`) in status text to observe packet flow.
+
 
 
 
