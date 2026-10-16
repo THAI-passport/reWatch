@@ -55,3 +55,6 @@ Write into PROTOCOL.md a surface map: transports (with service UUIDs/ports/SSID 
 
 ## Other platforms
 iOS: first `otool -l <binary> | grep -A4 LC_ENCRYPTION_INFO`; `cryptid 1` means FairPlay-encrypted code: stop and ask the owner for a decrypted IPA, still read `Info.plist`, usage strings and bundled assets. On a decrypted binary grep selectors `scanForPeripheralsWithServices:`, `discoverCharacteristics:forService:`, `writeValue:forCharacteristic:type:`, `setNotifyValue:forCharacteristic:`, `UUIDWithString:`; class-dump or Ghidra; same method. Desktop: strings and import tables first. Web/Electron: unpack asar and read JS, endpoints are plain.
+
+## Pitfall: jadx constant substitution (C900 / Hiwear Plus, 2026-10-13)
+Jadx may print a library constant name whose value equals a literal (example: `BaseResp.CODE_ERROR_PARAMS` for -2000 in a time-pack routine). Always confirm numeric literals that affect framing or packing in smali (`apktool d` without `-s`). Same class of bug as reBeamBox's guard multiplier (300 vs 800).

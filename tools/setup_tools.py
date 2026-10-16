@@ -188,6 +188,9 @@ def main(argv=None):
     if not shutil.which("tshark"):
         hint = {"mac": "brew install wireshark", "linux": "apt install tshark (needs root)", "windows": "install Wireshark"}[host()[0]]
         print("tshark not found (optional; tools/btcap.py reads captures without it): %s" % hint)
+    # Owner-approved REPO_COPY zips under resources/ need Git LFS on the PATH.
+    if shutil.which("git-lfs") is None and not os.path.isfile(os.path.join(os.path.expanduser("~"), "tools", "bin", "git-lfs")):
+        print("note: git-lfs not found; targets with REPO_COPY need: install Git LFS, then git lfs pull", file=sys.stderr)
     return 0
 
 

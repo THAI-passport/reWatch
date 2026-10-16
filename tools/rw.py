@@ -249,9 +249,64 @@ def tracked_files(root):
     return files
 
 
+def pinned_repo_copies(root):
+    """REPO_COPY paths declared in any targets/*/SOURCES(.md): the only vendor archives allowed in git."""
+    out = set()
+    tdir = os.path.join(root, "targets")
+    for t in (os.listdir(tdir) if os.path.isdir(tdir) else []):
+        for n in ("SOURCES", "SOURCES.md"):
+            p = os.path.join(tdir, t, n)
+            if os.path.isfile(p):
+                for line in open(p, encoding="utf-8", errors="replace"):
+                    m = re.match(r"^REPO_COPY=(\S+)\s*$", line.strip())
+                    if m:
+                        out.add(m.group(1))
+    return out
+
+
+CAPTURE_RX = re.compile(r"(?i)(^|/)captures/|btsnoop|\.(pklg|pcap|pcapng|cfa|snoop)$|bugreport.*\.zip$|(^|/)c900-probe-[^/]*\.log$")
+PRIVACY_DIRS = ("targets/", "docs/", ".claude/")
+
+
+def _privacy_findings(root, rels):
+    """Personal-data scan (tools/privacy_scan.py) over committed docs; tests/fixtures are excluded."""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import privacy_scan  # noqa: E402
+    except Exception:  # noqa: BLE001
+        return []
+    allow = []
+    af = os.path.join(root, ".privacy-allow")
+    if os.path.isfile(af):
+        allow = [ln.strip() for ln in open(af, encoding="utf-8") if ln.strip() and not ln.startswith("#")]
+    out = []
+    for rel in rels:
+        if not rel.startswith(PRIVACY_DIRS) or os.path.splitext(rel)[1].lower() not in privacy_scan.TEXT_EXT:
+            continue
+        try:
+            text = open(os.path.join(root, rel), encoding="utf-8", errors="replace").read()
+        except OSError:
+            continue
+        for h in privacy_scan.scan_text(text, allow):
+            out.append(("%s:%d" % (rel, h["line"]), "personal data? %s %s (see skill re-privacy-scrub)" % (h["kind"], h["match"])))
+    return out
+
+
 def lint(root):
     problems = []
-    for rel in tracked_files(root):
+    pinned = pinned_repo_copies(root)
+    files = tracked_files(root)
+    problems.extend(_privacy_findings(root, files))
+    for rel in files:
+        if CAPTURE_RX.search(rel) and not rel.startswith("tests/fixtures/"):  # fixtures are synthetic
+            problems.append((rel, "capture or probe log; keep it in git-ignored captures/, never commit"))
+            continue
+        if rel.startswith("resources/"):
+            if rel.endswith("/README.md"):
+                continue
+            if rel not in pinned:
+                problems.append((rel, "file under resources/ is not a pinned REPO_COPY in any targets/*/SOURCES.md"))
+            continue
         low = rel.lower()
         if low.endswith(ARTIFACT_EXT):
             problems.append((rel, "vendor artifact extension, must not be committed"))
@@ -285,6 +340,13 @@ def cmd_lint(a):
 # --- taskflags ---------------------------------------------------------------------------------------
 CODE_RX = re.compile(r"```.*?```|`[^`\n]+`", re.S)   # fenced blocks and inline code spans
 FLAG_RX = re.compile(r"(?<![\w-])(--[a-z][a-z0-9-]*)")
+EXTERNAL_FLAGS = {
+    "--help", "--version",
+    # pip / venv setup
+    "--upgrade", "--require-hashes", "--only-binary", "--no-deps",
+    # git
+    "--no-verify",
+}
 
 
 def task_flags(root, slug):
@@ -293,14 +355,19 @@ def task_flags(root, slug):
     tdir = os.path.join(root, "targets", slug, "tasks")
     for name in sorted(os.listdir(tdir)) if os.path.isdir(tdir) else []:
         if name.endswith(".md"):
-            text = open(os.path.join(tdir, name), encoding="utf-8").read()
+            with open(os.path.join(tdir, name), encoding="utf-8") as fp:
+                text = fp.read()
             for block in CODE_RX.findall(text):
                 for f in FLAG_RX.findall(block):
-                    used.setdefault(f, set()).add(name)
+                    if f not in EXTERNAL_FLAGS:
+                        used.setdefault(f, set()).add(name)
     src = []
     for d in (os.path.join(root, "client", slug), os.path.join(root, "tools")):
         for dp, _, fs in os.walk(d):
-            src += [open(os.path.join(dp, f), encoding="utf-8", errors="replace").read() for f in fs if f.endswith(".py")]
+            for f in fs:
+                if f.endswith(".py"):
+                    with open(os.path.join(dp, f), encoding="utf-8", errors="replace") as fp:
+                        src.append(fp.read())
     src = "\n".join(src)
     return {f: sorted(n) for f, n in used.items() if '"%s"' % f not in src and "'%s'" % f not in src}
 

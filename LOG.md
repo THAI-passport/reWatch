@@ -54,6 +54,11 @@ Problems hit while building reWatch's own tools (seeded from reWork, see docs/FR
 - Cause: external source; written for a different workflow.
 - Solution: stored as `docs/recon/budget-smartwatch-landscape.md` with a banner and flaws table; JSX tag converted; every claim is `[W]`; the build-location advice is overridden. Status: Solved for storage; claims stay unverified until G0/G1.
 
+## 2026-10-13, REPO_COPY + Git LFS for owner-approved vendor archives
+- Problem: cloud agents could not rebuild c900 without a downloadable host or --local-file; owner approved committing one pinned zip.
+- Cause: ground rule 3 forbade all vendor binaries; no REPO_COPY acquire path.
+- Solution: Git LFS 3.5.1 in ~/tools; `.gitattributes` `resources/**/*.zip`; `rebuild_analysis.py` `from_repo_copy` (hash check, single member, LFS pointer detect); `rw.py pinned_repo_copies` lint; AGENTS.md exception + `resources/README.md`. Status: Solved.
+
 ## 2026-10-14, skill review: overlaps, missing generic rules, missing tools
 - Problem: an external review of `.claude/skills/` found gate-only trigger text, the gate map and tag legend held only in AGENTS.md, generic unicorn rules buried in `re-jieli`, duplicated text between `re-static` and `re-ble-android-patterns`, and promised steps (scrub, flag check) with no tool behind them. Its proposed tag legend redefined `[W]` and `[V]` and added `[C-SDK]`, which would have contradicted AGENTS.md.
 - Cause: skills grew per target; generic lessons stayed where they were first learned.

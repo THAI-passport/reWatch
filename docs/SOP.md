@@ -43,6 +43,8 @@ Disassemble with capstone and pyelftools; emulate with unicorn; port stage by st
 
 ## 7. Captures
 Ingest HCI snoop and pcap files with `tools/btcap.py`; map handles to UUIDs, reassemble across MTU chunks, validate checksums, report bad frames instead of dropping them. Scrub before storing; never commit raw captures. See `re-capture-ingestion`.
+- c900 first contact on a real watch: owner runs `tools/c900_probe.py` per `targets/c900/tasks/PROBE-GUIDE.md` (hashed deps in `requirements-probe.txt`). Do not unbind; turn phone Bluetooth off.
+- c900: decode frames with `tools/c900_decode.py <capture>` (decode only; hides message text, masks MACs, flags blocked cmds and OTA traffic). Live notify logging: `tools/notify_log.py --only <uuid>`; its OTA/DFU deny list is always on.
 
 ## 8. Tests and simulators
 Build a software device from the spec to test the client, but a simulator written by you proves consistency only. Keep every uncertain value a named constant or flag so first hardware contact needs flag changes. Run `python3 -m unittest discover -s tests` and `python3 tools/rw.py lint` before each commit.
@@ -60,6 +62,30 @@ Build a software device from the spec to test the client, but a simulator writte
 - Framing checksums: HryFine Sum8 checksum requires clearing byte[3] to 0x00 prior to computing the arithmetic sum of the full frame modulo 256.
 - In-memory simulation speed: do not introduce artificial chunk pacing sleeps in unit test simulators; guard sleep delays with hardware link checks so test suites finish in milliseconds.
 
+## 9.1 Lessons from C900 / Hiwear Plus (2026-10-13)
+- Confirm the companion app with the owner before anything else. Two days of C900 notes were written for the wrong app (HryFine/HiWatch Pro) from a landscape write-up. Retail pages of the exact model ("APP: Hiwear plus") settle it in one search.
+- Same vendor, different app: white-label families (here Shenzhen United Power, "lianhezhuli") share backends (`api/hry`) but opcodes must still be read per app.
+- A service named like a command channel can be the OTA channel (0xFF00 here). Read the constant names and the callers before tagging a service; never trust a write-up's label.
+- Watch-face upload may ride on the firmware-update machinery. Treat it as an OTA-class write: design review and owner approval first.
+- Third-party or AI-written RE documents: copy into `targets/<slug>/sources/`, check every claim against code, list disputes in FACTS.md. In this case the header was right and most opcodes were wrong, two of them destructive (unbind, factory test).
+- Self-made vectors: compute them with the codec, not by hand; a hand sum in a draft was off by one.
+
+- Jadx substitutes library constants for equal-valued literals (e.g. `BaseResp.CODE_ERROR_PARAMS` for -2000). Confirm every numeric that matters in smali (`apktool d` without `-s`). It also picks wrong same-valued names from the app's own classes (C900: a key 21 shown as `KEY_SETTING_SET_LANGUAGE` was really exit-find-phone; keys shown as `CommandID.*`). Read the `const` just before each builder call. Smali reading tricks: file order is not control-flow order, so when a register has two `const` assignments follow the branch label from the guarding `if-*` to find the one that reaches the call; builders often reuse a parameter register (`const/16 p0, ...`) for the command id, so search `p` as well as `v` registers.
+- Owner-approved pinned archives live under `resources/<slug>/` as a single-member zip in Git LFS, declared as `REPO_COPY` + `REPO_COPY_SHA256`. Fresh clone: `git lfs pull` then `rebuild_analysis.py`.
+- Bluetrum watch-face / paper / contact push uses a separate OTA channel (D5/D6 on 0xFF00), not the DF/FD command channel. Document only; never wire into the client without a reviewed design.
+- Dial `.bin` files from the vendor server are obfuscated Base64 text (`StringUtils.decodeInfo` token swap), not raw binaries.
+- Absence claims ("the app never calls X") need an app-wide smali search for the framework method, e.g. `rg "BluetoothDevice;->createBond" work/smali | grep -v <ble-lib>`, not a jadx search over a few classes. C900: an earlier "no createBond in app code" was wrong; smali found three sites. Write the reproduce command next to the claim.
+- Treat every jadx field reference used as a number (`SomeLib.CONST`) as a possible substitution: read the literal in smali. C900-Q16 found `JCameraView.MEDIA_QUALITY_FUNNY` standing in for 400000 in a step parser.
+- Tools that touch a live device need a deny list for OTA/DFU UUIDs that cannot be turned off by a flag; test it with a fake GATT table (C900-Q17).
+- Capability bitmaps decide which payload variant the app sends (notify switch length, message type table, face code size). Map the feature parser early; it explains most "optional" bytes.
+- Live-device probes on macOS (bleak 3.x, CoreBluetooth): there is no bond-state API, so `is_paired` checks are dead code (bleak 3.0.2 has no such attribute) and macOS auto-starts pairing when a read hits an encrypted characteristic. Make "OS pairing dialog: Cancel, Ctrl-C" an owner abort trigger and log that detection is unavailable; never claim the tool detects pairing there. Test with a fake that lacks the attribute.
+- Address writes and subscriptions by the characteristic object from the expected service, not by UUID string: bleak resolves strings across the whole table, so a duplicate UUID (or one under an OTA service) becomes the target.
+- Scan logs collect third parties: nearby phone and headset names, and manufacturer data that may hold the target's own MAC. Keep full scan output on screen only; the log gets candidate names and masked manufacturer bytes.
+- When the app derives a frame byte from a device read (C900: version byte from 0x2A27), a probe that hardcodes it must read the value first and refuse to write on a mismatch.
+- bleak needs Python 3.10+; the macOS Command Line Tools Python is 3.9. Say so in the owner guide before the install step.
+- Fake-client tests must resolve the same UUID forms the tool uses (full base UUIDs); a fake that only matched short forms hid untested read paths for a whole review round.
+- When jadx/apktool cannot be installed (blocked release host), `pip install androguard` and read dex directly: dump the string table for negative UUID searches, and print one method's bytecode (`DEX(...).get_classes()`, `m.get_code().get_bc().get_instructions()`) to follow a parser. Enough for "is X referenced" and short methods; use jadx for anything larger.
+
 ## 10. After each pass (checklist)
 1. PROTOCOL.md: byte-level findings with tags and the source class and method.
 2. FACTS.md: disputed values.
@@ -72,6 +98,12 @@ Build a software device from the spec to test the client, but a simulator writte
 - When the artifact is blocked, still finish G0 and seed PROTOCOL/FACTS from the third-party document as `[W]`, then build the pure codec and simulator ahead with every layout value a named constant. A hand-computed vector in a test is own arithmetic, not evidence; say so in the test.
 - Read a third-party frame layout for internal contradictions before coding it (here the ack header 0xFD versus the app header 0xDF, and what the length field counts); each goes into FACTS.md as a dispute.
 
+- Negative claims ("the app never calls X") need a smali search before they get [C]; a jadx-only negative search was wrong on c900 (createBond). One reproducible positive hit retires a negative claim.
+
+- Keep a per-target INVARIANTS.md: each quirk that was wrong once, its tempting wrong version, tag and proof; a small test pins the machine-checkable rows. Agents grep their diff for the wrong versions before finishing a pass.
+
+- Integrating parallel-agent results: re-check citations against the artifact, not just the result file. On c900 one result named classes that do not exist and a frame layout from a different vendor, while its summary looked complete. A coordinator's summary of results is a third copy and drifts further; read the result files.
+
 ## Lessons from the skill review (2026-10-14)
 - Triage the app framework before grepping Java: Flutter keeps logic in `libapp.so`, React Native in `assets/index.android.bundle` (Hermes or JS). See `re-static`.
 - aarch64 unicorn: CPACR_EL1 FP/SIMD on, a TLS page for TPIDR_EL0, PLT hooks return to LR, return to a mapped sentinel. Harness and table in `re-native-emulation`.
@@ -80,4 +112,3 @@ Build a software device from the spec to test the client, but a simulator writte
 - Scrub capture summaries with `tools/scrub_capture.py` before committing; review the output by eye.
 - Check a task pack with `python tools/rw.py taskflags <slug>` before handing it off.
 - A skill description should say what a user would ask, not only which gate it belongs to.
-
