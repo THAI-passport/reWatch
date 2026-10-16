@@ -616,3 +616,8 @@ Required by AGENTS.md.
 
 
 
+
+## 2026-10-16 (Asia/Saigon) merge all branches into main
+- Merged origin/c900/batch-2 into claude/keen-planck-70gueu. Why: owner asked to merge everything; every other remote branch is an ancestor of batch-2, so this one merge carries all of them.
+- Moved run-sheet-2026-10-16-c900.md from targets/t900-c900 (folded into c900 and t900 by batch-2) to targets/c900/tasks/results. Why: keep results under the live target. Revisit: reconcile with targets/c900/tasks/HW-0-RUNSHEET.md when results arrive.
+- Remote branches deleted after merge to main (owner approved housekeeping).
