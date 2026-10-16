@@ -37,8 +37,13 @@ The agent reads `AGENTS.md`, loads the `re-workflow` skill, and runs gates G0 to
 | `tools/rw.py` | `init`, `doctor`, `hash`, `recon`, `lint`, `taskflags` (stdlib only) |
 | `tools/btcap.py` | btsnoop/pcap/pcapng to ATT write/notify table by UUID |
 | `tools/scrub_capture.py` | Mask addresses, tokens and named literals in a btcap summary, length-preserving |
+| `tools/c900_probe.py` | Owner-run C900 first-contact probe (scan / inspect / allowlisted safe-write); see `targets/c900/tasks/PROBE-GUIDE.md` |
+| `tools/c900_decode.py` | C900 DF/FD frame decoder over a capture or btcap JSON: reassembly, sum check, cmd/key labels, feature bits, bond-trigger/blocked-cmd/OTA flags. Decode only |
 | `tools/crcfind.py` | Identify a CRC from sample frames |
-| `tools/notify_log.py` | Passive BLE notification logger (touch/event discovery) |
+| `tools/dexgrep.py` | Read a companion APK without jadx (strings, classes, method bytecode, callers, manifest) via androguard; `requirements-static.txt` |
+| `tools/install_hooks.py` | Opt-in git pre-commit hook running `rw.py lint` (artifacts, captures, emoji, secrets, personal data); run once per clone |
+| `tools/privacy_scan.py` | Scan files for personal data (MACs incl. kept OUI, CoreBluetooth UUIDs, IMEI, phone, e-mail, home paths) before commit; `--strict` adds spaced hex bytes; placeholders in `.privacy-allow`; see skill `re-privacy-scrub` |
+| `tools/notify_log.py` | Passive BLE notification logger (touch/event discovery); OTA/DFU deny list always on, `--only UUID` to pin one characteristic |
 | `tools/make_test_media.py` | Synthetic test images, GIF and clips for display devices |
 | `templates/tasks/` | Recon task pack copied into every target by `init` |
 | `tools/setup_tools.py` | User-space JDK, jadx, apktool, venv (no admin rights); Linux, macOS, Windows. `setup-tools.sh` wraps it |
@@ -47,7 +52,8 @@ The agent reads `AGENTS.md`, loads the `re-workflow` skill, and runs gates G0 to
 
 ## Manual quick start
 ```
-python tools/setup_tools.py        # once; optional --emulation (Windows: run it from PowerShell)
+python tools/setup_tools.py
+# If a target uses a pinned REPO_COPY under resources/: install Git LFS, then `git lfs install && git lfs pull`        # once; optional --emulation (Windows: run it from PowerShell)
 python tools/rw.py doctor
 python tools/rw.py init mywatch --name "My watch" --goal "sync status from CLI"
 python tools/rw.py hash targets/mywatch/artifacts/app.xapk --slug mywatch

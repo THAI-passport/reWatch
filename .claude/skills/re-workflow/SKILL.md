@@ -21,6 +21,7 @@ Entry point. Input is `Reverse engineer: <device/app>. Goal: <client behaviour>.
 | G5 Handoff | `re-hardware-recon` (+ `re-capture-ingestion`) | `targets/<slug>/tasks/` specialised, HANDOFF.md |
 
 ## Steps
+0. Log steps and decisions in `docs/steps.md` using the format in `re-step-rationale`.
 1. **G0 Brief.** Pick a short slug (lowercase, dashes). Run `python tools/rw.py init <slug> --name "<name>" --goal "<goal>"`. Run `python tools/rw.py doctor` and note missing tools in LOG.md. Write defaults you chose in TARGET.md Assumptions: static only, Android first, Python client, local-only.
 2. **Identify the target software.** If only hardware names were given (model numbers, a brand), follow `re-acquire` section "From hardware name to app".
 3. **Rebuild only when needed.** If the artifacts are not on this machine, read the target docs first and rebuild only for a named `[I]`/`[U]` claim (AGENTS.md): `bash tools/rebuild-analysis.sh <slug> --dry-run`, then without `--dry-run` (`re-acquire`, "Make it rebuildable"). Never continue past a hash mismatch.

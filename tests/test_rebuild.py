@@ -295,6 +295,47 @@ class Rebuild(unittest.TestCase):
         self.assertIn("pins version 1.0", r.stderr)
 
     # repo wiring ---------------------------------------------------------------------------------------------
+    # owner-approved repo copy under resources/ ------------------------------------------------------------------
+    def repo_copy(self, raw=None):
+        os.makedirs(os.path.join(self.d, "resources", "demo"), exist_ok=True)
+        z = os.path.join(self.d, "resources", "demo", "fake.xapk.zip")
+        if raw is not None:
+            open(z, "wb").write(raw)
+        else:
+            with zipfile.ZipFile(z, "w") as zz:
+                zz.write(self.xapk, "renamed-inside.xapk")
+        return z, sha(open(z, "rb").read())
+
+    def test_repo_copy_is_used_when_the_artifact_is_absent(self):
+        self.sources(name="SOURCES.md")
+        z, zs = self.repo_copy()
+        self.sources(name="SOURCES.md", REPO_COPY="resources/demo/fake.xapk.zip", REPO_COPY_SHA256=zs, URL=None)
+        r = self.run_("demo", path=self.tools())
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("sha256 ok: repo copy", r.stdout)
+        self.assertTrue(os.path.isfile(os.path.join(self.t, "artifacts", "fake.xapk")))
+        self.assertEqual(self.calls(), 1)
+
+    def test_repo_copy_with_wrong_hash_refuses(self):
+        self.sources(name="SOURCES.md")
+        z, zs = self.repo_copy()
+        self.sources(name="SOURCES.md", REPO_COPY="resources/demo/fake.xapk.zip", REPO_COPY_SHA256="0" * 64, URL=None)
+        r = self.run_("demo", path=self.tools())
+        self.assertEqual(r.returncode, 3, r.stderr)
+        self.assertFalse(os.path.exists(os.path.join(self.t, "artifacts", "fake.xapk")))
+
+    def test_repo_copy_lfs_pointer_and_bad_fields(self):
+        self.sources(name="SOURCES.md")
+        z, zs = self.repo_copy(raw=b"version https://git-lfs.github.com/spec/v1\noid sha256:00\n")
+        self.sources(name="SOURCES.md", REPO_COPY="resources/demo/fake.xapk.zip", REPO_COPY_SHA256=zs, URL=None)
+        r = self.run_("demo", path=self.tools())
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("git lfs pull", r.stderr)
+        self.sources(name="SOURCES.md", REPO_COPY="../outside.zip", REPO_COPY_SHA256=zs)
+        self.assertEqual(self.run_("demo").returncode, 2)
+        self.sources(name="SOURCES.md", REPO_COPY="resources/demo/fake.xapk.zip", REPO_COPY_SHA256=None)
+        self.assertEqual(self.run_("demo").returncode, 2)
+
     def test_template_has_machine_readable_block_that_parses(self):
         text = open(os.path.join(ROOT, "templates", "SOURCES.md")).read()
         self.assertIn("<!-- rebuild:begin -->", text)

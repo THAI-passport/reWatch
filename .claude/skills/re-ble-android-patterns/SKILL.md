@@ -38,5 +38,8 @@ Start at the UI action (connect, send, apply watch face), follow it to the sende
 - **Wi-Fi modes.** Joining a device access point (SSID prefix, password rules, `bindProcessToNetwork`), a fixed gateway address and port, control words versus length-prefixed frames, HTTP upload with ranges. Watch faces and media often go: BLE command opens a SoftAP on the watch, the app binds to it, then HTTP upload (`MultipartBody`, `@Multipart`, `@POST`) or a TCP socket to a fixed gateway (`192.168.4.1`, `192.168.10.1`, `192.168.43.1` are common [W]). Record how the phone joins, which models use it, the frame limits and any rate cap in the code.
 - **Several transports in one app.** Build a table: transport, selector (name, service, catalog field), models, evidence. Do not assume one transport per app.
 
+## Bluetrum OTA / dial push channel (Hiwear Plus, 2026-10-13)
+Some United Power / Bluetrum apps keep a second framing on an OTA GATT service (e.g. 0xFF00 write 0xFF02): control header 0xD5, data 0xD6, CRC left-shift poly 0x31, ready reply fun 0x81 with MTU/interval/groupPacNum. Watch-face and paper uploads often ride this path (`OTAUtils`), separate from the DF/FD command channel. Document only until a reviewed design and owner approval; never send from the client by default.
+
 ## Out of scope here
 Decompiling, decompiler failures, framework triage and stored keys (MMKV, SharedPreferences): `re-static`.
